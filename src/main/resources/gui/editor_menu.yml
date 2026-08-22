@@ -1,0 +1,154 @@
+# ==========================================================
+#  PracticeBot - GUI Editor Menu Configuration
+#  
+#  COMMAND: /practicebot egui
+#  PERMISSION: practicebot.admin
+#  
+#  This is the main menu for the GUI Editor system.
+#  Admins can select which GUI they want to customize.
+#
+#  COLOR FORMATS: &a (legacy), &#FF5555 (hex),
+#    rgb:255,85,85 (RGB), <gradient:#HEX1:#HEX2>text</gradient>
+#  Size: 45 slots (5 rows of 9)
+# ==========================================================
+
+title: "&d&lGUI Editor"
+size: 45
+
+filler:
+  enabled: true
+  material: PURPLE_STAINED_GLASS_PANE
+  name: " "
+
+items:
+
+  # ========== INFO ITEM ==========
+  info:
+    slot: 4
+    material: COMMAND_BLOCK
+    name: "&d&lGUI Editor"
+    lore:
+      - "&7Customize GUI item positions only!"
+      - " "
+      - "&e&lFeatures:"
+      - "&7• Move items to different slots"
+      - "&7• Swap items by clicking two slots"
+      - "&7• Reset layouts to defaults"
+      - "&8Item material/name/lore are config-only"
+      - " "
+      - "&7Select a GUI below to begin editing"
+    glow: true
+
+  # ========== GUI SELECTION ITEMS ==========
+  
+  gui_settingsmenu:
+    slot: 19
+    material: CRAFTING_TABLE
+    name: "&e&lBot Settings Menu"
+    lore:
+      - "&7Main settings menu for bot configuration"
+      - " "
+      - "&7Size: &f27 slots"
+      - "&7Items: &fToggles, PvP access, inventory"
+      - " "
+      - "&eClick to edit this GUI layout"
+    glow: false
+    action: "edit:settings_menu"
+
+  gui_pvpsettings:
+    slot: 20
+    material: DIAMOND_SWORD
+    name: "&c&lPvP Combat Settings"
+    lore:
+      - "&7PvP combat behavior settings"
+      - " "
+      - "&7Size: &f45 slots"
+      - "&7Items: &fToggles, mode selectors"
+      - " "
+      - "&eClick to edit this GUI layout"
+    glow: false
+    action: "edit:pvp_settings"
+    item-flags:
+      - HIDE_ATTRIBUTES
+
+  gui_cpvpsettings:
+    slot: 21
+    material: END_CRYSTAL
+    name: "&d&lCrystal PvP Settings"
+    lore:
+      - "&7Crystal PvP combat settings"
+      - " "
+      - "&7Size: &f45 slots"
+      - "&7Items: &fCrystal placement, pearls, mace"
+      - " "
+      - "&eClick to edit this GUI layout"
+    glow: false
+    action: "edit:cpvp_settings"
+
+  gui_botinventory:
+    slot: 24
+    material: CHEST
+    name: "&6&lBot Equipment"
+    lore:
+      - "&7Bot equipment and armor settings"
+      - " "
+      - "&7Size: &f54 slots"
+      - "&7Items: &fArmor display, toggles"
+      - " "
+      - "&eClick to edit this GUI layout"
+    glow: false
+    action: "edit:bot_inventory"
+
+  gui_admininventory:
+    slot: 25
+    material: ENDER_CHEST
+    name: "&5&lAdmin Default Inventory"
+    lore:
+      - "&7Default inventory for new bots"
+      - " "
+      - "&7Size: &f54 slots"
+      - "&7Items: &fTrim configuration"
+      - " "
+      - "&eClick to edit this GUI layout"
+    glow: false
+    action: "edit:admin_inventory"
+
+  # ========== UTILITY BUTTONS ==========
+
+  reload:
+    slot: 39
+    material: LIME_DYE
+    name: "&a&lReload All GUIs"
+    lore:
+      - "&7Reload all GUI configurations"
+      - "&7from their config files."
+      - " "
+      - "&eClick to reload"
+    glow: false
+    action: reload
+
+  help:
+    slot: 40
+    material: BOOK
+    name: "&b&lEditor Help"
+    lore:
+      - "&e&lHow to use the editor:"
+      - " "
+      - "&71. Select a GUI layout to edit"
+      - "&72. &eLeft-click &7an item to select it"
+      - "&73. Click another slot to move/swap"
+      - "&74. Click &aSave &7to apply layout changes"
+      - " "
+      - "&c&lNote:"
+      - "&7Changes are not saved until you"
+      - "&7click the Save button!"
+    glow: true
+
+  close:
+    slot: 41
+    material: BARRIER
+    name: "&c&lClose"
+    lore:
+      - "&7Close the GUI Editor"
+    glow: false
+    action: close

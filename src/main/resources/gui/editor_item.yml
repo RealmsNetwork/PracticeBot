@@ -1,0 +1,12 @@
+# ==========================================================
+#  PracticeBot - Deprecated Item Editor GUI
+#
+#  This file is intentionally no longer loaded by the plugin.
+#  /pbadmin egui now edits GUI layout only: moving and swapping
+#  existing items between slots. Item material, name, amount, glow
+#  and lore must be edited directly in the relevant gui/*.yml file.
+# ==========================================================
+
+title: "&e&lItem Editor Disabled"
+size: 9
+items: {}

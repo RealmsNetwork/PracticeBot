@@ -1,0 +1,112 @@
+title: "&8&lTemplate Editor"
+size: 54
+filler:
+  enabled: true
+  material: GRAY_STAINED_GLASS_PANE
+  name: " "
+
+items:
+  template_name:
+    slot: 10
+    material: WRITABLE_BOOK
+    name: "&b&lTemplate Name"
+    lore:
+      - "&7Current: &f{name}"
+      - ""
+      - "&eClick to edit"
+  display_name:
+    slot: 13
+    material: PAPER
+    name: "&d&lNPC Display Name"
+    lore:
+      - "&7Current: &f{display_name}"
+      - ""
+      - "&eClick to edit"
+  skin_name:
+    slot: 16
+    material: PLAYER_HEAD
+    name: "&6&lSkin"
+    lore:
+      - "&7Current: &f{skin}"
+      - ""
+      - "&eClick to edit"
+  bot_type:
+    slot: 20
+    material: IRON_SWORD
+    name: "&c&lBot Type"
+    lore:
+      - "&7Current: &f{bot_type}"
+      - ""
+      - "&eClick to cycle"
+  target_binding:
+    slot: 22
+    material: COMPASS
+    name: "&9&lTarget Binding"
+    lore:
+      - "&7Current: &f{target_binding}"
+      - ""
+      - "&eClick to cycle"
+  respawn_delay:
+    slot: 24
+    material: CLOCK
+    name: "&6&lRespawn Delay"
+    lore:
+      - "&7Current: &f{respawn_delay}"
+      - ""
+      - "&eLeft-Click: &7+1 second"
+      - "&eRight-Click: &7-1 second"
+      - "&eShift-Click: &7type a value"
+  death_mode:
+    slot: 33
+    material: TOTEM_OF_UNDYING
+    name: "&c&lDeath Mode"
+    lore:
+      - "&7Current: &f{death_mode}"
+      - ""
+      - "&eClick to cycle"
+  kill_mode:
+    slot: 29
+    material: BARRIER
+    name: "&4&lKill Mode"
+    lore:
+      - "&7Current: &f{kill_mode}"
+      - ""
+      - "&eClick to cycle"
+  combat_menu:
+    slot: 38
+    material: DIAMOND_SWORD
+    name: "&f&l{settings_name}"
+    lore:
+      - "&7{settings_description}"
+      - ""
+      - "&eClick to open"
+  inventory_menu:
+    slot: 40
+    material: CHEST
+    name: "&b&lInventory Settings"
+    lore:
+      - "&7Edit armor, trims, totems, and main hand"
+      - ""
+      - "&eClick to open"
+  warmup:
+    slot: 42
+    material: BLAZE_POWDER
+    name: "&6&lWarm-Up"
+    lore:
+      - "&7Current: &f{warmup}"
+      - ""
+      - "&eLeft-Click: &7+1 second"
+      - "&eRight-Click: &7-1 second"
+      - "&eShift-Click: &7type a value"
+  finish:
+    slot: 48
+    material: LIME_CONCRETE
+    name: "&a&lFinish & Save"
+    lore:
+      - "&7Save this template to bot_templates.yml"
+  cancel:
+    slot: 50
+    material: BARRIER
+    name: "&c&lCancel"
+    lore:
+      - "&7Discard this session and remove the preview NPC"

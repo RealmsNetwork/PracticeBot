@@ -1,0 +1,274 @@
+# ==========================================================
+#  PracticeBot - Bot Template Configuration
+#
+#  Template command namespace:
+#    /pbadmin template create <template>
+#    /pbadmin template edit <template>
+#    /pbadmin template cancel
+#    /pbadmin template delete <template>
+#    /pbadmin template spawn <template> [target]
+#    /pbadmin template spawn <template> [target] <world> <x> <y> <z> <yaw> <pitch>
+#
+#  Section rules:
+#    NORMAL templates use: general + settings + combat + inventory
+#    CPVP templates use:   general + inventory + cpvp
+#    DUMMY templates use:  general + settings + inventory
+#
+#  General fields:
+#    name                    Internal readable name.
+#    display-name            NPC name shown above the bot.
+#    skin-name               Minecraft account skin name. Empty = default/editor skin.
+#    bot-type                NORMAL, CPVP, or DUMMY.
+#    allow-gui               Compatibility flag. Runtime template bots keep normal GUI closed.
+#    target-binding          REQUIRED = target player needed, NONE = nearest player, BOT = nearest bot.
+#    death-mode              REMOVE = despawn after death, RESPAWN = respawn from this template.
+#    kill-mode               DESPAWN = despawn after killing target, RESPAWN = respawn, NONE = stay alive.
+#    respawn-delay-seconds   Delay before respawn when death-mode/kill-mode uses RESPAWN.
+#    warm-up-seconds         Delay before the bot starts fighting after spawn.
+#
+#  Settings fields for NORMAL/DUMMY:
+#    look-at-target          Turn head/body toward target.
+#    follow-target           Follow the selected target.
+#    random-walk             Wander naturally when idle.
+#    hold-shield             Visually hold shield when available.
+#    use-shield              Use shield defensively.
+#    resistance              Apply resistance behavior/effect where supported.
+#    frozen                  DUMMY only. Locks movement when true.
+#    shield-in-main-hand     Put shield in main hand instead of offhand.
+#    pvp-enabled             NORMAL only. Enables melee PvP logic.
+#
+#  Combat fields for NORMAL:
+#    strafe                  Strafe while fighting.
+#    wtap                    Use W-tap knockback timing.
+#    stap                    Use S-tap spacing.
+#    crits                   Try critical hits.
+#    shield-breaker          Use axe/shield-break behavior when applicable.
+#    retreat                 Back off when low/unsafe.
+#    reach-mode              SHORT, NORMAL, EXTENDED, or ADVANCED.
+#    aggression              LOW, MEDIUM, or HIGH.
+#    crit-chance             25, 50, 75, or 100.
+#    crit-speed              SLOW, NORMAL, or FAST.
+#
+#  Inventory fields for all template types:
+#    helmet/chestplate/leggings/boots-material  leather, copper, gold, chain, iron, diamond, netherite.
+#    helmet/chestplate/leggings/boots-enchant   protection, blast_protection, or none.
+#    offhand-type                               totem, shield, or none.
+#    totem-count                                Amount of totems to give when offhand uses totems.
+#    main-hand.material                         Bukkit material name for custom weapon/item.
+#    main-hand.amount                           Stack amount.
+#    main-hand.unbreakable                      Makes the item unbreakable.
+#    main-hand.enchantments                     Enchantment keys and levels.
+#    trims.<piece>.pattern/material             Armor trim pattern/material. Empty = no trim.
+#
+#  CPVP fields for CPVP:
+#    enabled                                   Must be true for CPVP templates.
+#    skill-level                               EASY, MEDIUM, HARD, or PRO preset name.
+#    aggression-weight                         Higher = more aggressive crystal pressure.
+#    use-pearls                                Allow ender pearl movement/tactics.
+#    use-mace                                  Allow mace logic when available.
+#    use-golden-apples                         Allow golden apple healing.
+#    place-obsidian                            Allow obsidian base placement.
+#    break-blocks                              Allow block mining/breaching.
+#    strafing-enabled                          Allow CPvP strafe movement.
+#    anchoring-mode                            Allow respawn anchor combat.
+#    heal-threshold                            HP ratio where healing starts, 0.4 = 40%.
+#    low-hp-crystal-lethal-reserve             Extra low-health safety reserve against self-damage.
+#    pearl-cooldown-ms                         Minimum milliseconds between pearls.
+#    fov-degrees                               CPvP action FOV. Lower = more human, higher = more permissive.
+#    place-delay-min/max-ms                    Random crystal place delay range.
+#    break-delay-min/max-ms                    Random crystal break delay range.
+#    sword-delay-ms                            Delay between sword/mace hits when CPvP allows melee.
+#    reaction-hesitation-*                     Humanized hesitation chance and duration.
+#    crystal-miss-*                            Humanized crystal miss/pause chance and duration.
+#    non-urgent-pearl-restraint-chance-percent Chance to avoid non-urgent pearls.
+# ==========================================================
+
+templates:
+  arena_normal:
+    # General
+    name: "Arena Normal"
+    display-name: "ArenaBot"
+    bot-type: NORMAL
+    allow-gui: false
+    target-binding: REQUIRED
+    death-mode: RESPAWN
+    kill-mode: DESPAWN
+    respawn-delay-seconds: 3
+    warm-up-seconds: 0
+    skin-name: ""
+
+    # NORMAL behavior settings
+    settings:
+      look-at-target: true
+      follow-target: false
+      random-walk: false
+      hold-shield: false
+      use-shield: true
+      resistance: false
+      frozen: false
+      shield-in-main-hand: false
+      pvp-enabled: true
+
+    # NORMAL melee combat settings
+    combat:
+      strafe: true
+      wtap: false
+      stap: false
+      crits: true
+      shield-breaker: true
+      retreat: false
+      reach-mode: NORMAL
+      aggression: MEDIUM
+      crit-chance: 75
+      crit-speed: NORMAL
+
+    # General equipment
+    inventory:
+      helmet-material: netherite
+      chestplate-material: netherite
+      leggings-material: netherite
+      boots-material: netherite
+      helmet-enchant: protection
+      chestplate-enchant: protection
+      leggings-enchant: protection
+      boots-enchant: protection
+      offhand-type: totem
+      totem-count: 64
+      main-hand:
+        material: NETHERITE_SWORD
+        amount: 1
+        unbreakable: true
+        enchantments:
+          sharpness: 5
+          knockback: 1
+      trims:
+        helmet:
+          pattern: ward
+          material: gold
+        chest:
+          pattern: ward
+          material: gold
+        legs:
+          pattern: ward
+          material: gold
+        boots:
+          pattern: ward
+          material: gold
+
+  arena_cpvp:
+    # General
+    name: "Arena Crystal"
+    display-name: "CrystalBot"
+    bot-type: CPVP
+    allow-gui: false
+    target-binding: REQUIRED
+    death-mode: RESPAWN
+    kill-mode: DESPAWN
+    respawn-delay-seconds: 5
+    warm-up-seconds: 0
+    skin-name: ""
+
+    # General equipment. CPVP behavior/combat is controlled by the cpvp section below.
+    inventory:
+      helmet-material: netherite
+      chestplate-material: netherite
+      leggings-material: netherite
+      boots-material: netherite
+      helmet-enchant: protection
+      chestplate-enchant: protection
+      leggings-enchant: blast_protection
+      boots-enchant: protection
+      offhand-type: totem
+      totem-count: 64
+      trims:
+        helmet:
+          pattern: flow
+          material: redstone
+        chest:
+          pattern: flow
+          material: redstone
+        legs:
+          pattern: flow
+          material: redstone
+        boots:
+          pattern: flow
+          material: redstone
+
+    # CPVP-only settings
+    cpvp:
+      enabled: true
+      skill-level: MEDIUM
+      aggression-weight: 1.3
+      use-pearls: true
+      use-mace: true
+      use-golden-apples: true
+      place-obsidian: true
+      break-blocks: false
+      strafing-enabled: true
+      anchoring-mode: false
+      heal-threshold: 0.4
+      low-hp-crystal-lethal-reserve: 0.05
+      pearl-cooldown-ms: 1600
+      fov-degrees: 120.0
+      place-delay-min-ms: 120
+      place-delay-max-ms: 190
+      break-delay-min-ms: 80
+      break-delay-max-ms: 135
+      sword-delay-ms: 600
+      reaction-hesitation-chance-percent: 14
+      reaction-hesitation-min-ms: 70
+      reaction-hesitation-max-ms: 160
+      crystal-miss-chance-percent: 7
+      crystal-miss-min-ms: 90
+      crystal-miss-max-ms: 210
+      non-urgent-pearl-restraint-chance-percent: 18
+
+  arena_dummy:
+    # General
+    name: "Arena Dummy"
+    display-name: "DummyBot"
+    bot-type: DUMMY
+    allow-gui: false
+    target-binding: NONE
+    death-mode: RESPAWN
+    kill-mode: NONE
+    respawn-delay-seconds: 3
+    warm-up-seconds: 0
+    skin-name: ""
+
+    # DUMMY behavior settings
+    settings:
+      look-at-target: true
+      follow-target: false
+      random-walk: false
+      hold-shield: false
+      use-shield: false
+      resistance: true
+      frozen: true
+      shield-in-main-hand: false
+
+    # General equipment
+    inventory:
+      helmet-material: netherite
+      chestplate-material: netherite
+      leggings-material: netherite
+      boots-material: netherite
+      helmet-enchant: protection
+      chestplate-enchant: protection
+      leggings-enchant: protection
+      boots-enchant: protection
+      offhand-type: totem
+      totem-count: 64
+      trims:
+        helmet:
+          pattern: ""
+          material: ""
+        chest:
+          pattern: ""
+          material: ""
+        legs:
+          pattern: ""
+          material: ""
+        boots:
+          pattern: ""
+          material: ""

@@ -1,0 +1,236 @@
+# ==========================================================
+#  PracticeBot - Crystal PvP Settings GUI Configuration
+#
+#  COLOR FORMATS: &a (legacy), &#FF5555 (hex),
+#    rgb:255,85,85 (RGB), <gradient:#HEX1:#HEX2>text</gradient>
+# ==========================================================
+
+title: "&d&lCrystal PvP Settings"
+size: 45
+
+filler:
+  enabled: true
+  material: GRAY_STAINED_GLASS_PANE
+  name: " "
+
+items:
+  # Row 1: Info
+  info:
+    slot: 4
+    material: END_CRYSTAL
+    name: "&d&lCrystal PvP Settings"
+    lore:
+      - "&7Configure Crystal PvP combat"
+      - " "
+      - "&7Status: {status}"
+      - "&7Skill: &e{skill_level}"
+      - " "
+      - "&d&lCrystal PvP Mode"
+      - "&7Place & break End Crystals"
+      - "&7for explosive damage!"
+    action: none
+
+  # Row 2: Core settings
+  enabled:
+    slot: 10
+    material: LIME_DYE
+    name: "&eCrystal PvP: {state}"
+    lore:
+      - "&7Toggle Crystal PvP mode"
+      - " "
+      - "&7Status: {state}"
+      - " "
+      - "&7Enabling will equip CPvP items"
+      - " "
+      - "&eClick to toggle"
+    action: toggle_enabled
+
+  skill_level:
+    slot: 12
+    material: EXPERIENCE_BOTTLE
+    name: "&bSkill Level: {skill_color}{skill_level}"
+    lore:
+      - "&7Bot skill level"
+      - " "
+      - "{easy_marker}Easy &7- Human hesitation, fewer perfect punishes"
+      - "{medium_marker}Medium &7- Balanced human-like pressure"
+      - "{hard_marker}Hard &7- Fast, rare hesitation"
+      - "{pro_marker}Pro &7- Near-perfect reactive"
+      - " "
+      - "&7Place Delay: &f{place_delay}ms"
+      - "&7Break Delay: &f{break_delay}ms"
+      - "&7Realism: &f{realism_profile}"
+      - "&7FOV: &f{fov_degrees}°"
+      - " "
+      - "&eClick to cycle"
+    action: cycle_skill
+
+  block_breaking:
+    slot: 14
+    material: NETHERITE_PICKAXE
+    name: "&5Block Breaking: {state}"
+    lore:
+      - "&7Break only real path or cover blocks"
+      - "&7that are stopping CPvP pressure"
+      - " "
+      - "&7Status: {state}"
+      - " "
+      - "&7When OFF, the bot keeps cover"
+      - "&7pressure explosive-only."
+      - " "
+      - "&eClick to toggle"
+    action: toggle_block_breaking
+
+  # Row 3: Feature toggles
+  pearls:
+    slot: 19
+    material: ENDER_PEARL
+    name: "&5Ender Pearls: {state}"
+    lore:
+      - "&7Use ender pearls for"
+      - "&7engage, escape & juggle"
+      - " "
+      - "&7Status: {state}"
+      - " "
+      - "&eClick to toggle"
+    action: toggle_pearls
+
+  pearl_cooldown:
+    slot: 21
+    material: CLOCK
+    name: "&dPearl Cooldown: &f{value}s"
+    lore:
+      - "&7Time between pearl throws"
+      - " "
+      - "&7Current: &d{value}s"
+      - " "
+      - "&7Range: 0.5s - 3.0s"
+      - " "
+      - "&eLeft-Click: &7+0.25s"
+      - "&eRight-Click: &7-0.25s"
+      - "&eShift-Click: &7Reset to 1.8s"
+    action: adjust_pearl_cooldown
+
+  mace:
+    slot: 23
+    material: MACE
+    name: "&6Mace Combat: {state}"
+    lore:
+      - "&7Use mace for air attacks"
+      - "&7and falling smash damage"
+      - " "
+      - "&7Status: {state}"
+      - " "
+      - "&eClick to toggle"
+    action: toggle_mace
+
+  gapples:
+    slot: 25
+    material: GOLDEN_APPLE
+    name: "&eGolden Apples: {state}"
+    lore:
+      - "&7Eat golden apples when"
+      - "&7health gets low"
+      - " "
+      - "&7Status: {state}"
+      - " "
+      - "&eClick to toggle"
+    action: toggle_gapples
+
+  # Row 4: More features
+  heal_threshold:
+    slot: 28
+    material: GOLDEN_APPLE
+    name: "&cHeal At: &f{value}%"
+    lore:
+      - "&7HP% to start eating gapples"
+      - " "
+      - "&7Current: &c{value}%"
+      - "{bar}"
+      - " "
+      - "&7Range: 20% - 80%"
+      - " "
+      - "&eLeft-Click: &7+10%"
+      - "&eRight-Click: &7-10%"
+      - "&eShift-Click: &7Reset to 40%"
+    action: adjust_heal_threshold
+
+  strafe:
+    slot: 30
+    material: RABBIT_FOOT
+    name: "&aStrafing: {state}"
+    lore:
+      - "&7Circle-strafe during combat"
+      - "&7to dodge attacks"
+      - " "
+      - "&7Status: {state}"
+      - " "
+      - "&eClick to toggle"
+    action: toggle_strafe
+
+  obsidian:
+    slot: 32
+    material: OBSIDIAN
+    name: "&8Obsidian Placing: {state}"
+    lore:
+      - "&7Auto-place obsidian for"
+      - "&7crystal placement spots"
+      - " "
+      - "&7Status: {state}"
+      - " "
+      - "&eClick to toggle"
+    action: toggle_obsidian
+
+  anchoring:
+    slot: 16
+    material: RESPAWN_ANCHOR
+    name: "&5Anchoring Mode: {state}"
+    lore:
+      - "&7Use glowstone and respawn"
+      - "&7anchors when they beat crystals"
+      - "&7in close, cramped, or defensive fights."
+      - " "
+      - "&7Status: {state}"
+      - " "
+      - "&eClick to toggle"
+    action: toggle_anchoring
+
+  reset:
+    slot: 34
+    material: STRUCTURE_VOID
+    name: "&c&lReset Settings"
+    lore:
+      - "&7Reset all settings to"
+      - "&7default values"
+      - " "
+      - "&eClick to reset"
+    action: reset_settings
+
+  # Row 5: Navigation
+  bot_inventory:
+    slot: 38
+    material: CHEST
+    name: "&6Bot Inventory"
+    lore:
+      - "&7Open bot inventory."
+      - " "
+      - "&eClick to open."
+    action: open_bot_inventory
+
+  back:
+    slot: 40
+    material: BARRIER
+    name: "&c&lClose"
+    lore:
+      - "&7Close this menu"
+    action: close
+
+  despawn:
+    slot: 42
+    material: REDSTONE_BLOCK
+    name: "&cDespawn Bot"
+    lore:
+      - "&7Remove this bot."
+      - " "
+      - "&eClick to despawn."
+    action: despawn_bot

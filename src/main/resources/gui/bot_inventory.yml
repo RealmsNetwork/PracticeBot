@@ -1,0 +1,189 @@
+# ==========================================================
+#  PracticeBot - Bot Equipment/Inventory GUI Configuration
+#
+#  COLOR FORMATS: &a (legacy), &#FF5555 (hex),
+#    rgb:255,85,85 (RGB), <gradient:#HEX1:#HEX2>text</gradient>
+# ==========================================================
+
+title: "&8&lBot Equipment"
+size: 54
+
+filler:
+  enabled: true
+  material: BLACK_STAINED_GLASS_PANE
+  name: " "
+
+items:
+
+  # ========== INFO ITEM ==========
+  info:
+    slot: 4
+    material: BOOK
+    name: "&b&lBot Equipment"
+    lore:
+      - "&7Configure your bot's equipment"
+      - " "
+      - "&7Armor Material: {armor_type}"
+      - "&7Helmet: {helmet_enchant}"
+      - "&7Chestplate: {chestplate_enchant}"
+      - "&7Leggings: {leggings_enchant} &7({leggings_material}&7)"
+      - "&7Boots: {boots_enchant}"
+      - "&7Main Hand: &f{mainhand_type}"
+      - "&7Totems: &e{totem_count}"
+      - " "
+      - "&eClick armor pieces to toggle enchants"
+    glow: false
+
+  # ========== HELMET - CLICKABLE ENCHANT TOGGLE ==========
+  helmet:
+    slot: 13
+    material: NETHERITE_HELMET
+    name: "&b&lHelmet"
+    lore:
+      - "&7Material: {helmet_material}"
+      - "&7Enchant: {helmet_enchant}"
+      - " "
+      - "&eClick to toggle enchant"
+      - "&7Protection ↔ Blast Protection"
+    glow: false
+    action: toggle_helmet_enchant
+    item-flags:
+      - HIDE_ATTRIBUTES
+      - HIDE_UNBREAKABLE
+      - HIDE_ENCHANTS
+      - HIDE_ARMOR_TRIM
+
+  # ========== MAIN HAND ==========
+  mainhand:
+    slot: 20
+    material: NETHERITE_SWORD
+    name: "&c&lMain Hand"
+    lore:
+      - "&7Current: &f{mainhand_type}"
+      - " "
+      - "&eClick with a sword to replace"
+      - "&7Pick up a sword from your inventory,"
+      - "&7then click here to set it."
+    glow: false
+    item-flags:
+      - HIDE_ATTRIBUTES
+      - HIDE_UNBREAKABLE
+      - HIDE_ENCHANTS
+
+  # ========== CHESTPLATE - CLICKABLE ENCHANT TOGGLE ==========
+  chestplate:
+    slot: 22
+    material: NETHERITE_CHESTPLATE
+    name: "&b&lChestplate"
+    lore:
+      - "&7Material: {chestplate_material}"
+      - "&7Enchant: {chestplate_enchant}"
+      - " "
+      - "&eClick to toggle enchant"
+      - "&7Protection ↔ Blast Protection"
+    glow: false
+    action: toggle_chestplate_enchant
+    item-flags:
+      - HIDE_ATTRIBUTES
+      - HIDE_UNBREAKABLE
+      - HIDE_ENCHANTS
+      - HIDE_ARMOR_TRIM
+
+  # ========== ARMOR TOGGLE (Helmet, Chest, Boots Material) ==========
+  armor_toggle:
+    slot: 24
+    material: NETHERITE_INGOT
+    name: "&e&lArmor Material"
+    lore:
+      - "&7Current: {armor_type}"
+      - " "
+      - "&7Changes: Helmet, Chestplate, Boots"
+      - " "
+      - "&eClick to toggle"
+      - "&7Netherite ↔ Diamond"
+    glow: false
+    action: toggle_armor
+
+  # ========== OFF HAND (Totems) ==========
+  offhand:
+    slot: 29
+    material: TOTEM_OF_UNDYING
+    name: "&6&lOff Hand - Totems"
+    lore:
+      - "&7Totem Count: &e{totem_count}"
+      - " "
+      - "&eClick to cycle count"
+      - "&72 → 4 → 8 → 16 → 32 → 64 → 99"
+    glow: false
+    item-flags:
+      - HIDE_ATTRIBUTES
+
+  # ========== LEGGINGS - ENCHANT TOGGLE ==========
+  leggings:
+    slot: 31
+    material: NETHERITE_LEGGINGS
+    name: "&b&lLeggings"
+    lore:
+      - "&7Material: {leggings_material}"
+      - "&7Enchant: {leggings_enchant}"
+      - " "
+      - "&eClick to toggle enchant"
+      - "&7Protection ↔ Blast Protection"
+    glow: false
+    action: toggle_leggings_enchant
+    item-flags:
+      - HIDE_ATTRIBUTES
+      - HIDE_UNBREAKABLE
+      - HIDE_ENCHANTS
+      - HIDE_ARMOR_TRIM
+
+  # ========== LEGGINGS MATERIAL TOGGLE ==========
+  leggings_material:
+    slot: 33
+    material: NETHERITE_INGOT
+    name: "&6&lLeggings Material"
+    lore:
+      - "&7Current: {leggings_material}"
+      - " "
+      - "&eClick to toggle"
+      - "&7Netherite ↔ Diamond"
+    glow: false
+    action: toggle_leggings_material
+
+  # ========== BOOTS - CLICKABLE ENCHANT TOGGLE ==========
+  boots:
+    slot: 40
+    material: NETHERITE_BOOTS
+    name: "&b&lBoots"
+    lore:
+      - "&7Material: {boots_material}"
+      - "&7Enchant: {boots_enchant}"
+      - " "
+      - "&eClick to toggle enchant"
+      - "&7Protection ↔ Blast Protection"
+    glow: false
+    action: toggle_boots_enchant
+    item-flags:
+      - HIDE_ATTRIBUTES
+      - HIDE_UNBREAKABLE
+      - HIDE_ENCHANTS
+      - HIDE_ARMOR_TRIM
+
+  # ========== NAVIGATION ==========
+  back:
+    slot: 48
+    material: ARROW
+    name: "&c&l« Back"
+    lore:
+      - "&7Return to settings menu"
+    glow: false
+    action: back
+
+  close:
+    slot: 50
+    material: BARRIER
+    name: "&c&lClose"
+    lore:
+      - "&7Close this menu"
+    glow: false
+    action: close

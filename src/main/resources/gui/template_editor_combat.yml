@@ -1,0 +1,106 @@
+title: "&8&lTemplate Combat"
+size: 45
+filler:
+  enabled: true
+  material: BLACK_STAINED_GLASS_PANE
+  name: " "
+
+items:
+  strafe:
+    slot: 10
+    material: LIME_DYE
+    name: "&e&lStrafe"
+    lore:
+      - "&7Current: {strafe}"
+      - ""
+      - "&eClick to toggle"
+  wtap:
+    slot: 12
+    material: LIME_DYE
+    name: "&e&lW-Tap"
+    lore:
+      - "&7Current: {wtap}"
+      - ""
+      - "&eClick to toggle"
+  stap:
+    slot: 14
+    material: LIME_DYE
+    name: "&e&lS-Tap"
+    lore:
+      - "&7Current: {stap}"
+      - ""
+      - "&eClick to toggle"
+  crits:
+    slot: 16
+    material: LIME_DYE
+    name: "&e&lCritical Hits"
+    lore:
+      - "&7Current: {crits}"
+      - ""
+      - "&eClick to toggle"
+  shield_breaker:
+    slot: 20
+    material: LIME_DYE
+    name: "&e&lShield Breaker"
+    lore:
+      - "&7Current: {shield_breaker}"
+      - ""
+      - "&eClick to toggle"
+  reach:
+    slot: 31
+    material: BLAZE_ROD
+    name: "&6&lReach Mode"
+    lore:
+      - "&7Current: &f{reach}"
+      - ""
+      - "&eClick to cycle"
+  retreat:
+    slot: 24
+    material: LIME_DYE
+    name: "&e&lRetreat"
+    lore:
+      - "&7Current: {retreat}"
+      - ""
+      - "&eClick to toggle"
+  crit_speed:
+    slot: 34
+    material: CLOCK
+    name: "&6&lCrit Speed"
+    lore:
+      - "&7Current: &f{crit_speed}"
+      - ""
+      - "&eClick to cycle"
+  crit_chance:
+    slot: 28
+    material: FEATHER
+    name: "&6&lCrit Chance"
+    lore:
+      - "&7Current: &f{crit_chance}"
+      - ""
+      - "&eClick to cycle"
+  aggression:
+    slot: 22
+    material: NETHER_STAR
+    name: "&6&lAggression"
+    lore:
+      - "&7Current: &f{aggression}"
+      - ""
+      - "&eClick to cycle"
+  back:
+    slot: 38
+    material: ARROW
+    name: "&c&lBack"
+    lore:
+      - "&7Return to the main template menu"
+  finish:
+    slot: 40
+    material: LIME_CONCRETE
+    name: "&a&lFinish & Save"
+    lore:
+      - "&7Save this template"
+  cancel:
+    slot: 42
+    material: BARRIER
+    name: "&c&lCancel"
+    lore:
+      - "&7Discard this session"

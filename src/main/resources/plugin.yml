@@ -1,0 +1,86 @@
+name: PracticeBot
+main: com.sheldera.practicebot.PracticeBotPlugin
+version: 1.6.2
+api-version: 1.21
+author: Sheldera
+
+description: >
+  A customizable PvP practice bot using Citizens.
+
+website: https://discord.gg/6y4P6ycubQ
+
+depend: [Citizens]
+softdepend: [PlaceholderAPI]
+
+commands:
+  spawnbot:
+    description: Spawn your personal PvP bot.
+    usage: "/spawnbot [normal|crystal]"
+    aliases: [bot]
+
+  practicebot:
+    description: Player PracticeBot commands.
+    usage: "/practicebot [spawn|info|help]"
+    aliases: [pb]
+
+  practicebot-admin:
+    description: Admin PracticeBot commands.
+    usage: "/practicebot-admin [help|license|inventory|egui|reload|template|despawn <world> [bot]]"
+    aliases: [pbadmin]
+
+permissions:
+  practicebot.use:
+    description: Legacy permission for spawning bots.
+    default: true
+
+  practicebot.spawn:
+    description: Allows spawning all player-owned bot types.
+    default: false
+
+  practicebot.spawn.normal:
+    description: Allows spawning normal PvP bots.
+    default: true
+
+  practicebot.spawn.cpvp:
+    description: Allows spawning Crystal PvP bots.
+    default: true
+
+  practicebot.admin:
+    description: Access to admin tools and bot management commands.
+    default: op
+    children:
+      practicebot.admin.license: true
+      practicebot.admin.template.spawn: true
+      practicebot.admin.despawn: true
+      practicebot.admin.template.create: true
+      practicebot.admin.template.edit: true
+      practicebot.admin.template.cancel: true
+      practicebot.admin.template.delete: true
+
+  practicebot.admin.template.spawn:
+    description: Allows spawning configured bot templates.
+    default: op
+
+  practicebot.admin.despawn:
+    description: Allows despawning PracticeBot NPCs from a world.
+    default: op
+
+  practicebot.admin.template.create:
+    description: Allows creating a bot template with the in-game editor.
+    default: op
+
+  practicebot.admin.template.edit:
+    description: Allows editing an existing bot template with the in-game editor.
+    default: op
+
+  practicebot.admin.template.cancel:
+    description: Allows cancelling an active in-game bot template editor session.
+    default: op
+
+  practicebot.admin.template.delete:
+    description: Allows deleting bot templates.
+    default: op
+
+  practicebot.admin.license:
+    description: Allows managing PracticeBot license activation.
+    default: op

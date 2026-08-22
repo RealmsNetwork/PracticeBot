@@ -1,0 +1,195 @@
+# ==========================================================
+#  PracticeBot - Settings Menu GUI Configuration
+#  
+#  This file controls the appearance and layout of the
+#  main bot settings menu that opens when players
+#  shift+right-click their practice bot.
+#
+#  CUSTOMIZATION GUIDE:
+#  - Supports all color formats:
+#      Legacy:   &a, &c, &6, &l, &o, etc.
+#      Hex:      &#FF5555 (any 6-digit hex color)
+#      RGB:      rgb:255,85,85
+#      Gradient: <gradient:#FF0000:#0000FF>text</gradient>
+#  - Materials must be valid Bukkit material names
+#  - Slots are numbered 0-26 (3 rows of 9)
+#  - Use {placeholder} for dynamic values
+#
+#  ACTIONS (for reference, don't modify):
+#  - toggle_look, toggle_follow, toggle_random
+#  - toggle_hold_shield, toggle_use_shield
+#  - toggle_resistance, open_pvp, open_inventory
+#  - despawn, close
+# ==========================================================
+
+# GUI Title (supports color codes)
+title: "&8&lPractice Bot Settings"
+
+# GUI Size (must be 9, 18, 27, 36, 45, or 54)
+size: 27
+
+# Filler item settings (fills empty slots)
+filler:
+  enabled: true
+  material: GRAY_STAINED_GLASS_PANE
+  name: " "
+
+# ==========================================================
+#  ITEM DEFINITIONS
+#  Each item has: slot, material, name, lore, glow, action
+# ==========================================================
+items:
+
+  # ========== INFO ITEM (CENTER) ==========
+  info:
+    slot: 13
+    material: NETHERITE_HELMET
+    name: "&b{player_name}'s Practice Bot"
+    lore:
+      - "&7A personal PvP practice bot."
+      - " "
+      - "&7Look At You: {look_status}"
+      - "&7Bot PvP: {pvp_status}"
+      - "&7Follow: {follow_status}"
+      - "&7Random Walk: {random_status}"
+      - "&7Hold Shield: {shield_status}"
+      - "&7Use Shield: {use_shield_status}"
+      - "&7Resistance: {resistance_status}"
+    glow: false
+    item-flags:
+      - HIDE_ATTRIBUTES
+
+  # ========== ROW 1 TOGGLES ==========
+  
+  look:
+    slot: 2
+    material: ENDER_EYE
+    name: "&eLook At You: {status}"
+    lore:
+      - "&7Bot looks towards you."
+      - " "
+      - "&8Click to toggle."
+    glow: false
+    action: toggle_look
+
+  resistance:
+    slot: 4
+    material: TOTEM_OF_UNDYING
+    name: "&6Resistance: {status}"
+    lore:
+      - "&7Bot cannot die."
+      - " "
+      - "&8Click to toggle."
+    glow: false
+    action: toggle_resistance
+    item-flags:
+      - HIDE_ATTRIBUTES
+
+  pvp_settings:
+    slot: 6
+    material: IRON_SWORD
+    name: "&cBot PvP Settings {status}"
+    lore:
+      - "&7Configure PvP settings."
+      - " "
+      - "&eClick to open."
+    glow: false
+    action: open_pvp
+    item-flags:
+      - HIDE_ATTRIBUTES
+
+  # ========== ROW 2 TOGGLES ==========
+  
+  follow:
+    slot: 10
+    material: LEAD
+    name: "&eFollow You: {status}"
+    lore:
+      - "&7Bot follows you around."
+      - " "
+      - "&8Click to toggle."
+    glow: false
+    action: toggle_follow
+
+  random:
+    slot: 12
+    material: COMPASS
+    name: "&eRandom Walk: {status}"
+    lore:
+      - "&7Bot wanders randomly."
+      - " "
+      - "&8Click to toggle."
+    glow: false
+    action: toggle_random
+
+  hold_shield:
+    slot: 14
+    material: SHIELD
+    name: "&eHold Shield: {status}"
+    lore:
+      - "&7Bot holds a shield."
+      - " "
+      - "&8Left-Click: Toggle on/off"
+      - "&8Right-Click: Switch hand"
+      - " "
+      - "&7Current: {shield_hand}"
+    glow: false
+    action: toggle_hold_shield
+    item-flags:
+      - HIDE_ATTRIBUTES
+
+  use_shield:
+    slot: 16
+    material: SHIELD
+    name: "&eUse Shield: {status}"
+    lore:
+      - "&7Bot blocks hits."
+      - " "
+      - "&8Click to toggle."
+    glow: false
+    action: toggle_use_shield
+    item-flags:
+      - HIDE_ATTRIBUTES
+
+  # ========== ROW 3 ACTIONS ==========
+  
+  bot_inventory:
+    slot: 20
+    material: CHEST
+    name: "&6Bot Inventory"
+    lore:
+      - "&7Open bot inventory."
+      - " "
+      - "&eClick to open."
+    glow: false
+    action: open_inventory
+
+  close:
+    slot: 22
+    material: BARRIER
+    name: "&cClose"
+    lore:
+      - "&7Close this menu."
+    glow: false
+    action: close
+
+  despawn:
+    slot: 24
+    material: REDSTONE_BLOCK
+    name: "&cDespawn Bot"
+    lore:
+      - "&7Remove this bot."
+      - " "
+      - "&eClick to despawn."
+    glow: false
+    action: despawn
+
+# ==========================================================
+#  DYNAMIC PLACEHOLDERS
+#  These are replaced at runtime with actual values
+#
+#  {player_name} - Owner's name
+#  {status} - ON/OFF text with color
+#  {look_status}, {pvp_status}, etc. - Individual toggle states
+#  {shield_hand} - "Main Hand" or "Off Hand"
+# ==========================================================

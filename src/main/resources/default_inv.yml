@@ -1,0 +1,138 @@
+# ==========================================================
+#  PracticeBot - Default Bot Inventory Configuration
+#
+#  This file defines the DEFAULT equipment for newly
+#  spawned practice bots. Admins can also configure this
+#  in-game using the command: /practicebot inventory
+#
+#  All settings here will apply to NEW bots only.
+#  Existing bots keep their current equipment until
+#  respawned.
+# ==========================================================
+
+# ----------------------------------------------------------
+#  ARMOR TYPE
+#  Determines the material for helmet, chestplate, and boots
+#
+#  Options:
+#    netherite - Netherite armor (default, highest protection)
+#    diamond   - Diamond armor
+# ----------------------------------------------------------
+armor-type: netherite
+
+# ----------------------------------------------------------
+#  LEGGINGS CONFIGURATION
+#  Leggings can use different enchants and materials
+#
+#  Enchant Options:
+#    protection       - Protection IV (general damage reduction)
+#    blast_protection - Blast Protection IV (explosion resistance)
+#
+#  Material Options:
+#    netherite - Netherite leggings
+#    diamond   - Diamond leggings
+# ----------------------------------------------------------
+leggings-enchant: protection
+leggings-material: netherite
+
+# ----------------------------------------------------------
+#  OFFHAND ITEM
+#  What the bot holds in their offhand
+#
+#  Options:
+#    totem  - Totem of Undying (prevents death)
+#    shield - Shield (can be used for blocking)
+# ----------------------------------------------------------
+offhand-type: totem
+
+# ----------------------------------------------------------
+#  TOTEM AMOUNT
+#  How many totems the bot has (1-99)
+#  Each totem prevents one death
+# ----------------------------------------------------------
+totem-amount: 99
+
+# ==========================================================
+#  ARMOR TRIMS
+#
+#  Configure armor trim patterns and materials below.
+#  You can set these using the in-game GUI at:
+#  /practicebot inventory
+#
+#  HOW TO SET TRIMS IN-GAME:
+#  1. Open /practicebot inventory
+#  2. Have Smithing Templates in your inventory
+#  3. Pick up a template and click on a Pattern Slot
+#  4. Have ingots/materials in your inventory
+#  5. Pick up a material and click on a Material Slot
+#  6. Right-click any trim slot to remove it
+#
+#  VALID TRIM PATTERNS (use Smithing Templates):
+#  coast, dune, eye, host, raiser, rib, sentry,
+#  shaper, silence, snout, spire, tide, vex, ward,
+#  wayfinder, wild, bolt, flow
+#
+#  VALID TRIM MATERIALS (use these items):
+#  - amethyst   (Amethyst Shard)
+#  - copper     (Copper Ingot)
+#  - diamond    (Diamond)
+#  - emerald    (Emerald)
+#  - gold       (Gold Ingot)
+#  - iron       (Iron Ingot)
+#  - lapis      (Lapis Lazuli)
+#  - netherite  (Netherite Ingot)
+#  - quartz     (Quartz)
+#  - redstone   (Redstone)
+#  - resin      (Resin Brick)
+# ==========================================================
+
+# Helmet Trim
+# helmet-trim-pattern: ward
+# helmet-trim-material: gold
+
+# Chestplate Trim
+# chest-trim-pattern: ward
+# chest-trim-material: gold
+
+# Leggings Trim
+# legs-trim-pattern: ward
+# legs-trim-material: gold
+
+# Boots Trim
+# boots-trim-pattern: ward
+# boots-trim-material: gold
+
+# ==========================================================
+#  EXAMPLES
+#
+#  Example 1: Gold-trimmed netherite armor
+#  -----------------------------------------
+#  armor-type: netherite
+#  helmet-trim-pattern: ward
+#  helmet-trim-material: gold
+#  chest-trim-pattern: ward
+#  chest-trim-material: gold
+#  legs-trim-pattern: ward
+#  legs-trim-material: gold
+#  boots-trim-pattern: ward
+#  boots-trim-material: gold
+#
+#  Example 2: Diamond armor with diamond trims
+#  -------------------------------------------
+#  armor-type: diamond
+#  helmet-trim-pattern: vex
+#  helmet-trim-material: diamond
+#  chest-trim-pattern: vex
+#  chest-trim-material: diamond
+#  legs-trim-pattern: vex
+#  legs-trim-material: diamond
+#  boots-trim-pattern: vex
+#  boots-trim-material: diamond
+#
+#  Example 3: Mixed setup with blast prot legs
+#  -------------------------------------------
+#  armor-type: netherite
+#  leggings-enchant: blast_protection
+#  leggings-material: diamond
+#  (no trims configured)
+# ==========================================================

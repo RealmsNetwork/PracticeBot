@@ -1,0 +1,230 @@
+# ==========================================================
+#  PracticeBot - PvP Combat Settings GUI Configuration
+#  
+#  This file controls the appearance and layout of the
+#  PvP combat settings menu.
+#
+#  COLOR FORMATS: &a (legacy), &#FF5555 (hex),
+#    rgb:255,85,85 (RGB), <gradient:#HEX1:#HEX2>text</gradient>
+#
+#  Size: 45 slots (5 rows of 9)
+#  
+#  ACTIONS (for reference):
+#  - toggle_pvp, toggle_strafe, toggle_wtap, toggle_stap
+#  - toggle_crits, toggle_shield_breaker
+#  - cycle_reach, cycle_crit_chance, cycle_crit_speed
+#  - cycle_combo, cycle_aggro, back
+# ==========================================================
+
+title: "&c&lPvP Combat Settings"
+size: 27
+
+filler:
+  enabled: true
+  material: BLACK_STAINED_GLASS_PANE
+  name: " "
+
+items:
+
+  border_1:
+    slot: 0
+    material: RED_STAINED_GLASS_PANE
+    name: " "
+  border_2:
+    slot: 1
+    material: RED_STAINED_GLASS_PANE
+    name: " "
+  border_3:
+    slot: 2
+    material: RED_STAINED_GLASS_PANE
+    name: " "
+  border_4:
+    slot: 3
+    material: RED_STAINED_GLASS_PANE
+    name: " "
+  border_5:
+    slot: 5
+    material: RED_STAINED_GLASS_PANE
+    name: " "
+  border_6:
+    slot: 6
+    material: RED_STAINED_GLASS_PANE
+    name: " "
+  border_7:
+    slot: 7
+    material: RED_STAINED_GLASS_PANE
+    name: " "
+  border_8:
+    slot: 8
+    material: RED_STAINED_GLASS_PANE
+    name: " "
+
+  info:
+    slot: 4
+    material: DIAMOND_SWORD
+    name: "&c&lPvP Combat Settings"
+    lore:
+      - "&7Configure bot combat behavior."
+      - " "
+      - "&7PvP: {pvp_status}"
+      - "&7Strafe: {strafe_status}"
+      - "&7W-Tap: {wtap_status}"
+      - "&7S-Tap: {stap_status}"
+      - "&7Crits: {crit_status}"
+      - "&7Shield Breaker: {shield_breaker_status}"
+      - "&7Retreat: {retreat_status}"
+    glow: false
+    item-flags:
+      - HIDE_ATTRIBUTES
+
+  pvp_enabled:
+    slot: 9
+    material: LIME_DYE
+    name: "&ePvP Enabled: {status}"
+    lore:
+      - "&7Enable combat AI."
+      - " "
+      - "&eClick to toggle"
+    glow: false
+    action: toggle_pvp
+
+  strafe:
+    slot: 10
+    material: LIME_DYE
+    name: "&eStrafe: {status}"
+    lore:
+      - "&7Circle-strafe around target."
+      - " "
+      - "&eClick to toggle"
+    glow: false
+    action: toggle_strafe
+
+  wtap:
+    slot: 11
+    material: LIME_DYE
+    name: "&eW-Tap: {status}"
+    lore:
+      - "&7Sprint reset for extra KB."
+      - " "
+      - "&eClick to toggle"
+    glow: false
+    action: toggle_wtap
+
+  stap:
+    slot: 12
+    material: LIME_DYE
+    name: "&eS-Tap: {status}"
+    lore:
+      - "&7Reduce KB when hit."
+      - " "
+      - "&eClick to toggle"
+    glow: false
+    action: toggle_stap
+
+  crits:
+    slot: 13
+    material: LIME_DYE
+    name: "&eCritical Hits: {status}"
+    lore:
+      - "&7Jump for crit damage."
+      - " "
+      - "&eClick to toggle"
+    glow: false
+    action: toggle_crits
+
+  shield_breaker:
+    slot: 14
+    material: LIME_DYE
+    name: "&eShield Breaker: {status}"
+    lore:
+      - "&7Auto axe switch."
+      - " "
+      - "&eClick to toggle"
+    glow: false
+    action: toggle_shield_breaker
+
+  retreat:
+    slot: 15
+    material: LIME_DYE
+    name: "&eRetreat: {status}"
+    lore:
+      - "&7Move back after taking hits."
+      - " "
+      - "&eClick to toggle"
+    glow: false
+    action: toggle_retreat
+
+  reach:
+    slot: 18
+    material: ENDER_PEARL
+    name: "&bReach: {value}"
+    lore:
+      - " "
+      - "&72.0"
+      - "&f3.0"
+      - "&e3.5"
+      - "&c4.0"
+      - " "
+      - "&eClick to cycle"
+    glow: false
+    action: cycle_reach
+
+  crit_chance:
+    slot: 19
+    material: NETHER_STAR
+    name: "&eCrit Chance: {value}"
+    lore:
+      - " "
+      - "&a25%"
+      - "&e50%"
+      - "&675%"
+      - "&c100%"
+      - " "
+      - "&eClick to cycle"
+    glow: false
+    action: cycle_crit_chance
+
+  crit_speed:
+    slot: 20
+    material: SUGAR
+    name: "&dCrit Speed: {value}"
+    lore:
+      - " "
+      - "&aSlow (~550ms delay)"
+      - "&eNormal (~120ms delay)"
+      - "&cFast (0ms, instant jumps)"
+      - " "
+      - "&eClick to cycle"
+    glow: false
+    action: cycle_crit_speed
+
+  aggro:
+    slot: 21
+    material: BLAZE_POWDER
+    name: "&cAggression: {value}"
+    lore:
+      - " "
+      - "&aLow"
+      - "&eMedium"
+      - "&cHigh"
+      - " "
+      - "&eClick to cycle"
+    glow: false
+    action: cycle_aggro
+
+  back:
+    slot: 26
+    material: ARROW
+    name: "&c« Back"
+    lore:
+      - "&7Return to settings menu"
+    glow: false
+    action: back
+
+# ==========================================================
+#  PLACEHOLDERS
+#  {pvp_status}, {strafe_status}, etc. - ON/OFF with color
+#  {color} - &a for ON, &c for OFF
+#  {status} - §aON or §cOFF
+#  {value} - Current mode value
+# ==========================================================

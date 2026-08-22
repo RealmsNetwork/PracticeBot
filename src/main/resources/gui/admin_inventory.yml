@@ -1,0 +1,267 @@
+# ==========================================================
+#  PracticeBot - Admin Default Inventory GUI Configuration
+#  
+#  This file controls the appearance and layout of the
+#  admin inventory editor for setting default bot equipment.
+#
+#  COMMAND: /practicebot inventory
+#
+#  COLOR FORMATS: &a (legacy), &#FF5555 (hex),
+#    rgb:255,85,85 (RGB), <gradient:#HEX1:#HEX2>text</gradient>
+#  Size: 54 slots (6 rows of 9)
+#  
+#  LAYOUT:
+#  - Row 0: Info item with detailed instructions
+#  - Row 1: Helmet + Trim slots
+#  - Row 2: Chestplate + Trim slots
+#  - Row 3: Leggings + Trim slots
+#  - Row 4: Boots + Trim slots
+#  - Row 5: Navigation
+#
+#  HOW ARMOR TRIMS WORK:
+#  1. Trim Pattern Slot (left of armor): Place a Smithing Template
+#  2. Armor Display (center): Shows current armor with trim
+#  3. Trim Material Slot (right of armor): Place an ingot/material
+#
+#  SUPPORTED TRIM MATERIALS:
+#  - Iron Ingot, Gold Ingot, Diamond, Emerald
+#  - Copper Ingot, Netherite Ingot, Lapis Lazuli
+#  - Amethyst Shard, Quartz, Redstone, Resin Brick
+#
+#  SUPPORTED TRIM PATTERNS:
+#  - Any Armor Trim Smithing Template item
+# ==========================================================
+
+title: "&6&lDefault Bot Armor Trims"
+size: 54
+
+filler:
+  enabled: true
+  material: GRAY_STAINED_GLASS_PANE
+  name: " "
+
+items:
+
+  # ========== INFO ITEM ==========
+  info:
+    slot: 4
+    material: BOOK
+    name: "&6&lDefault Bot Armor Trims"
+    lore:
+      - "&7Configure armor trims for new bots"
+      - " "
+      - "&e&lHow to add trims:"
+      - "&7• Pick up a &fSmithing Template &7from your inventory"
+      - "&7• Click on a &eTrim Pattern Slot &7(left of armor)"
+      - "&7• Pick up a &fMaterial (ingot/ore) &7from your inventory"
+      - "&7• Click on a &6Trim Material Slot &7(right of armor)"
+      - " "
+      - "&c&lTo remove:"
+      - "&7• &cRight-Click &7on any trim slot to remove it"
+      - " "
+      - "&7&oChanges are saved automatically"
+    glow: false
+
+  # ========== HELMET ROW ==========
+  helmet_trim_pattern:
+    slot: 11
+    material: LIGHT_GRAY_STAINED_GLASS_PANE
+    name: "&e&lTrim Pattern Slot"
+    lore:
+      - "&7Place a &fSmithing Template &7here"
+      - "&7to add armor trim pattern"
+      - " "
+      - "&eClick with template to set"
+      - "&cRight-click to remove"
+    glow: false
+    action: trim_pattern_helmet
+
+  helmet:
+    slot: 13
+    material: NETHERITE_HELMET
+    name: "&b&lHelmet"
+    lore:
+      - "&7Protection IV"
+      - "&7Trim: &8None"
+      - " "
+      - "&e&lShift+Right-Click &7to reset trim"
+    glow: false
+    item-flags:
+      - HIDE_ATTRIBUTES
+      - HIDE_UNBREAKABLE
+      - HIDE_ENCHANTS
+    action: reset_helmet_trim
+
+  helmet_trim_material:
+    slot: 15
+    material: LIGHT_GRAY_STAINED_GLASS_PANE
+    name: "&6&lTrim Material Slot"
+    lore:
+      - "&7Place an &fIngot/Material &7here"
+      - "&7to set trim color"
+      - " "
+      - "&eClick with material to set"
+      - "&cRight-click to remove"
+    glow: false
+    action: trim_material_helmet
+
+  # ========== CHESTPLATE ROW ==========
+  chest_trim_pattern:
+    slot: 20
+    material: LIGHT_GRAY_STAINED_GLASS_PANE
+    name: "&e&lTrim Pattern Slot"
+    lore:
+      - "&7Place a &fSmithing Template &7here"
+      - "&7to add armor trim pattern"
+      - " "
+      - "&eClick with template to set"
+      - "&cRight-click to remove"
+    glow: false
+    action: trim_pattern_chest
+
+  chestplate:
+    slot: 22
+    material: NETHERITE_CHESTPLATE
+    name: "&b&lChestplate"
+    lore:
+      - "&7Protection IV"
+      - "&7Trim: &8None"
+      - " "
+      - "&e&lShift+Right-Click &7to reset trim"
+    glow: false
+    item-flags:
+      - HIDE_ATTRIBUTES
+      - HIDE_UNBREAKABLE
+      - HIDE_ENCHANTS
+    action: reset_chest_trim
+
+  chest_trim_material:
+    slot: 24
+    material: LIGHT_GRAY_STAINED_GLASS_PANE
+    name: "&6&lTrim Material Slot"
+    lore:
+      - "&7Place an &fIngot/Material &7here"
+      - "&7to set trim color"
+      - " "
+      - "&eClick with material to set"
+      - "&cRight-click to remove"
+    glow: false
+    action: trim_material_chest
+
+  # ========== LEGGINGS ROW ==========
+  legs_trim_pattern:
+    slot: 29
+    material: LIGHT_GRAY_STAINED_GLASS_PANE
+    name: "&e&lTrim Pattern Slot"
+    lore:
+      - "&7Place a &fSmithing Template &7here"
+      - "&7to add armor trim pattern"
+      - " "
+      - "&eClick with template to set"
+      - "&cRight-click to remove"
+    glow: false
+    action: trim_pattern_legs
+
+  leggings:
+    slot: 31
+    material: NETHERITE_LEGGINGS
+    name: "&b&lLeggings"
+    lore:
+      - "&7Protection IV"
+      - "&7Trim: &8None"
+      - " "
+      - "&e&lShift+Right-Click &7to reset trim"
+    glow: false
+    item-flags:
+      - HIDE_ATTRIBUTES
+      - HIDE_UNBREAKABLE
+      - HIDE_ENCHANTS
+    action: reset_legs_trim
+
+  legs_trim_material:
+    slot: 33
+    material: LIGHT_GRAY_STAINED_GLASS_PANE
+    name: "&6&lTrim Material Slot"
+    lore:
+      - "&7Place an &fIngot/Material &7here"
+      - "&7to set trim color"
+      - " "
+      - "&eClick with material to set"
+      - "&cRight-click to remove"
+    glow: false
+    action: trim_material_legs
+
+  # ========== BOOTS ROW ==========
+  boots_trim_pattern:
+    slot: 38
+    material: LIGHT_GRAY_STAINED_GLASS_PANE
+    name: "&e&lTrim Pattern Slot"
+    lore:
+      - "&7Place a &fSmithing Template &7here"
+      - "&7to add armor trim pattern"
+      - " "
+      - "&eClick with template to set"
+      - "&cRight-click to remove"
+    glow: false
+    action: trim_pattern_boots
+
+  boots:
+    slot: 40
+    material: NETHERITE_BOOTS
+    name: "&b&lBoots"
+    lore:
+      - "&7Protection IV"
+      - "&7Trim: &8None"
+      - " "
+      - "&e&lShift+Right-Click &7to reset trim"
+    glow: false
+    item-flags:
+      - HIDE_ATTRIBUTES
+      - HIDE_UNBREAKABLE
+      - HIDE_ENCHANTS
+    action: reset_boots_trim
+
+  boots_trim_material:
+    slot: 42
+    material: LIGHT_GRAY_STAINED_GLASS_PANE
+    name: "&6&lTrim Material Slot"
+    lore:
+      - "&7Place an &fIngot/Material &7here"
+      - "&7to set trim color"
+      - " "
+      - "&eClick with material to set"
+      - "&cRight-click to remove"
+    glow: false
+    action: trim_material_boots
+
+  # ========== NAVIGATION ==========
+  close:
+    slot: 49
+    material: BARRIER
+    name: "&c&lClose & Save"
+    lore:
+      - "&7Save and close this menu"
+      - " "
+      - "&7All changes are saved to:"
+      - "&f/plugins/PracticeBot/default_inv.yml"
+    glow: false
+    action: close
+
+# ==========================================================
+#  ADMIN INVENTORY DATA STORAGE
+#  
+#  Note: The actual trim configurations are stored in
+#  /plugins/PracticeBot/default_inv.yml
+#  
+#  This file only controls the GUI appearance.
+#  
+#  Data stored in default_inv.yml:
+#  - armor-type: netherite/diamond
+#  - leggings-enchant: protection/blast_protection
+#  - leggings-material: netherite/diamond
+#  - offhand-type: totem/shield
+#  - totem-amount: 1-64
+#  - helmet-trim-pattern: trim pattern key
+#  - helmet-trim-material: trim material key
+#  - (same for chest, legs, boots)
+# ==========================================================

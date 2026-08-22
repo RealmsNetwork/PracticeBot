@@ -1,0 +1,172 @@
+title: "&8&lTemplate CPvP"
+size: 45
+filler:
+  enabled: true
+  material: GRAY_STAINED_GLASS_PANE
+  name: " "
+
+items:
+  info:
+    slot: 4
+    material: END_CRYSTAL
+    name: "&d&lTemplate CPvP Settings"
+    lore:
+      - "&7Configure Crystal PvP behavior"
+      - " "
+      - "&7Status: {status}"
+      - "&7Skill: &e{skill_level}"
+      - " "
+      - "&d&lTemplate CPvP Mode"
+      - "&7Adjust the saved CPvP profile"
+      - "&7for this template."
+      - "&7Timing/realism values are saved"
+      - "&7per-template in bot_templates.yml."
+  skill:
+    slot: 12
+    material: EXPERIENCE_BOTTLE
+    name: "&bSkill Level: {skill_color}{skill_level}"
+    lore:
+      - "&7Bot skill level"
+      - " "
+      - "{easy_marker}Easy &7- Human hesitation, fewer perfect punishes"
+      - "{medium_marker}Medium &7- Balanced human-like pressure"
+      - "{hard_marker}Hard &7- Fast, rare hesitation"
+      - "{pro_marker}Pro &7- Near-perfect reactive"
+      - " "
+      - "&7Place Delay: &f{place_delay}ms"
+      - "&7Break Delay: &f{break_delay}ms"
+      - "&7Realism: &f{realism_profile}"
+      - "&7FOV: &f{fov_degrees}°"
+      - " "
+      - "&7Each template can override these"
+      - "&7values independently in config."
+      - " "
+      - "&eClick to cycle preset"
+  block_breaking:
+    slot: 14
+    material: NETHERITE_PICKAXE
+    name: "&5Block Breaking: {state}"
+    lore:
+      - "&7Break only real path or cover blocks"
+      - "&7that are stopping CPvP pressure"
+      - " "
+      - "&7Status: {state}"
+      - " "
+      - "&7When OFF, the bot keeps cover"
+      - "&7pressure explosive-only."
+      - " "
+      - "&eClick to toggle"
+  pearls:
+    slot: 19
+    material: ENDER_PEARL
+    name: "&5Ender Pearls: {state}"
+    lore:
+      - "&7Use ender pearls for"
+      - "&7engage, escape & juggle"
+      - " "
+      - "&7Status: {state}"
+      - " "
+      - "&eClick to toggle"
+  pearl_cooldown:
+    slot: 21
+    material: CLOCK
+    name: "&dPearl Cooldown: &f{value}s"
+    lore:
+      - "&7Time between pearl throws"
+      - " "
+      - "&7Current: &d{value}s"
+      - " "
+      - "&7Range: 0.5s - 3.0s"
+      - " "
+      - "&eLeft-Click: &7+0.25s"
+      - "&eRight-Click: &7-0.25s"
+      - "&eShift-Click: &7Reset to 1.8s"
+  mace:
+    slot: 23
+    material: MACE
+    name: "&6Mace Combat: {state}"
+    lore:
+      - "&7Use mace for air attacks"
+      - "&7and falling smash damage"
+      - " "
+      - "&7Status: {state}"
+      - " "
+      - "&eClick to toggle"
+  gapples:
+    slot: 25
+    material: GOLDEN_APPLE
+    name: "&eGolden Apples: {state}"
+    lore:
+      - "&7Eat golden apples when"
+      - "&7health gets low"
+      - " "
+      - "&7Status: {state}"
+      - " "
+      - "&eClick to toggle"
+  heal_threshold:
+    slot: 28
+    material: GOLDEN_APPLE
+    name: "&cHeal At: &f{value}%"
+    lore:
+      - "&7HP% to start eating gapples"
+      - " "
+      - "&7Current: &c{value}%"
+      - "{bar}"
+      - " "
+      - "&7Range: 20% - 80%"
+      - " "
+      - "&eLeft-Click: &7+10%"
+      - "&eRight-Click: &7-10%"
+      - "&eShift-Click: &7Reset to 40%"
+  strafe:
+    slot: 30
+    material: RABBIT_FOOT
+    name: "&aStrafing: {state}"
+    lore:
+      - "&7Circle-strafe during combat"
+      - "&7to dodge attacks"
+      - " "
+      - "&7Status: {state}"
+      - " "
+      - "&eClick to toggle"
+  obsidian:
+    slot: 32
+    material: OBSIDIAN
+    name: "&8Obsidian Placing: {state}"
+    lore:
+      - "&7Auto-place obsidian for"
+      - "&7crystal placement spots"
+      - " "
+      - "&7Status: {state}"
+      - " "
+      - "&eClick to toggle"
+  anchoring:
+    slot: 16
+    material: RESPAWN_ANCHOR
+    name: "&5Anchoring Mode: {state}"
+    lore:
+      - "&7Use glowstone and respawn"
+      - "&7anchors when close pressure,"
+      - "&7holes, or defenses favor them."
+      - " "
+      - "&7Status: {state}"
+      - " "
+      - "&eClick to toggle"
+  back:
+    slot: 38
+    material: ARROW
+    name: "&c&lBack"
+    lore:
+      - "&7Return to the main template menu"
+  finish:
+    slot: 40
+    material: LIME_CONCRETE
+    name: "&a&lFinish & Save"
+    lore:
+      - "&7Save this template"
+  cancel:
+    slot: 42
+    material: BARRIER
+    name: "&c&lCancel"
+    lore:
+      - "&7Discard this session"

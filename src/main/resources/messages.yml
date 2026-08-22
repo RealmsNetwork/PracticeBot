@@ -1,0 +1,244 @@
+# ==========================================================
+#  PracticeBot - Messages Configuration
+#
+#  Supported Color Formats:
+#    Legacy:    &0-9, &a-f, &k-o, &r (e.g. &aGreen &cRed)
+#    Hex:       &#RRGGBB           (e.g. &#FF5555 for red)
+#    Bukkit:    &x&R&R&G&G&B&B     (e.g. &x&F&F&5&5&5&5)
+#    RGB:       rgb:R,G,B          (e.g. rgb:255,85,85)
+#    Gradient:  <gradient:#HEX1:#HEX2>text</gradient>
+#
+#  Placeholders are shown in {brackets}
+# ==========================================================
+
+prefix: "&7[&bPracticeBot&7] "
+
+# ==========================================================
+#  GENERAL MESSAGES
+# ==========================================================
+
+# Shown when console tries to use player-only commands
+player-only: "&cThis command can only be used by players."
+
+# Permission denied message
+no-permission: "&cYou do not have permission to use this command."
+
+# When player tries to interact with another player's bot
+not-your-bot: "&cThis is not your bot."
+bot-gui-disabled: "&cThis bot's settings GUI is disabled."
+
+# Citizens dependency messages
+citizens-not-loaded: "&cCitizens is not loaded. Bot spawning is unavailable."
+npc-provider-not-selected: "&cNo NPC provider selected. Please wait for initialization."
+
+# ==========================================================
+#  BOT MESSAGES
+# ==========================================================
+
+bot-spawned: "&aYour Practice Bot has been spawned!"
+cpvp-bot-spawned: "&d&lCrystal PvP Bot &aspawned!"
+bot-despawned: "&cYour Practice Bot has been despawned."
+cpvp-bot-despawned: "&c&lCrystal PvP Bot despawned!"
+bot-removed-all: "&aAll practice bots have been removed."
+bot-despawned-owner-death: "&cYour Practice Bot has been despawned because it killed you."
+template-spawned: "&aSpawned bot template &e{template} &ain world &e{world}&a."
+template-spawned-bound: "&aSpawned bot template &e{template} &abound to &e{target} &ain world &e{world}&a."
+world-despawned: "&aRemoved &e{count} &aPracticeBot NPC(s) from &e{world}&a and cancelled &e{respawns} &apending respawn task(s)."
+world-despawned-one: "&aRemoved PracticeBot NPC &e{bot} &afrom &e{world}&a."
+
+open-inventory: "&aOpening bot inventory..."
+save-default-inventory: "&aDefault bot inventory saved."
+
+# ==========================================================
+#  COMMAND USAGE (shown for invalid subcommands)
+# ==========================================================
+
+invalid-usage:
+  practicebot: "&eUnknown command. Use &6/pb help &efor a list of commands."
+  practicebot-admin: "&eUnknown command. Use &6/pbadmin help &efor a list of admin commands."
+  spawnbot: "&eUsage: &6/spawnbot [normal|crystal]"
+  template: "&eUsage: &6/pbadmin template <create|edit|cancel|delete|spawn>"
+  template-create: "&eUsage: &6/pbadmin template create <template>"
+  template-edit: "&eUsage: &6/pbadmin template edit <template>"
+  template-cancel: "&eUsage: &6/pbadmin template cancel"
+  template-delete: "&eUsage: &6/pbadmin template delete <template>"
+  template-spawn: "&eUsage: &6/pbadmin template spawn <template> [target] &eor &6/pbadmin template spawn <template> [target] <world> <x> <y> <z> <yaw> <pitch>"
+  despawn: "&eUsage: &6/pbadmin despawn <world> [bot]"
+  license: "&eUsage: &6/pbadmin license <refresh|set>"
+  license-set: "&eUsage: &6/pbadmin license set <license-key-or-offline-token>"
+
+# ==========================================================
+#  HELP COMMAND (/practicebot help)
+# ==========================================================
+
+help:
+  header: "&r &6&lPracticeBot Help"
+
+  # Shown to all players with spawn permission
+  spawn-commands:
+    - "&e/pb spawn &8- &7Open bot type selection GUI"
+    - "&e/spawnbot normal &8- &7Spawn a Normal PvP bot"
+    - "&e/spawnbot crystal &8- &7Spawn a Crystal PvP bot"
+    - "&e/pb info &8- &7Show plugin information"
+    - "&e/pb help &8- &7Show this help menu"
+    - "&e/pbadmin help &8- &7Show admin commands"
+
+  admin-header: "&r &c&lPracticeBot Admin Help"
+
+  admin-commands:
+    - ""
+    - "&c&lAdmin Commands:"
+    - "&e/pbadmin inventory &8- &7Edit default bot inventory"
+    - "&e/pbadmin egui &8- &7Open the GUI editor"
+    - "&e/pbadmin reload &8- &7Reload all configurations"
+    - "&e/pbadmin template spawn <template> [target] &8- &7Spawn a template bot at your location"
+    - "&e/pbadmin template spawn <template> [target] <world> <x> <y> <z> <yaw> <pitch> &8- &7Spawn a template bot at coordinates"
+    - "&e/pbadmin despawn <world> [bot] &8- &7Remove all PracticeBot NPCs in a world or one named bot"
+    - "&e/pbadmin template create <template> &8- &7Start a new in-game template editor session"
+    - "&e/pbadmin template edit <template> &8- &7Edit a template with a live preview NPC"
+    - "&e/pbadmin template cancel &8- &7Cancel your active template editor session"
+    - "&e/pbadmin template delete <template> &8- &7Delete a saved template"
+    - "&e/pbadmin license &8- &7Show license status"
+    - "&e/pbadmin license refresh &8- &7Force license validation now"
+    - "&e/pbadmin license set <key-or-token> &8- &7Save and validate an online key or offline token"
+
+  footer: ""
+
+# ==========================================================
+#  INFO COMMAND (/practicebot info)
+# ==========================================================
+
+info:
+  header: "&r &b&lPracticeBot Info"
+
+  lines:
+    - ""
+    - "&7Plugin: &bPracticeBot &7(Premium)"
+    - "&7Author: &f{author}"
+    - ""
+    - "&7Bot Types: &eNormal PvP&7, &eCrystal PvP"
+    - "&7Citizens: {citizens_status}"
+    - ""
+
+  footer: ""
+
+  # Status indicators for Citizens
+  citizens-ready: "&aReady"
+  citizens-not-ready: "&cNot Ready"
+
+# ==========================================================
+#  CONFIG MESSAGES
+# ==========================================================
+
+config-reloaded: "&aConfiguration reloaded successfully!"
+
+# ==========================================================
+#  ERROR MESSAGES
+# ==========================================================
+
+errors:
+  bot-not-exist: "&cBot does not exist."
+  bot-not-spawned: "&cBot is not spawned."
+  spawn-cooldown: "&cWait {time}s before spawning another bot."
+  spawn-failed: "&cFailed to spawn the bot. Check the console for details."
+  trait-failed: "&cFailed to initialize bot. Please try again."
+  world-disabled: "&cBot spawning is disabled in this world: &e{world}"
+  template-not-found: "&cNo bot template named &e{template} &cwas found."
+  template-spawn-failed: "&cFailed to spawn bot template &e{template}&c."
+  template-target-required: "&cBot template &e{template} &crequires a target player."
+  template-target-not-allowed: "&cBot template &e{template} &cdoes not allow a target player."
+  player-not-found: "&cNo online player named &e{player} &cwas found."
+  world-not-found: "&cWorld &e{world} &cwas not found."
+  bot-not-found-in-world: "&cNo PracticeBot NPC named &e{bot} &cwas found in &e{world}&c."
+  invalid-coordinates: "&cInvalid coordinates or rotation. Use numbers for x y z pitch yaw."
+
+template-editor:
+  session-active: "&eYou already have an active template editor session. Reopening it."
+  invalid-key: "&cInvalid template key: &e{key}&c. Use only lowercase letters, numbers, _ and -."
+  key-exists: "&cA saved template with key &e{key} &calready exists."
+  key-reserved: "&cAnother active editor session is already using template key &e{key}&c."
+  no-session: "&cYou do not have an active template editor session."
+  cancelled: "&cTemplate editor cancelled. The preview NPC was removed."
+  cancelled-world: "&cTemplate editor cancelled because you changed worlds."
+  created: "&aTemplate editor started for &e{key}&a. Shift-right-click the preview NPC or use the GUI."
+  loaded: "&aLoaded template &e{key} &ainto the live editor."
+  deleted: "&aDeleted template &e{key}&a."
+  delete-active: "&cCannot delete template &e{key}&c because it is open in an active editor session."
+  delete-failed: "&cFailed to delete template &e{key}&c."
+  preview-spawn-failed: "&cFailed to spawn the template editor preview NPC."
+  preview-lost: "&cThe template editor preview NPC was removed. The session was cleaned up."
+  prompt: "&eEnter a value in chat for &f{field}&e. Type &ccancel &eto abort."
+  invalid-number: "&cInvalid number: &e{value}&c."
+  save-failed: "&cFailed to save template &e{key}&c."
+  saved: "&aSaved template &e{key}&a and closed the editor session."
+
+# ==========================================================
+#  LICENSE MESSAGES
+# ==========================================================
+
+license-invalid: "&cLicense invalid, expired, revoked, or not registered for this server IP."
+license-missing: "&cNo license configured. Use &e/pbadmin license set <key-or-token>&c."
+license-valid: "&aLicense verified successfully. PracticeBot features are now unlocked."
+license-checking: "&7Verifying license..."
+license-refresh-not-needed: "&aLicense is already active. Refresh is not required."
+license-saved-checking: "&aLicense saved. &7Verifying now..."
+license-required: "&cPracticeBot is locked because the license is missing or invalid. Only &e/pbadmin license refresh &cand &e/pbadmin license set <key-or-token> &care available."
+license-status: "&7License status: {status} &8(last: &f{last}&8)"
+license-usage: "&7Use &e/pbadmin license refresh &7or &e/pbadmin license set <key-or-token>&7."
+
+# ==========================================================
+#  SHIELD MESSAGES
+# ==========================================================
+
+shield-blocked: "&7Shield blocked the attack!"
+shield-broken: "&cYour bot's shield has been broken!"
+shield-disabled: "&eYour bot's shield has been disabled temporarily!"
+
+# ==========================================================
+#  GUI EDITOR MESSAGES
+#  Used by the /practicebot egui command
+#  Note: These use their own styled prefix for consistency
+# ==========================================================
+
+gui-editor:
+  config-not-found: "&c&l[PracticeBot] &7GUI config not found: &f{gui}"
+  gui-not-found: "&c&l[PracticeBot] &7GUI not found."
+  configs-reloaded: "&a&l[PracticeBot] &7All GUI configs reloaded!"
+  gui-saved: "&a&l[PracticeBot] &7GUI &f{gui} &7saved successfully!"
+  gui-reset: "&a&l[PracticeBot] &7GUI &f{gui} &7reset to default!"
+  item-saved: "&a&l[PracticeBot] &7Item saved!"
+  item-moved: "&a&l[PracticeBot] &7Item moved to slot &f{slot}&7!"
+  select-new-slot: "&e&l[PracticeBot] &7Click an empty slot to place the item."
+  enter-material: "&e&l[PracticeBot] &7Enter a material name in chat (e.g., DIAMOND, GOLD_INGOT):"
+  enter-name: "&e&l[PracticeBot] &7Enter the new item name in chat (use & for colors):"
+  enter-lore: "&e&l[PracticeBot] &7Enter a lore line in chat (use & for colors):"
+  enter-amount: "&e&l[PracticeBot] &7Enter the item amount (1-64):"
+  input-cancelled: "&c&l[PracticeBot] &7Input cancelled."
+  material-set: "&a&l[PracticeBot] &7Material set to: &f{material}"
+  invalid-material: "&c&l[PracticeBot] &7Invalid material: &f{material}"
+  name-set: "&a&l[PracticeBot] &7Item name updated!"
+  lore-added: "&a&l[PracticeBot] &7Lore line added!"
+  lore-cleared: "&a&l[PracticeBot] &7Lore cleared!"
+  amount-set: "&a&l[PracticeBot] &7Amount set to: &f{amount}"
+  invalid-amount: "&c&l[PracticeBot] &7Invalid amount. Must be 1-64."
+
+# ==========================================================
+#  PLACEHOLDER REFERENCE
+#
+#  Available placeholders (context-dependent):
+#
+#  General:
+#    {player_name} - Player's display name
+#    {version} - Plugin version
+#    {author} - Plugin author(s)
+#
+#  GUI Editor:
+#    {gui} - GUI display name
+#    {material} - Material name
+#    {amount} - Item amount
+#    {slot} - Inventory slot number
+#
+#  Status:
+#    {citizens_status} - Citizens ready status
+#    {status} - Generic on/off status
+# ==========================================================

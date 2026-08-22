@@ -1,0 +1,83 @@
+title: "&8&lTemplate Inventory"
+size: 54
+filler:
+  enabled: true
+  material: BLACK_STAINED_GLASS_PANE
+  name: " "
+
+items:
+  helmet_pattern: { slot: 10, material: LIGHT_GRAY_STAINED_GLASS_PANE, name: "&eHelmet Pattern", lore: [ "&7Set the helmet trim pattern" ] }
+  helmet_display: { slot: 11, material: NETHERITE_HELMET, name: "&bHelmet", lore: [ "&7Cycle the helmet enchant" ] }
+  helmet_material: { slot: 12, material: LIGHT_GRAY_STAINED_GLASS_PANE, name: "&6Helmet Trim Material", lore: [ "&7Set the helmet trim material" ] }
+  helmet_piece_material:
+    slot: 15
+    material: NETHERITE_HELMET
+    name: "&6&lHelmet Material"
+    lore:
+      - "&7Current: &f{value}"
+      - ""
+      - "&eClick to toggle"
+  chest_pattern: { slot: 19, material: LIGHT_GRAY_STAINED_GLASS_PANE, name: "&eChest Pattern", lore: [ "&7Set the chest trim pattern" ] }
+  chest_display: { slot: 20, material: NETHERITE_CHESTPLATE, name: "&bChestplate", lore: [ "&7Cycle the chest enchant" ] }
+  chest_material: { slot: 21, material: LIGHT_GRAY_STAINED_GLASS_PANE, name: "&6Chest Trim Material", lore: [ "&7Set the chest trim material" ] }
+  main_hand:
+    slot: 23
+    material: NETHERITE_SWORD
+    name: "&c&lMain Hand"
+    lore:
+      - "&7Place any tool or weapon on your cursor and click"
+      - "&7Right-click to clear the custom item"
+  chest_piece_material:
+    slot: 24
+    material: NETHERITE_CHESTPLATE
+    name: "&6&lChestplate Material"
+    lore:
+      - "&7Current: &f{value}"
+      - ""
+      - "&eClick to toggle"
+  totem_count:
+    slot: 25
+    material: TOTEM_OF_UNDYING
+    name: "&e&lTotem Count"
+    lore:
+      - "&7Adjust the totem stack amount"
+  legs_pattern: { slot: 28, material: LIGHT_GRAY_STAINED_GLASS_PANE, name: "&eLegs Pattern", lore: [ "&7Set the leggings trim pattern" ] }
+  legs_display: { slot: 29, material: NETHERITE_LEGGINGS, name: "&bLeggings", lore: [ "&7Cycle the leggings enchant" ] }
+  legs_material: { slot: 30, material: LIGHT_GRAY_STAINED_GLASS_PANE, name: "&6Legs Trim Material", lore: [ "&7Set the leggings trim material" ] }
+  legs_piece_material:
+    slot: 33
+    material: NETHERITE_LEGGINGS
+    name: "&6&lLeggings Material"
+    lore:
+      - "&7Current: &f{value}"
+      - ""
+      - "&eClick to toggle"
+  boots_pattern: { slot: 37, material: LIGHT_GRAY_STAINED_GLASS_PANE, name: "&eBoots Pattern", lore: [ "&7Set the boots trim pattern" ] }
+  boots_display: { slot: 38, material: NETHERITE_BOOTS, name: "&bBoots", lore: [ "&7Cycle the boots enchant" ] }
+  boots_material: { slot: 39, material: LIGHT_GRAY_STAINED_GLASS_PANE, name: "&6Boots Trim Material", lore: [ "&7Set the boots trim material" ] }
+  boots_piece_material:
+    slot: 42
+    material: NETHERITE_BOOTS
+    name: "&6&lBoots Material"
+    lore:
+      - "&7Current: &f{value}"
+      - ""
+      - "&eClick to toggle"
+  back:
+    slot: 45
+    material: ARROW
+    name: "&c&lBack"
+    lore:
+      - "&7Return to the main template menu"
+  finish:
+    slot: 49
+    material: LIME_CONCRETE
+    name: "&a&lFinish & Save"
+    lore:
+      - "&7Save this template"
+  cancel:
+    slot: 53
+    material: BARRIER
+    name: "&c&lCancel"
+    lore:
+      - "&7Discard this session"

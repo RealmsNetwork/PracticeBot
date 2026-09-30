@@ -36,6 +36,28 @@ leggings-enchant: protection
 leggings-material: netherite
 
 # ----------------------------------------------------------
+#  WEAPON PROFILE
+#
+#  type:
+#    sword - existing normal PvP
+#    mace  - Java 1.21+ Mace combat
+#    spear - Java 1.21.11+ Spear combat
+# ----------------------------------------------------------
+weapon:
+  type: sword
+
+  mace:
+    density: 5
+    breach: 0
+    wind-burst: 3
+    wind-charges: 16
+
+  spear:
+    material: netherite
+    sharpness: 5
+    lunge: 3
+
+# ----------------------------------------------------------
 #  OFFHAND ITEM
 #  What the bot holds in their offhand
 #

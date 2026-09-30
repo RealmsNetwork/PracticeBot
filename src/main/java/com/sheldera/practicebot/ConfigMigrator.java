@@ -11,7 +11,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public final class ConfigMigrator {
-    private static final int CURRENT_VERSION = 2;
+    private static final int CURRENT_VERSION = 3;
     private static final int CURRENT_INVENTORY_VERSION = 2;
 
     private ConfigMigrator() {
@@ -51,6 +51,11 @@ public final class ConfigMigrator {
         defaults.put("modern-weapons.spear.min-relative-speed-bps", 4.6D);
         defaults.put("modern-weapons.spear.charge-velocity-multiplier", 1.2D);
         defaults.put("modern-weapons.spear.base-damage", 5.0D);
+        defaults.put("modern-weapons.spear.damage-max-duration-ticks", 175L);
+        defaults.put("modern-weapons.spear.knockback-max-duration-ticks", 110L);
+        defaults.put("modern-weapons.spear.dismount-max-duration-ticks", 50L);
+        defaults.put("modern-weapons.spear.knockback-min-speed-bps", 5.1D);
+        defaults.put("modern-weapons.spear.dismount-min-speed-bps", 9.0D);
 
         defaults.put("tactics.humanization.movement-enabled", true);
         defaults.put("tactics.humanization.movement-jitter", 0.015D);
@@ -69,6 +74,9 @@ public final class ConfigMigrator {
 
         defaults.put("tactics.humanization.attack.min-delay-ms", 8.0D);
         defaults.put("tactics.humanization.attack.max-delay-ms", 42.0D);
+        defaults.put("tactics.humanization.mistake-chance-percent", 3.0D);
+        defaults.put("tactics.humanization.mistake-delay-min-ms", 55L);
+        defaults.put("tactics.humanization.mistake-delay-max-ms", 180L);
 
         defaults.put("tactics.wind-charge-reset.enabled", true);
         defaults.put("tactics.wind-charge-reset.local-fallback", true);
@@ -89,6 +97,13 @@ public final class ConfigMigrator {
         defaults.put("tactics.elytra.spear-dive-y", -0.85D);
         defaults.put("tactics.elytra.mace-min-smash-fall", 2.0D);
 
+        defaults.put("tactics.pearl.enabled", true);
+        defaults.put("tactics.pearl.low-health-threshold", 0.35D);
+        defaults.put("tactics.pearl.min-distance", 2.5D);
+        defaults.put("tactics.pearl.max-distance", 12.0D);
+        defaults.put("tactics.pearl.cooldown-ms", 7000L);
+        defaults.put("tactics.pearl.chance-percent", 45.0D);
+
         defaults.put("tactics.attribute-swap.enabled", false);
         defaults.put("tactics.attribute-swap.chance-percent", 10.0D);
 
@@ -101,6 +116,7 @@ public final class ConfigMigrator {
         defaults.put("tactics.cart-pvp.max-distance", 18.0D);
         defaults.put("tactics.cart-pvp.launch-speed", 0.8D);
         defaults.put("tactics.cart-pvp.fuse-ticks", 45);
+        defaults.put("tactics.cart-pvp.rail-search-radius", 6);
 
         defaults.put("weapon.type", "sword");
         defaults.put("weapon.mobility.firework-rockets", 24);

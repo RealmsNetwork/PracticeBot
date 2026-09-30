@@ -479,8 +479,14 @@ public final class ModernWeaponCombat {
             long elapsedTicks = elapsedMs / 50L;
             double relativeSpeed = relativeSpeedAlongView(bot, target);
 
-            if (elapsedTicks <= SPEAR_DAMAGE_MAX_DURATION_TICKS &&
-                relativeSpeed >= SPEAR_DAMAGE_MIN_RELATIVE_SPEED &&
+            if (elapsedTicks <= plugin.getConfig().getLong(
+                    "modern-weapons.spear.damage-max-duration-ticks",
+                    SPEAR_DAMAGE_MAX_DURATION_TICKS
+                ) &&
+                relativeSpeed >= plugin.getConfig().getDouble(
+                    "modern-weapons.spear.damage-min-relative-speed-bps",
+                    SPEAR_DAMAGE_MIN_RELATIVE_SPEED
+                ) &&
                 now >= trait.modernWeaponCooldownUntil &&
                 !isShieldUp(target)) {
                 performSpearCharge(
@@ -568,10 +574,10 @@ public final class ModernWeaponCombat {
             SPEAR_DAMAGE_MULTIPLIER
         );
 
-        double viewProjection = viewProjectionAlongAttack(bot, target);
-
+        // relativeSpeed is already projected onto the attacker's view axis.
+        // Do not apply a second view-angle multiplier here.
         double kineticDamage = Math.floor(
-            relativeSpeed * multiplier * Math.max(0.0D, viewProjection)
+            Math.max(0.0D, relativeSpeed) * multiplier
         );
 
         // Java's kinetic_weapon calculation adds attribute/enchantment damage
@@ -588,12 +594,24 @@ public final class ModernWeaponCombat {
         target.damage(damage, bot);
 
         boolean withinKnockbackWindow =
-            elapsedTicks <= SPEAR_KNOCKBACK_MAX_DURATION_TICKS &&
-            relativeSpeed >= SPEAR_KNOCKBACK_MIN_SPEED;
+            elapsedTicks <= plugin.getConfig().getLong(
+                "modern-weapons.spear.knockback-max-duration-ticks",
+                SPEAR_KNOCKBACK_MAX_DURATION_TICKS
+            ) &&
+            relativeSpeed >= plugin.getConfig().getDouble(
+                "modern-weapons.spear.knockback-min-speed-bps",
+                SPEAR_KNOCKBACK_MIN_SPEED
+            );
 
         boolean withinDismountWindow =
-            elapsedTicks <= SPEAR_DISMOUNT_MAX_DURATION_TICKS &&
-            relativeSpeed >= SPEAR_DISMOUNT_MIN_SPEED;
+            elapsedTicks <= plugin.getConfig().getLong(
+                "modern-weapons.spear.dismount-max-duration-ticks",
+                SPEAR_DISMOUNT_MAX_DURATION_TICKS
+            ) &&
+            relativeSpeed >= plugin.getConfig().getDouble(
+                "modern-weapons.spear.dismount-min-speed-bps",
+                SPEAR_DISMOUNT_MIN_SPEED
+            );
 
         if (withinKnockbackWindow) {
             applyKnockback(
@@ -865,29 +883,7 @@ public final class ModernWeaponCombat {
         );
     }
 
-    private double viewProjectionAlongAttack(
-        Player attacker, Player target
-    ) {
-        Vector look =
-            attacker.getEyeLocation().getDirection().normalize();
-
-        Vector delta =
-            target.getLocation().toVector()
-                .subtract(attacker.getEyeLocation().toVector());
-
-        if (delta.lengthSquared() < 1.0E-5D) {
-            return 1.0D;
-        }
-
-        delta.normalize();
-
-        // The kinetic weapon uses relative velocity projected onto the
-        // attacker's view axis. View alignment still matters for reaching the
-        // target hitbox, but should not multiply damage a second time.
-        return Math.max(0.0D, look.dot(delta));
-    }
-
-    private void applyLunge(Player bot) {
+undefined    private void applyLunge(Player bot) {
         int lunge = enchantLevel(
             bot.getInventory().getItemInMainHand(), "lunge"
         );

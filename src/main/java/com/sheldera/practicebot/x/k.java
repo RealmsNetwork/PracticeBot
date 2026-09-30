@@ -29,6 +29,7 @@ import net.citizensnpcs.trait.SkinTrait;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.attribute.Attribute;
@@ -56,6 +57,7 @@ public class k {
    private final Map<UUID, r> bm = new HashMap<>();
    private final Map<Integer, UUID> bn = new HashMap<>();
    private final Map<Integer, NPC> bo = new HashMap<>();
+   private final Map<UUID, String> pendingWeaponProfiles = new HashMap<>();
 
    public k(PracticeBotPlugin var1) {
       this.bj = var1;
@@ -84,6 +86,28 @@ public class k {
             return true;
          }
       }
+   }
+
+   public boolean a(Player player, String weaponProfile) {
+      if (!this.bj.isLicenseActive() || player == null) {
+         return false;
+      }
+
+      String normalized = weaponProfile == null ? "sword" : weaponProfile.trim().toLowerCase(Locale.ROOT);
+      if (!normalized.equals("mace") && !normalized.equals("spear")) {
+         normalized = "sword";
+      }
+
+      if ("spear".equals(normalized) && Material.matchMaterial("NETHERITE_SPEAR") == null) {
+         player.sendMessage("§cSpear support requires Minecraft Java 1.21.11 or newer.");
+         return false;
+      }
+
+      UUID uuid = player.getUniqueId();
+      this.pendingWeaponProfiles.put(uuid, normalized);
+      this.b(player, a.NORMAL);
+      Bukkit.getScheduler().runTaskLater(this.bj, () -> this.pendingWeaponProfiles.remove(uuid), 40L);
+      return true;
    }
 
    public void b(Player var1, a var2) {
@@ -363,6 +387,13 @@ public class k {
                var4x.setOffhandType(var9.getString("offhand-type", "totem"));
                var4x.setTotemCount(var9.getInt("totem-amount", 64));
                var4x.setCustomMainHand(null);
+               String requestedWeapon = this.pendingWeaponProfiles.get(var1.getUniqueId());
+               String defaultWeapon = var9.getString("weapon.type", "sword");
+               if (var2 == a.CPVP) {
+                  var4x.setWeaponProfile("sword");
+               } else {
+                  var4x.setWeaponProfile(requestedWeapon != null ? requestedWeapon : defaultWeapon);
+               }
                var4x.setHelmetTrimPattern(var9.getString("helmet-trim-pattern", ""));
                var4x.setHelmetTrimMaterial(var9.getString("helmet-trim-material", ""));
                var4x.setChestTrimPattern(var9.getString("chest-trim-pattern", ""));

@@ -60,6 +60,7 @@ public class BotTrait extends Trait {
    private String bootsEnchant = "protection";
    private String leggingsMaterial = "netherite";
    private String swordType = "sharp_kb";
+   private String weaponProfile = "sword";
    private String offhandType = "totem";
    private int totemCount = 64;
    private ItemStack customMainHand = null;
@@ -129,6 +130,12 @@ public class BotTrait extends Trait {
    public long knockbackUntil = 0L;
    public boolean inKnockback = false;
    public long lastSprintJumpTime = 0L;
+   public long modernWeaponCooldownUntil = 0L;
+   public long maceLaunchStartedAt = 0L;
+   public boolean maceLaunchActive = false;
+   public long spearChargeStartedAt = 0L;
+   public long spearLastHitAt = 0L;
+   public UUID modernWeaponTarget = null;
    public boolean shouldRetreat = false;
    public long retreatUntil = 0L;
    public long lastRetreatTime = 0L;
@@ -613,6 +620,29 @@ public class BotTrait extends Trait {
 
    public void setSwordType(String var1) {
       this.swordType = var1;
+   }
+
+   public String getWeaponProfile() {
+      return this.weaponProfile;
+   }
+
+   public void setWeaponProfile(String profile) {
+      this.weaponProfile = this.normalizeWeaponProfile(profile);
+      this.modernWeaponCooldownUntil = 0L;
+      this.maceLaunchStartedAt = 0L;
+      this.maceLaunchActive = false;
+      this.spearChargeStartedAt = 0L;
+      this.spearLastHitAt = 0L;
+      this.modernWeaponTarget = null;
+   }
+
+   private String normalizeWeaponProfile(String profile) {
+      if (profile == null) return "sword";
+      String normalized = profile.trim().toLowerCase(Locale.ROOT);
+      return switch (normalized) {
+         case "mace", "spear", "sword" -> normalized;
+         default -> "sword";
+      };
    }
 
    public String getOffhandType() {
@@ -1125,6 +1155,7 @@ public class BotTrait extends Trait {
       this.leggingsMaterial = var1.getString("leggingsMaterial", this.leggingsMaterial);
       this.refreshArmorTypeSnapshot();
       this.swordType = var1.getString("swordType", this.swordType);
+      this.weaponProfile = this.normalizeWeaponProfile(var1.getString("weaponProfile", this.weaponProfile));
       this.offhandType = var1.getString("offhandType", this.offhandType);
       this.totemCount = var1.getInt("totemCount", this.totemCount);
       this.attackWarmupTicks = Math.max(0L, var1.getLong("attackWarmupTicks", this.attackWarmupTicks));
@@ -1258,6 +1289,7 @@ public class BotTrait extends Trait {
       var1.setString("bootsEnchant", this.bootsEnchant);
       var1.setString("leggingsMaterial", this.leggingsMaterial);
       var1.setString("swordType", this.swordType);
+      var1.setString("weaponProfile", this.weaponProfile);
       var1.setString("offhandType", this.offhandType);
       var1.setInt("totemCount", this.totemCount);
       var1.setLong("attackWarmupTicks", this.attackWarmupTicks);

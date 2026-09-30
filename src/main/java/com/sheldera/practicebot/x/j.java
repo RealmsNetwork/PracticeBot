@@ -47,7 +47,11 @@ public class j {
             if (var2.getCustomMainHand() != null) {
                var3.getInventory().setItemInMainHand(var2.getCustomMainHand().clone());
             } else {
-               var3.getInventory().setItemInMainHand(this.E());
+               var3.getInventory().setItemInMainHand(this.createModernWeapon(var2));
+            }
+
+            if (var2.getWeaponProfile().equals("mace")) {
+               this.giveWindCharges(var3, var14);
             }
 
             if (var2.isShieldInMainHand()) {
@@ -208,6 +212,72 @@ public class j {
       }
 
       return var1;
+   }
+
+   private ItemStack createModernWeapon(BotTrait trait) {
+      String profile = trait.getWeaponProfile();
+
+      if ("mace".equals(profile)) {
+         ItemStack mace = new ItemStack(Material.MACE);
+         int density = Math.max(0, this.ax.getDefaultInvConfig().getInt("weapon.mace.density", 5));
+         int breach = Math.max(0, this.ax.getDefaultInvConfig().getInt("weapon.mace.breach", 0));
+         int windBurst = Math.max(0, this.ax.getDefaultInvConfig().getInt("weapon.mace.wind-burst", 3));
+         if (density > 0 && breach > 0) breach = 0;
+
+         if (density > 0) this.b(mace, "density", density);
+         if (breach > 0) this.b(mace, "breach", breach);
+         if (windBurst > 0) this.b(mace, "wind_burst", windBurst);
+
+         ItemMeta meta = mace.getItemMeta();
+         if (meta != null) {
+            meta.setUnbreakable(true);
+            meta.addItemFlags(new ItemFlag[]{ItemFlag.HIDE_UNBREAKABLE, ItemFlag.HIDE_ATTRIBUTES});
+            mace.setItemMeta(meta);
+         }
+         return mace;
+      }
+
+      if ("spear".equals(profile)) {
+         String configured = this.ax.getDefaultInvConfig().getString("weapon.spear.material", "netherite");
+         String normalized = configured == null ? "netherite" : configured.trim().toUpperCase(Locale.ROOT);
+         if ("GOLD".equals(normalized)) normalized = "GOLDEN";
+
+         Material spearMaterial = Material.matchMaterial(normalized + "_SPEAR");
+         if (spearMaterial != null) {
+            ItemStack spear = new ItemStack(spearMaterial);
+            int sharpness = Math.max(0, this.ax.getDefaultInvConfig().getInt("weapon.spear.sharpness", 5));
+            int lunge = Math.max(0, this.ax.getDefaultInvConfig().getInt("weapon.spear.lunge", 3));
+
+            if (sharpness > 0) this.b(spear, "sharpness", sharpness);
+            if (lunge > 0) this.b(spear, "lunge", lunge);
+
+            ItemMeta meta = spear.getItemMeta();
+            if (meta != null) {
+               meta.setUnbreakable(true);
+               meta.addItemFlags(new ItemFlag[]{ItemFlag.HIDE_UNBREAKABLE, ItemFlag.HIDE_ATTRIBUTES});
+               spear.setItemMeta(meta);
+            }
+            return spear;
+         }
+
+         this.ax.getLogger().warning("Spear profile requested, but this server does not expose Spear materials. Falling back to Netherite Sword.");
+      }
+
+      return this.E();
+   }
+
+   private void giveWindCharges(Player player, FileConfiguration defaults) {
+      int amount = Math.max(0, Math.min(64, defaults.getInt("weapon.mace.wind-charges", 16)));
+      if (amount <= 0) return;
+
+      ItemStack charges = new ItemStack(Material.WIND_CHARGE, amount);
+      for (int slot = 9; slot < player.getInventory().getSize(); slot++) {
+         ItemStack current = player.getInventory().getItem(slot);
+         if (current == null || current.getType().isAir()) {
+            player.getInventory().setItem(slot, charges);
+            return;
+         }
+      }
    }
 
    public ItemStack F() {

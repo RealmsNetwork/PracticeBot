@@ -335,6 +335,24 @@ pvp:
 
 
 # ----------------------------------------------------------
+# ----------------------------------------------------------
+#  MODERN WEAPON AI
+# ----------------------------------------------------------
+modern-weapons:
+  mace:
+    wind-charge-enabled: true
+    wind-charge-launch-height: 7.0
+    assisted-jump-without-wind-charge: true
+    launch-min-distance: 2.8
+    launch-max-distance: 4.5
+
+  spear:
+    charge-enabled: true
+    charge-delay-ms: 400
+    contact-cooldown-ms: 500
+    min-relative-speed-bps: 3.0
+    maintain-min-reach: true
+
 #  SHIELD SYSTEM
 # ----------------------------------------------------------
 shield:

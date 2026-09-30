@@ -5,11 +5,18 @@
 
     <groupId>com.sheldera</groupId>
     <artifactId>PracticeBot</artifactId>
-    <version>1.6.2</version>
+    <version>1.7.0</version>
     <packaging>jar</packaging>
 
     <name>PracticeBot</name>
-    <description>A customizable PvP practice bot using Citizens</description>
+    <description>A customizable Citizens player-NPC PvP practice bot for modern Minecraft combat.</description>
+    <url>https://github.com/THEMPGUYAlt</url>
+    <developers>
+        <developer>
+            <name>THEMPGUY</name>
+            <url>https://github.com/THEMPGUYAlt</url>
+        </developer>
+    </developers>
 
     <properties>
         <maven.compiler.source>21</maven.compiler.source>
@@ -53,6 +60,13 @@
             </exclusions>
         </dependency>
         <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.12.2</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
             <groupId>me.clip</groupId>
             <artifactId>placeholderapi</artifactId>
             <version>2.11.6</version>
@@ -71,6 +85,11 @@
                     <source>21</source>
                     <target>21</target>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.5.2</version>
             </plugin>
         </plugins>
         <resources>

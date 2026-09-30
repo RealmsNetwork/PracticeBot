@@ -12,6 +12,8 @@ Version 2 -> 3 added the published Spear kinetic thresholds, human misplay setti
 
 Version 3 -> 4 added FastCrystals timing-scale tuning.
 
+Version 4 -> 5 added live network-latency drift and aim-prediction settings, plus server-side target tracking defaults.
+
 The backup created before a schema upgrade is:
 
 plugins/PracticeBot/config.yml.v3.pre-migration.bak

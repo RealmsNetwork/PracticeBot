@@ -11,7 +11,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public final class ConfigMigrator {
-    private static final int CURRENT_VERSION = 3;
+    private static final int CURRENT_VERSION = 4;
     private static final int CURRENT_INVENTORY_VERSION = 2;
 
     private ConfigMigrator() {
@@ -109,6 +109,7 @@ public final class ConfigMigrator {
 
         defaults.put("tactics.fast-crystals.mode", "auto");
         defaults.put("tactics.fast-crystals.remove-artificial-delay", true);
+        defaults.put("tactics.fast-crystals.timing-scale", 0.80D);
 
         defaults.put("tactics.cart-pvp.enabled", true);
         defaults.put("tactics.cart-pvp.cooldown-ms", 3500L);

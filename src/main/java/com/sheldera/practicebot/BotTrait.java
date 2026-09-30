@@ -136,6 +136,15 @@ public class BotTrait extends Trait {
    public long spearChargeStartedAt = 0L;
    public long spearLastHitAt = 0L;
    public UUID modernWeaponTarget = null;
+   public int simulatedPingMs = 0;
+   public long tacticNextDecisionAt = 0L;
+   public long tacticCooldownUntil = 0L;
+   public long windChargeResetCooldownUntil = 0L;
+   public long elytraFlightUntil = 0L;
+   public long lastCartActionAt = 0L;
+   public long lastRocketBoostAt = 0L;
+   public int strafeDirection = 1;
+   public String lastTactic = "none";
    public boolean shouldRetreat = false;
    public long retreatUntil = 0L;
    public long lastRetreatTime = 0L;
@@ -620,6 +629,14 @@ public class BotTrait extends Trait {
 
    public void setSwordType(String var1) {
       this.swordType = var1;
+   }
+
+   public int getSimulatedPingMs() {
+      return this.simulatedPingMs;
+   }
+
+   public void setSimulatedPingMs(int ping) {
+      this.simulatedPingMs = Math.max(0, ping);
    }
 
    public String getWeaponProfile() {

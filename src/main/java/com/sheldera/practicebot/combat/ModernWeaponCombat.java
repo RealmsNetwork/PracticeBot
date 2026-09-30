@@ -1261,6 +1261,20 @@ public final class ModernWeaponCombat {
         );
     }
 
+    static double spearChargeDamage(
+        double relativeSpeed,
+        double velocityMultiplier
+    ) {
+        if (relativeSpeed < SPEAR_DAMAGE_MIN_RELATIVE_SPEED) {
+            return 0.0D;
+        }
+
+        return Math.floor(
+            Math.max(0.0D, relativeSpeed) *
+                Math.max(0.0D, velocityMultiplier)
+        );
+    }
+
     private double compensateForBreach(
         double desiredDamage,
         Player target,

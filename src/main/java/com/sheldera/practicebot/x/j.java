@@ -50,9 +50,7 @@ public class j {
                var3.getInventory().setItemInMainHand(this.createModernWeapon(var2));
             }
 
-            if ("mace".equals(var2.getWeaponProfile())) {
-               this.giveWindCharges(var3, var14);
-            }
+            this.applyTacticKit(var3, var2.getWeaponProfile(), var14);
 
             if (var2.isShieldInMainHand()) {
                var3.getInventory().setItemInMainHand(this.F());
@@ -214,8 +212,93 @@ public class j {
       return var1;
    }
 
+   private void applyTacticKit(Player player, String profile, FileConfiguration defaults) {
+      if (profile == null) {
+         return;
+      }
+
+      String normalized = profile.toLowerCase(Locale.ROOT);
+
+      if (normalized.endsWith("_elytra")) {
+         ItemStack elytra = new ItemStack(Material.ELYTRA);
+         ItemMeta meta = elytra.getItemMeta();
+         if (meta != null) {
+            meta.setUnbreakable(true);
+            meta.addItemFlags(new ItemFlag[]{ItemFlag.HIDE_UNBREAKABLE});
+            elytra.setItemMeta(meta);
+         }
+         player.getInventory().setChestplate(elytra);
+
+         this.giveItems(
+            player,
+            Material.FIREWORK_ROCKET,
+            Math.max(4, Math.min(64, defaults.getInt("weapon.mobility.firework-rockets", 24)))
+         );
+      }
+
+      if (normalized.startsWith("mace")) {
+         this.giveWindCharges(player, defaults);
+      }
+
+      if (normalized.equals("cart") || normalized.equals("cart_elytra")) {
+         this.giveItems(
+            player,
+            Material.TNT_MINECART,
+            Math.max(1, Math.min(64, defaults.getInt("weapon.cart.tnt-minecarts", 16)))
+         );
+         this.giveItems(
+            player,
+            Material.POWERED_RAIL,
+            Math.max(1, Math.min(64, defaults.getInt("weapon.cart.powered-rails", 16)))
+         );
+         this.giveItems(
+            player,
+            Material.RAIL,
+            Math.max(1, Math.min(64, defaults.getInt("weapon.cart.rails", 32)))
+         );
+         this.giveItems(
+            player,
+            Material.FLINT_AND_STEEL,
+            1
+         );
+         this.giveItems(
+            player,
+            Material.ARROW,
+            Math.max(1, Math.min(64, defaults.getInt("weapon.cart.arrows", 32)))
+         );
+      }
+   }
+
+   private void giveItems(Player player, Material material, int amount) {
+      if (amount <= 0) {
+         return;
+      }
+
+      ItemStack stack = new ItemStack(material, amount);
+
+      for (ItemStack leftover : player.getInventory().addItem(stack).values()) {
+         player.getWorld().dropItemNaturally(player.getLocation(), leftover);
+      }
+   }
+
    private ItemStack createModernWeapon(BotTrait trait) {
       String profile = trait.getWeaponProfile();
+
+      if ("cart".equals(profile) || "cart_elytra".equals(profile)) {
+         ItemStack bow = new ItemStack(Material.BOW);
+         this.b(bow, "flame", 1);
+         this.b(bow, "power", Math.max(1, this.ax.getDefaultInvConfig().getInt("weapon.cart.power", 5)));
+         this.b(bow, "punch", Math.max(0, this.ax.getDefaultInvConfig().getInt("weapon.cart.punch", 2)));
+
+         ItemMeta bowMeta = bow.getItemMeta();
+         if (bowMeta != null) {
+            bowMeta.setUnbreakable(true);
+            bowMeta.addItemFlags(new ItemFlag[]{ItemFlag.HIDE_UNBREAKABLE, ItemFlag.HIDE_ATTRIBUTES});
+            bow.setItemMeta(bowMeta);
+         }
+
+         return bow;
+      }
 
       if ("mace".equals(profile)) {
          ItemStack mace = new ItemStack(Material.MACE);

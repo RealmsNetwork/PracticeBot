@@ -94,11 +94,17 @@ public class k {
       }
 
       String profile = weaponProfile == null ? "sword" : weaponProfile.trim().toLowerCase(Locale.ROOT);
-      if (!profile.equals("mace") && !profile.equals("spear")) {
+      if (!profile.equals("mace") &&
+          !profile.equals("mace_elytra") &&
+          !profile.equals("spear") &&
+          !profile.equals("spear_elytra") &&
+          !profile.equals("cart") &&
+          !profile.equals("cart_elytra")) {
          profile = "sword";
       }
 
-      if ("spear".equals(profile) && Material.matchMaterial("NETHERITE_SPEAR") == null) {
+      if ((profile.equals("spear") || profile.equals("spear_elytra")) &&
+          Material.matchMaterial("NETHERITE_SPEAR") == null) {
          player.sendMessage("§cSpear support requires Minecraft Java 1.21.11 or newer.");
          return true;
       }

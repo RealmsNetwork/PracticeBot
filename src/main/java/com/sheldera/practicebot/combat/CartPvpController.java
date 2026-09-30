@@ -88,6 +88,11 @@ public final class CartPvpController {
 
         int fuse = (int) plugin.getConfig().getLong("tactics.cart-pvp.fuse-ticks", 45L);
         cart.setFuseTicks(Math.max(5, Math.min(200, fuse)));
+        try {
+            cart.ignite();
+        } catch (Throwable ignored) {
+            // Older Paper builds may not expose the helper; the cart remains harmless.
+        }
 
         trait.lastCartActionAt = now;
         trait.tacticCooldownUntil = now + 700L;

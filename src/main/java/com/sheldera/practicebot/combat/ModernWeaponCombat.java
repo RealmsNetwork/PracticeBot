@@ -416,7 +416,18 @@ public final class ModernWeaponCombat {
 
         double distance = bot.getLocation().distance(target.getLocation());
 
-        if (distance < SPEAR_MIN_REACH + 0.05D) {
+        ItemStack spear = bot.getInventory().getItemInMainHand();
+        PaperItemDataBridge.AttackRangeData range =
+            PaperItemDataBridge.attackRange(spear);
+
+        double minReach = range == null
+            ? SPEAR_MIN_REACH
+            : range.minReach();
+        double maxReach = range == null
+            ? SPEAR_MAX_REACH
+            : range.maxReach();
+
+        if (distance < minReach + 0.05D) {
             if (!bot.isGliding()) {
                 Vector away = bot.getLocation().toVector()
                     .subtract(target.getLocation().toVector());
@@ -444,8 +455,8 @@ public final class ModernWeaponCombat {
             return;
         }
 
-        if (distance < SPEAR_MIN_REACH + 0.1D ||
-            distance > SPEAR_MAX_REACH) {
+        if (distance < minReach + 0.1D ||
+            distance > maxReach) {
             return;
         }
 

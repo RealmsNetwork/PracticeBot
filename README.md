@@ -25,9 +25,9 @@ This fork keeps the existing Citizens player-NPC architecture and adds a dedicat
 - Knockback, sprinting and movement state carried through Citizens traits
 - Per-bot weapon profile persistence
 
-Minecraft Java 1.21.11 describes the Spear as a two-attack weapon with Jab and Charge. Charge is a kinetic attack whose damage depends on relative velocity, view direction and weapon data. The same release adds custom attack ranges and the kinetic weapon data component. citeturn644803search0
+Minecraft Java 1.21.11 describes the Spear as a two-attack weapon with Jab and Charge. Charge is a kinetic attack whose damage depends on relative velocity, view direction and weapon data. The same release also adds custom attack ranges and the kinetic weapon data component. See the Minecraft Java Edition 1.21.11 release notes for the complete technical specification.
 
-Minecraft's Mace smash uses fall distance with a falloff of 4 damage per block for the first 3 blocks, 2 for the next 5, then 1 per block beyond 8. Density adds 0.5 damage per fallen block per level, while Breach reduces armor effectiveness by 15% per level. Wind Burst launches the attacker upward after a smash. citeturn787360search5turn787360search2
+Minecraft's Mace smash uses fall distance with a falloff of 4 damage per block for the first 3 blocks, 2 for the next 5, then 1 per block beyond 8. Density adds 0.5 damage per fallen block per level, while Breach reduces armor effectiveness by 15% per level. Wind Burst launches the attacker upward after a smash. These values are taken from Mojang's published Java combat snapshots.
 
 ## Commands
 

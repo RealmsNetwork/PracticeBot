@@ -10,6 +10,8 @@ Version 1 -> 2 added the first modern Mace/Spear, humanization, Wind Charge Rese
 
 Version 2 -> 3 added the published Spear kinetic thresholds, human misplay settings, pearl disengage settings and additional Cart PvP settings.
 
+Version 3 -> 4 added FastCrystals timing-scale tuning.
+
 The backup created before a schema upgrade is:
 
 plugins/PracticeBot/config.yml.v3.pre-migration.bak

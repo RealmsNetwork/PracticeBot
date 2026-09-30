@@ -147,6 +147,10 @@ public final class ModernWeaponCombat {
             return true;
         }
 
+        if (humanMisplay(trait, now)) {
+            return true;
+        }
+
         if (item.getType() == Material.MACE) {
             return tryMace(bot, target, trait, now);
         }
@@ -745,7 +749,7 @@ public final class ModernWeaponCombat {
 
         // This intentionally measures a real server-side attribute delta from
         // the actual inventory rather than hard-coding weapon damage values.
-        bot.getInventory().setItemInMainHand(alternate);
+        bot.getInventory().setItemInMainHand(alternate.clone());
 
         double swapped = attribute.getValue();
 
@@ -793,6 +797,33 @@ public final class ModernWeaponCombat {
             50L,
             Math.round(1000.0D / speed)
         );
+    }
+
+    private boolean humanMisplay(BotTrait trait, long now) {
+        double chance = plugin.getConfig().getDouble(
+            "tactics.humanization.mistake-chance-percent", 3.0D
+        );
+
+        if (chance <= 0.0D ||
+            ThreadLocalRandom.current().nextDouble(100.0D) >= chance) {
+            return false;
+        }
+
+        long min = plugin.getConfig().getLong(
+            "tactics.humanization.mistake-delay-min-ms", 55L
+        );
+        long max = plugin.getConfig().getLong(
+            "tactics.humanization.mistake-delay-max-ms", 180L
+        );
+
+        long delay = ThreadLocalRandom.current().nextLong(
+            Math.max(0L, Math.min(min, max)),
+            Math.max(0L, Math.max(min, max)) + 1L
+        );
+
+        trait.tacticCooldownUntil = now + delay;
+        trait.lastTactic = "human-misplay";
+        return true;
     }
 
     private void applyHumanAttackDelay(BotTrait trait, long now) {

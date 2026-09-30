@@ -435,6 +435,7 @@ tactics:
     # force-on/force-off are useful for custom forks.
     mode: auto
     remove-artificial-delay: true
+    timing-scale: 0.80
 
   cart-pvp:
     enabled: true

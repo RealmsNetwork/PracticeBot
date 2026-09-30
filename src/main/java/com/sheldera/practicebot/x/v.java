@@ -2,6 +2,7 @@ package com.sheldera.practicebot.x;
 
 import com.sheldera.practicebot.BotTrait;
 import com.sheldera.practicebot.combat.ModernWeaponCombat;
+import com.sheldera.practicebot.combat.PvpTacticsEngine;
 import com.sheldera.practicebot.PracticeBotPlugin;
 import java.util.concurrent.ThreadLocalRandom;
 import net.citizensnpcs.api.ai.Navigator;
@@ -44,6 +45,7 @@ public class v {
    private final y r1;
    private final x s0;
    private final ModernWeaponCombat modernWeaponCombat;
+   private final PvpTacticsEngine tacticsEngine;
 
    public v(PracticeBotPlugin var1, y var2) {
       this.q1 = var1;
@@ -51,6 +53,7 @@ public class v {
       this.r1 = var2;
       this.s0 = new x(var1);
       this.modernWeaponCombat = new ModernWeaponCombat(var1);
+      this.tacticsEngine = new PvpTacticsEngine(var1);
    }
 
    public void b(NPC var1, Player var2, Player var3, BotTrait var4, long var5) {
@@ -100,6 +103,7 @@ public class v {
             }
 
             var2.setSprinting(false);
+            this.tacticsEngine.tick(var2, var3, var4, var5);
             this.modernWeaponCombat.tick(var2, var3, var4, var5);
             boolean var26 = var4.isPvpRetreat() && var4.shouldRetreatNow(var5);
             if (var4.sTapActive && var5 < var4.sTapEndTime) {

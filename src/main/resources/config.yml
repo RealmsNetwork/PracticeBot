@@ -1,4 +1,4 @@
-config-version: 2
+config-version: 3
 # ==========================================================
 #  PracticeBot - Configuration
 #  Author: THEMPGUY
@@ -387,6 +387,12 @@ tactics:
       min-delay-ms: 8.0
       max-delay-ms: 42.0
 
+    # Small intentional human mistakes keep the bot from behaving like a
+    # deterministic combat macro.
+    mistake-chance-percent: 3.0
+    mistake-delay-min-ms: 55
+    mistake-delay-max-ms: 180
+
   wind-charge-reset:
     enabled: true
     local-fallback: true
@@ -415,6 +421,14 @@ tactics:
     # unsupported-settings.update-equipment-on-player-actions=false.
     enabled: false
     chance-percent: 10.0
+
+  pearl:
+    enabled: true
+    low-health-threshold: 0.35
+    min-distance: 2.5
+    max-distance: 12.0
+    cooldown-ms: 7000
+    chance-percent: 45.0
 
   fast-crystals:
     # auto = detect FastCrystals by plugin name and adapt PracticeBot timing.

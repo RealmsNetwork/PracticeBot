@@ -1,6 +1,7 @@
+config-version: 5
 # ==========================================================
 #  PracticeBot - Configuration
-#  Author: SHELDERA
+#  Author: THEMPGUY
 # ==========================================================
 
 # ----------------------------------------------------------
@@ -335,11 +336,12 @@ pvp:
 
 
 # ----------------------------------------------------------
-# ----------------------------------------------------------
 #  MODERN WEAPON AI
 # ----------------------------------------------------------
 modern-weapons:
   mace:
+    # Native Minecraft smash damage is fall-distance based.
+    # The bot tries to create a safe launch window before dropping.
     wind-charge-enabled: true
     wind-charge-launch-height: 7.0
     assisted-jump-without-wind-charge: true
@@ -347,12 +349,108 @@ modern-weapons:
     launch-max-distance: 4.5
 
   spear:
+    # Java 1.21.11+ Spear supports Jab and a kinetic Charge.
     charge-enabled: true
     charge-delay-ms: 400
     contact-cooldown-ms: 500
-    min-relative-speed-bps: 3.0
-    maintain-min-reach: true
+    min-relative-speed-bps: 4.6
+    # Vanilla kinetic_weapon damage uses floor(relative_speed * multiplier).
+    # Kept configurable because the public Bukkit 1.21.1 API cannot expose the
+    # 1.21.11 per-material item-component constant directly.
+    charge-velocity-multiplier: 1.0
 
+# ----------------------------------------------------------
+#  TACTICAL / HUMANIZATION SETTINGS
+# ----------------------------------------------------------
+tactics:
+  humanization:
+    # Different bots get independent simulated latency profiles.
+    movement-enabled: true
+    movement-jitter: 0.015
+    strafe-switch-ms: 380
+
+    ping:
+      min-ms: 35
+      max-ms: 180
+      jitter-ms: 8
+      drift-ms: 18
+      drift-interval-ms: 7000
+      action-latency-fraction: 0.35
+
+    reaction:
+      min-ms: 85.0
+      max-ms: 210.0
+
+    aim:
+      max-degrees-per-update: 24.0
+      jitter-degrees: 0.6
+      lead-ping-factor: 0.65
+      target-offset: 0.10
+
+    attack:
+      min-delay-ms: 8.0
+      max-delay-ms: 42.0
+
+    # Small intentional human mistakes keep the bot from behaving like a
+    # deterministic combat macro.
+    mistake-chance-percent: 3.0
+    mistake-delay-min-ms: 55
+    mistake-delay-max-ms: 180
+
+  wind-charge-reset:
+    enabled: true
+    local-fallback: true
+    # Matches the common Paper Wind Charge Reset behavior: falling,
+    # looking sufficiently downward, preserve horizontal momentum, clear Y.
+    min-fall-distance: 2.25
+    max-upward-velocity: -0.55
+    max-target-distance: 18.0
+    cooldown-ms: 650
+    plugin-pitch: 82.0
+
+  elytra:
+    enabled: true
+    start-min-distance: 9.0
+    start-max-distance: 28.0
+    launch-y: 0.58
+    flight-window-ms: 4200
+    rocket-interval-ms: 650
+    dive-distance: 4.25
+    mace-dive-y: -1.45
+    spear-dive-y: -0.85
+    mace-min-smash-fall: 2.0
+
+  attribute-swap:
+    # Only turns on automatically when Paper reports
+    # unsupported-settings.update-equipment-on-player-actions=false.
+    enabled: false
+    chance-percent: 10.0
+
+  pearl:
+    enabled: true
+    low-health-threshold: 0.35
+    min-distance: 2.5
+    max-distance: 12.0
+    cooldown-ms: 7000
+    chance-percent: 45.0
+
+  fast-crystals:
+    # auto = detect FastCrystals by plugin name and adapt PracticeBot timing.
+    # force-on/force-off are useful for custom forks.
+    mode: auto
+    remove-artificial-delay: true
+    timing-scale: 0.80
+
+  cart-pvp:
+    enabled: true
+    cooldown-ms: 3500
+    min-distance: 5.0
+    max-distance: 18.0
+    launch-speed: 0.8
+    fuse-ticks: 45
+    rail-search-radius: 6
+
+# ----------------------------------------------------------
 #  SHIELD SYSTEM
 # ----------------------------------------------------------
 shield:
@@ -418,4 +516,4 @@ debug:
 license:
   # You can set this from console/in-game with:
   # /pbadmin license set XXXX-XXXX-XXXX-XXXX
-  code: "https://nulledvault.com/maskirovka"
+  code: ""

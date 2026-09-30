@@ -89,25 +89,32 @@ public class k {
    }
 
    public boolean a(Player player, String weaponProfile) {
-      if (!this.bj.isLicenseActive() || player == null) {
+      if (player == null || !this.bj.isLicenseActive()) {
          return false;
       }
 
-      String normalized = weaponProfile == null ? "sword" : weaponProfile.trim().toLowerCase(Locale.ROOT);
-      if (!normalized.equals("mace") && !normalized.equals("spear")) {
-         normalized = "sword";
+      String profile = weaponProfile == null ? "sword" : weaponProfile.trim().toLowerCase(Locale.ROOT);
+      if (!profile.equals("mace") &&
+          !profile.equals("mace_elytra") &&
+          !profile.equals("spear") &&
+          !profile.equals("spear_elytra") &&
+          !profile.equals("cart") &&
+          !profile.equals("cart_elytra")) {
+         profile = "sword";
       }
 
-      if ("spear".equals(normalized) && Material.matchMaterial("NETHERITE_SPEAR") == null) {
+      if ((profile.equals("spear") || profile.equals("spear_elytra")) &&
+          Material.matchMaterial("NETHERITE_SPEAR") == null) {
          player.sendMessage("§cSpear support requires Minecraft Java 1.21.11 or newer.");
-         return false;
+         return true;
       }
 
-      UUID uuid = player.getUniqueId();
-      this.pendingWeaponProfiles.put(uuid, normalized);
-      this.b(player, a.NORMAL);
-      Bukkit.getScheduler().runTaskLater(this.bj, () -> this.pendingWeaponProfiles.remove(uuid), 40L);
-      return true;
+      this.pendingWeaponProfiles.put(player.getUniqueId(), profile);
+      try {
+         return this.a(player, a.NORMAL);
+      } finally {
+         this.pendingWeaponProfiles.remove(player.getUniqueId());
+      }
    }
 
    public void b(Player var1, a var2) {

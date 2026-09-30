@@ -14,6 +14,12 @@ class ModernWeaponCombatTest {
    }
 
    @Test
+   void bareMaceAtTwoBlocksMatchesPublishedExample() {
+      assertEquals(14.0,
+         ModernWeaponCombat.maceSmashDamage(6.0, 2.0, 0), 1.0E-9);
+   }
+
+   @Test
    void netheriteSpearChargeUsesVelocityMultiplier() {
       assertEquals(6.0,
          ModernWeaponCombat.spearChargeDamage(5.612, 1.20), 0.0001);
@@ -25,5 +31,17 @@ class ModernWeaponCombatTest {
          ModernWeaponCombat.spearChargeDamage(5.612, 1.20), 1.0E-9);
       assertEquals(0.0,
          ModernWeaponCombat.spearChargeDamage(2.0, 1.20), 1.0E-9);
+   }
+
+   @Test
+   void densityAddsPerFallenBlock() {
+      assertEquals(17.0,
+         ModernWeaponCombat.maceSmashDamage(6.0, 2.0, 3), 1.0E-9);
+   }
+
+   @Test
+   void baseDamageOverloadNeverDropsBelowBase() {
+      assertEquals(5.0,
+         ModernWeaponCombat.spearChargeDamage(5.0, 2.0, 1.20), 1.0E-9);
    }
 }

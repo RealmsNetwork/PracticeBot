@@ -1,3 +1,4 @@
+inventory-config-version: 2
 # ==========================================================
 #  PracticeBot - Default Bot Inventory Configuration
 #
@@ -36,13 +37,16 @@ leggings-enchant: protection
 leggings-material: netherite
 
 # ----------------------------------------------------------
-# ----------------------------------------------------------
 #  WEAPON PROFILE
 #
 #  type:
-#    sword  - existing normal 1.9+ sword combat
-#    mace   - Java 1.21+ Mace smash AI
-#    spear  - Java 1.21.11+ Spear jab/charge AI
+#    sword - existing normal PvP
+#    mace        - Java 1.21+ Mace combat
+#    spear       - Java 1.21.11+ Spear combat
+#    mace_elytra - Mace + Elytra / rocket aerial combat
+#    spear_elytra- Spear + Elytra aerial charge combat
+#    cart        - TNT minecart / Flame bow combat
+#    cart_elytra - Cart PvP + Elytra mobility
 # ----------------------------------------------------------
 weapon:
   type: sword
@@ -58,6 +62,18 @@ weapon:
     sharpness: 5
     lunge: 3
 
+  mobility:
+    firework-rockets: 24
+
+  cart:
+    tnt-minecarts: 16
+    powered-rails: 16
+    rails: 32
+    arrows: 32
+    power: 5
+    punch: 2
+
+# ----------------------------------------------------------
 #  OFFHAND ITEM
 #  What the bot holds in their offhand
 #

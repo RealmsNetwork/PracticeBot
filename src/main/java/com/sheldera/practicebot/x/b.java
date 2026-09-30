@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class b {
@@ -82,6 +83,7 @@ public class b {
    private void d() {
       this.debugLog("Loading CPVP configuration...");
       this.h = new af();
+      boolean fastCrystals = this.fastCrystalsCompatibilityEnabled();
       this.h.skillLevel = this.f.getString("cpvp.defaults.skill-level", "MEDIUM");
       this.h.aggressionWeight = this.f.getDouble("cpvp.defaults.aggression-weight", 1.3);
       this.h.usePearls = this.f.getBoolean("cpvp.defaults.use-pearls", true);
@@ -112,6 +114,18 @@ public class b {
             long var17 = this.f.getLong(var4 + ".break-delay-min-ms", var11);
             long var19 = this.f.getLong(var4 + ".break-delay-max-ms", var11);
             long var21 = this.f.getLong(var4 + ".sword-delay-ms", 600L);
+
+            if (fastCrystals &&
+                this.f.getBoolean("tactics.fast-crystals.remove-artificial-delay", true)) {
+               double scale = Math.max(0.10D, Math.min(
+                  1.0D,
+                  this.f.getDouble("tactics.fast-crystals.timing-scale", 0.80D)
+               ));
+               var13 = Math.max(1L, Math.round(var13 * scale));
+               var15 = Math.max(var13, Math.round(var15 * scale));
+               var17 = Math.max(1L, Math.round(var17 * scale));
+               var19 = Math.max(var17, Math.round(var19 * scale));
+            }
             int var23 = this.f.getInt(var4 + ".reaction-hesitation-chance-percent", this.a(var3));
             long var24 = this.f.getLong(var4 + ".reaction-hesitation-min-ms", this.b(var3));
             long var26 = this.f.getLong(var4 + ".reaction-hesitation-max-ms", this.c(var3));
@@ -155,6 +169,40 @@ public class b {
 
       ae.a(this.i);
       this.debugLog("CPVP config loaded successfully with " + this.i.size() + " difficulty levels");
+   }
+
+   private boolean fastCrystalsCompatibilityEnabled() {
+      String mode = this.f.getString(
+         "tactics.fast-crystals.mode", "auto"
+      );
+
+      if ("force-off".equalsIgnoreCase(mode)) {
+         return false;
+      }
+
+      if ("force-on".equalsIgnoreCase(mode)) {
+         return true;
+      }
+
+      for (Plugin plugin : org.bukkit.Bukkit.getPluginManager().getPlugins()) {
+         if (!plugin.isEnabled()) {
+            continue;
+         }
+
+         String name = plugin.getName()
+            .toLowerCase(java.util.Locale.ROOT)
+            .replace(" ", "")
+            .replace("-", "")
+            .replace("_", "");
+
+         if (name.equals("fastcrystals") ||
+             name.equals("fastcrystalsreborn") ||
+             name.equals("fastercrystals")) {
+            return true;
+         }
+      }
+
+      return false;
    }
 
    private int a(String var1) {

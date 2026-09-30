@@ -50,9 +50,7 @@ public class j {
                var3.getInventory().setItemInMainHand(this.createModernWeapon(var2));
             }
 
-            if (var2.getWeaponProfile().equals("mace")) {
-               this.giveWindCharges(var3, var14);
-            }
+            this.applyTacticKit(var3, var2.getWeaponProfile(), var14);
 
             if (var2.isShieldInMainHand()) {
                var3.getInventory().setItemInMainHand(this.F());
@@ -214,15 +212,104 @@ public class j {
       return var1;
    }
 
+   private void applyTacticKit(Player player, String profile, FileConfiguration defaults) {
+      if (profile == null) {
+         return;
+      }
+
+      String normalized = profile.toLowerCase(Locale.ROOT);
+
+      if (normalized.endsWith("_elytra")) {
+         ItemStack elytra = new ItemStack(Material.ELYTRA);
+         ItemMeta meta = elytra.getItemMeta();
+         if (meta != null) {
+            meta.setUnbreakable(true);
+            meta.addItemFlags(new ItemFlag[]{ItemFlag.HIDE_UNBREAKABLE});
+            elytra.setItemMeta(meta);
+         }
+         player.getInventory().setChestplate(elytra);
+
+         this.giveItems(
+            player,
+            Material.FIREWORK_ROCKET,
+            Math.max(4, Math.min(64, defaults.getInt("weapon.mobility.firework-rockets", 24)))
+         );
+      }
+
+      if (normalized.startsWith("mace")) {
+         this.giveWindCharges(player, defaults);
+      }
+
+      if (normalized.equals("cart") || normalized.equals("cart_elytra")) {
+         this.giveItems(
+            player,
+            Material.TNT_MINECART,
+            Math.max(1, Math.min(64, defaults.getInt("weapon.cart.tnt-minecarts", 16)))
+         );
+         this.giveItems(
+            player,
+            Material.POWERED_RAIL,
+            Math.max(1, Math.min(64, defaults.getInt("weapon.cart.powered-rails", 16)))
+         );
+         this.giveItems(
+            player,
+            Material.RAIL,
+            Math.max(1, Math.min(64, defaults.getInt("weapon.cart.rails", 32)))
+         );
+         this.giveItems(
+            player,
+            Material.FLINT_AND_STEEL,
+            1
+         );
+         this.giveItems(
+            player,
+            Material.ARROW,
+            Math.max(1, Math.min(64, defaults.getInt("weapon.cart.arrows", 32)))
+         );
+      }
+   }
+
+   private void giveItems(Player player, Material material, int amount) {
+      if (amount <= 0) {
+         return;
+      }
+
+      ItemStack stack = new ItemStack(material, amount);
+
+      for (ItemStack leftover : player.getInventory().addItem(stack).values()) {
+         player.getWorld().dropItemNaturally(player.getLocation(), leftover);
+      }
+   }
+
    private ItemStack createModernWeapon(BotTrait trait) {
       String profile = trait.getWeaponProfile();
 
-      if ("mace".equals(profile)) {
+      if ("cart".equals(profile) || "cart_elytra".equals(profile)) {
+         ItemStack bow = new ItemStack(Material.BOW);
+         this.b(bow, "flame", 1);
+         this.b(bow, "power", Math.max(1, this.ax.getDefaultInvConfig().getInt("weapon.cart.power", 5)));
+         this.b(bow, "punch", Math.max(0, this.ax.getDefaultInvConfig().getInt("weapon.cart.punch", 2)));
+
+         ItemMeta bowMeta = bow.getItemMeta();
+         if (bowMeta != null) {
+            bowMeta.setUnbreakable(true);
+            bowMeta.addItemFlags(new ItemFlag[]{ItemFlag.HIDE_UNBREAKABLE, ItemFlag.HIDE_ATTRIBUTES});
+            bow.setItemMeta(bowMeta);
+         }
+
+         return bow;
+      }
+
+      if (profile.startsWith("mace")) {
          ItemStack mace = new ItemStack(Material.MACE);
          int density = Math.max(0, this.ax.getDefaultInvConfig().getInt("weapon.mace.density", 5));
          int breach = Math.max(0, this.ax.getDefaultInvConfig().getInt("weapon.mace.breach", 0));
          int windBurst = Math.max(0, this.ax.getDefaultInvConfig().getInt("weapon.mace.wind-burst", 3));
-         if (density > 0 && breach > 0) breach = 0;
+
+         // Vanilla Mace makes Density and Breach mutually exclusive.
+         if (density > 0 && breach > 0) {
+            breach = 0;
+         }
 
          if (density > 0) this.b(mace, "density", density);
          if (breach > 0) this.b(mace, "breach", breach);
@@ -234,12 +321,13 @@ public class j {
             meta.addItemFlags(new ItemFlag[]{ItemFlag.HIDE_UNBREAKABLE, ItemFlag.HIDE_ATTRIBUTES});
             mace.setItemMeta(meta);
          }
+
          return mace;
       }
 
-      if ("spear".equals(profile)) {
+      if (profile.startsWith("spear")) {
          String configured = this.ax.getDefaultInvConfig().getString("weapon.spear.material", "netherite");
-         String normalized = configured == null ? "netherite" : configured.trim().toUpperCase(Locale.ROOT);
+         String normalized = configured == null ? "NETHERITE" : configured.trim().toUpperCase(Locale.ROOT);
          if ("GOLD".equals(normalized)) normalized = "GOLDEN";
 
          Material spearMaterial = Material.matchMaterial(normalized + "_SPEAR");
@@ -249,6 +337,7 @@ public class j {
             int lunge = Math.max(0, this.ax.getDefaultInvConfig().getInt("weapon.spear.lunge", 3));
 
             if (sharpness > 0) this.b(spear, "sharpness", sharpness);
+            // Lunge only exists on 1.21.11+. The enchantment helper already has safe fallbacks.
             if (lunge > 0) this.b(spear, "lunge", lunge);
 
             ItemMeta meta = spear.getItemMeta();
@@ -257,6 +346,7 @@ public class j {
                meta.addItemFlags(new ItemFlag[]{ItemFlag.HIDE_UNBREAKABLE, ItemFlag.HIDE_ATTRIBUTES});
                spear.setItemMeta(meta);
             }
+
             return spear;
          }
 

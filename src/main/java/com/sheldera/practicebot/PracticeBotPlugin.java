@@ -125,6 +125,8 @@ public class PracticeBotPlugin extends JavaPlugin {
    }
 
    private void initializeConfiguration() {
+      this.saveDefaultConfig();
+      ConfigMigrator.migrate(this);
       this.config = new b(this);
       this.config.a();
       h.a(this);
@@ -401,6 +403,7 @@ public class PracticeBotPlugin extends JavaPlugin {
    private void loadDefaultInventoryConfig() {
       this.defaultInvFile = new File(this.getDataFolder(), "default_inv.yml");
       this.defaultInvConfig = Z.a(this, this.defaultInvFile, "default_inv.yml");
+      ConfigMigrator.migrateDefaultInventory(this, this.defaultInvConfig);
       boolean var1 = false;
       if (!this.defaultInvConfig.contains("helmet-trim-pattern")) {
          this.defaultInvConfig.set("helmet-trim-pattern", "");

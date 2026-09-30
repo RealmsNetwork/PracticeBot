@@ -1,6 +1,6 @@
 name: PracticeBot
 main: com.sheldera.practicebot.PracticeBotPlugin
-version: 1.7.0
+version: 1.8.0
 api-version: 1.21
 author: THEMPGUY
 
@@ -10,12 +10,12 @@ description: >
 website: https://github.com/THEMPGUYAlt
 
 depend: [Citizens]
-softdepend: [PlaceholderAPI]
+softdepend: [PlaceholderAPI, WindChargeReset, FastCrystals]
 
 commands:
   spawnbot:
     description: Spawn your personal PvP bot.
-    usage: "/spawnbot [normal|crystal|mace|spear]"
+    usage: "/spawnbot [normal|crystal|mace|spear|maceelytra|spearelytra|cart|cartelytra]"
     aliases: [bot]
 
   practicebot:
@@ -51,6 +51,22 @@ permissions:
 
   practicebot.spawn.spear:
     description: Allows spawning Spear PvP bots.
+    default: true
+
+  practicebot.spawn.mace.elytra:
+    description: Allows spawning Mace Elytra PvP bots.
+    default: true
+
+  practicebot.spawn.spear.elytra:
+    description: Allows spawning Spear Elytra PvP bots.
+    default: true
+
+  practicebot.spawn.cart:
+    description: Allows spawning Cart PvP bots.
+    default: true
+
+  practicebot.spawn.cart.elytra:
+    description: Allows spawning Elytra Cart PvP bots.
     default: true
 
   practicebot.admin:

@@ -10,7 +10,7 @@ description: >
 website: https://github.com/THEMPGUYAlt
 
 depend: [Citizens]
-softdepend: [PlaceholderAPI]
+softdepend: [PlaceholderAPI, WindChargeReset, FastCrystals]
 
 commands:
   spawnbot:

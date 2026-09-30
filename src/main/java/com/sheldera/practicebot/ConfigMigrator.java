@@ -11,7 +11,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public final class ConfigMigrator {
-    private static final int CURRENT_VERSION = 4;
+    private static final int CURRENT_VERSION = 5;
     private static final int CURRENT_INVENTORY_VERSION = 2;
 
     private ConfigMigrator() {
@@ -64,6 +64,8 @@ public final class ConfigMigrator {
         defaults.put("tactics.humanization.ping.min-ms", 35);
         defaults.put("tactics.humanization.ping.max-ms", 180);
         defaults.put("tactics.humanization.ping.jitter-ms", 8);
+        defaults.put("tactics.humanization.ping.drift-ms", 18);
+        defaults.put("tactics.humanization.ping.drift-interval-ms", 7000L);
         defaults.put("tactics.humanization.ping.action-latency-fraction", 0.35D);
 
         defaults.put("tactics.humanization.reaction.min-ms", 85.0D);
@@ -71,6 +73,8 @@ public final class ConfigMigrator {
 
         defaults.put("tactics.humanization.aim.max-degrees-per-update", 24.0D);
         defaults.put("tactics.humanization.aim.jitter-degrees", 0.6D);
+        defaults.put("tactics.humanization.aim.lead-ping-factor", 0.65D);
+        defaults.put("tactics.humanization.aim.target-offset", 0.10D);
 
         defaults.put("tactics.humanization.attack.min-delay-ms", 8.0D);
         defaults.put("tactics.humanization.attack.max-delay-ms", 42.0D);

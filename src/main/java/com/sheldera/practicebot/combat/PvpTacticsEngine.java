@@ -57,6 +57,10 @@ public final class PvpTacticsEngine {
         trait.tacticNextDecisionAt = now + nextDecisionDelay(trait);
         updateHumanAim(bot, target, trait);
 
+        if (tryPearlDisengage(bot, target, trait, now)) {
+            return;
+        }
+
         String profile = trait.getWeaponProfile();
 
         if (profile.startsWith("mace") || profile.startsWith("spear")) {
@@ -99,6 +103,78 @@ public final class PvpTacticsEngine {
 
     public boolean fastCrystalsDetected() {
         return environment.isFastCrystalsEnabled();
+    }
+
+    private boolean tryPearlDisengage(
+        Player bot,
+        Player target,
+        BotTrait trait,
+        long now
+    ) {
+        if (!plugin.getConfig().getBoolean("tactics.pearl.enabled", true)) {
+            return false;
+        }
+
+        if (now < trait.tacticCooldownUntil) {
+            return false;
+        }
+
+        Attribute maxHealth = Attribute.GENERIC_MAX_HEALTH;
+        var maxHealthAttribute = bot.getAttribute(maxHealth);
+        double maxHealthValue = maxHealthAttribute == null ? 20.0D : maxHealthAttribute.getValue();
+        double healthRatio = maxHealthValue <= 0.0D ? 1.0D : bot.getHealth() / maxHealthValue;
+
+        if (healthRatio > plugin.getConfig().getDouble(
+            "tactics.pearl.low-health-threshold", 0.35D
+        )) {
+            return false;
+        }
+
+        double distance = bot.getLocation().distance(target.getLocation());
+        if (distance < plugin.getConfig().getDouble(
+            "tactics.pearl.min-distance", 2.5D
+        ) || distance > plugin.getConfig().getDouble(
+            "tactics.pearl.max-distance", 12.0D
+        )) {
+            return false;
+        }
+
+        if (ThreadLocalRandom.current().nextDouble(100.0D) >= plugin.getConfig().getDouble(
+            "tactics.pearl.chance-percent", 45.0D
+        )) {
+            return false;
+        }
+
+        ItemStack pearl = find(bot, Material.ENDER_PEARL);
+        if (pearl == null || pearl.getAmount() <= 0) {
+            return false;
+        }
+
+        Vector away = bot.getLocation().toVector()
+            .subtract(target.getLocation().toVector());
+        away.setY(0.12D);
+
+        if (away.lengthSquared() < 1.0E-5D) {
+            return false;
+        }
+
+        away.normalize();
+
+        try {
+            bot.launchProjectile(EnderPearl.class, away);
+        } catch (Throwable ex) {
+            plugin.debugLog(() -> "Pearl disengage failed: " + ex.getMessage());
+            return false;
+        }
+
+        pearl.setAmount(pearl.getAmount() - 1);
+
+        trait.lastTactic = "pearl-disengage";
+        trait.tacticCooldownUntil = now + plugin.getConfig().getLong(
+            "tactics.pearl.cooldown-ms", 7000L
+        );
+
+        return true;
     }
 
     private void initializeLatencyProfile(BotTrait trait) {

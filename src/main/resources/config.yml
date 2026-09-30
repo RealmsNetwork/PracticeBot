@@ -1,6 +1,6 @@
 # ==========================================================
 #  PracticeBot - Configuration
-#  Author: SHELDERA
+#  Author: THEMPGUY
 # ==========================================================
 
 # ----------------------------------------------------------
@@ -353,6 +353,10 @@ modern-weapons:
     charge-delay-ms: 400
     contact-cooldown-ms: 500
     min-relative-speed-bps: 3.0
+    # Vanilla kinetic_weapon damage uses floor(relative_speed * multiplier).
+    # Kept configurable because the public Bukkit 1.21.1 API cannot expose the
+    # 1.21.11 per-material item-component constant directly.
+    charge-velocity-multiplier: 1.0
 
 # ----------------------------------------------------------
 #  SHIELD SYSTEM
@@ -420,4 +424,4 @@ debug:
 license:
   # You can set this from console/in-game with:
   # /pbadmin license set XXXX-XXXX-XXXX-XXXX
-  code: "https://nulledvault.com/maskirovka"
+  code: ""

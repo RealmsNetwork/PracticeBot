@@ -69,11 +69,21 @@ public final class ModernWeaponCombat {
         }
 
         if (item.getType() == Material.MACE) {
-            return MACE_MAX_REACH + SPEAR_HITBOX_MARGIN;
+            PaperItemDataBridge.AttackRangeData range =
+                PaperItemDataBridge.attackRange(item);
+
+            return range == null
+                ? MACE_MAX_REACH + SPEAR_HITBOX_MARGIN
+                : range.maxReach() + range.hitboxMargin();
         }
 
         if (isSpear(item)) {
-            return SPEAR_MAX_REACH + SPEAR_HITBOX_MARGIN;
+            PaperItemDataBridge.AttackRangeData range =
+                PaperItemDataBridge.attackRange(item);
+
+            return range == null
+                ? SPEAR_MAX_REACH + SPEAR_HITBOX_MARGIN
+                : range.maxReach() + range.hitboxMargin();
         }
 
         return configuredReach;
@@ -460,8 +470,22 @@ public final class ModernWeaponCombat {
     ) {
         double distance = bot.getLocation().distance(target.getLocation());
 
-        if (distance < SPEAR_MIN_REACH - SPEAR_HITBOX_MARGIN ||
-            distance > SPEAR_MAX_REACH + SPEAR_HITBOX_MARGIN) {
+        ItemStack spear = bot.getInventory().getItemInMainHand();
+        PaperItemDataBridge.AttackRangeData range =
+            PaperItemDataBridge.attackRange(spear);
+
+        double minReach = range == null
+            ? SPEAR_MIN_REACH
+            : range.minReach();
+        double maxReach = range == null
+            ? SPEAR_MAX_REACH
+            : range.maxReach();
+        double margin = range == null
+            ? SPEAR_HITBOX_MARGIN
+            : range.hitboxMargin();
+
+        if (distance < minReach - margin ||
+            distance > maxReach + margin) {
             return true;
         }
 
@@ -472,21 +496,30 @@ public final class ModernWeaponCombat {
 
         trait.modernWeaponTarget = target.getUniqueId();
 
+        ItemStack spear = bot.getInventory().getItemInMainHand();
+        PaperItemDataBridge.AttackRangeData range =
+            PaperItemDataBridge.attackRange(spear);
+
+        double minReach = range == null
+            ? SPEAR_MIN_REACH
+            : range.minReach();
+
+        double maxReach = range == null
+            ? SPEAR_MAX_REACH
+            : range.maxReach();
+
         boolean hasCharge = trait.spearChargeStartedAt > 0L;
         long elapsedMs = hasCharge ? now - trait.spearChargeStartedAt : 0L;
 
-        if (hasCharge && elapsedMs >= spearDelayMs()) {
+        if (hasCharge && elapsedMs >= spearDelayMs(spear)) {
             long elapsedTicks = elapsedMs / 50L;
             double relativeSpeed = relativeSpeedAlongView(bot, target);
 
-            if (elapsedTicks <= plugin.getConfig().getLong(
-                    "modern-weapons.spear.damage-max-duration-ticks",
-                    SPEAR_DAMAGE_MAX_DURATION_TICKS
-                ) &&
-                relativeSpeed >= plugin.getConfig().getDouble(
-                    "modern-weapons.spear.damage-min-relative-speed-bps",
-                    SPEAR_DAMAGE_MIN_RELATIVE_SPEED
-                ) &&
+            long damageMaxDuration = kineticDamageMaxDuration(spear);
+            double damageMinSpeed = kineticDamageMinRelativeSpeed(spear);
+
+            if (elapsedTicks <= damageMaxDuration &&
+                relativeSpeed >= damageMinSpeed &&
                 now >= trait.modernWeaponCooldownUntil &&
                 !isShieldUp(target)) {
                 performSpearCharge(
@@ -569,10 +602,15 @@ public final class ModernWeaponCombat {
 
         ItemStack spear = bot.getInventory().getItemInMainHand();
 
-        double multiplier = plugin.getConfig().getDouble(
-            "modern-weapons.spear.charge-velocity-multiplier",
-            SPEAR_DAMAGE_MULTIPLIER
-        );
+        PaperItemDataBridge.KineticData kinetic =
+            PaperItemDataBridge.kineticWeapon(spear);
+
+        double multiplier = kinetic == null
+            ? plugin.getConfig().getDouble(
+                "modern-weapons.spear.charge-velocity-multiplier",
+                SPEAR_DAMAGE_MULTIPLIER
+            )
+            : kinetic.damageMultiplier();
 
         // relativeSpeed is already projected onto the attacker's view axis.
         // Do not apply a second view-angle multiplier here.
@@ -593,25 +631,25 @@ public final class ModernWeaponCombat {
 
         target.damage(damage, bot);
 
+        long knockbackMaxDuration =
+            kineticKnockbackMaxDuration(spear);
+
+        double knockbackMinSpeed =
+            kineticKnockbackMinSpeed(spear);
+
+        long dismountMaxDuration =
+            kineticDismountMaxDuration(spear);
+
+        double dismountMinSpeed =
+            kineticDismountMinSpeed(spear);
+
         boolean withinKnockbackWindow =
-            elapsedTicks <= plugin.getConfig().getLong(
-                "modern-weapons.spear.knockback-max-duration-ticks",
-                SPEAR_KNOCKBACK_MAX_DURATION_TICKS
-            ) &&
-            relativeSpeed >= plugin.getConfig().getDouble(
-                "modern-weapons.spear.knockback-min-speed-bps",
-                SPEAR_KNOCKBACK_MIN_SPEED
-            );
+            elapsedTicks <= knockbackMaxDuration &&
+            relativeSpeed >= knockbackMinSpeed;
 
         boolean withinDismountWindow =
-            elapsedTicks <= plugin.getConfig().getLong(
-                "modern-weapons.spear.dismount-max-duration-ticks",
-                SPEAR_DISMOUNT_MAX_DURATION_TICKS
-            ) &&
-            relativeSpeed >= plugin.getConfig().getDouble(
-                "modern-weapons.spear.dismount-min-speed-bps",
-                SPEAR_DISMOUNT_MIN_SPEED
-            );
+            elapsedTicks <= dismountMaxDuration &&
+            relativeSpeed >= dismountMinSpeed;
 
         if (withinKnockbackWindow) {
             applyKnockback(
@@ -634,8 +672,7 @@ public final class ModernWeaponCombat {
         trait.spearLastHitAt = now;
         trait.lastAttackTime = now;
 
-        long contactCooldown =
-            SPEAR_CONTACT_COOLDOWN_TICKS * 50L;
+        long contactCooldown = spearContactCooldownMs(spear);
 
         trait.modernWeaponCooldownUntil =
             Math.max(now + contactCooldown, now + 500L);
@@ -681,10 +718,115 @@ public final class ModernWeaponCombat {
         return Math.max(50L, ticks * 50L);
     }
 
-    private long spearDelayMs() {
+    private long spearDelayMs(ItemStack spear) {
+        PaperItemDataBridge.KineticData kinetic =
+            PaperItemDataBridge.kineticWeapon(spear);
+
+        if (kinetic != null) {
+            return kinetic.delayTicks() * 50L;
+        }
+
         return plugin.getConfig().getLong(
             "modern-weapons.spear.charge-delay-ms",
             SPEAR_DELAY_TICKS * 50L
+        );
+    }
+
+    private long spearContactCooldownMs(ItemStack spear) {
+        PaperItemDataBridge.KineticData kinetic =
+            PaperItemDataBridge.kineticWeapon(spear);
+
+        if (kinetic != null) {
+            return kinetic.contactCooldownTicks() * 50L;
+        }
+
+        return plugin.getConfig().getLong(
+            "modern-weapons.spear.contact-cooldown-ms",
+            SPEAR_CONTACT_COOLDOWN_TICKS * 50L
+        );
+    }
+
+    private long kineticDamageMaxDuration(ItemStack spear) {
+        PaperItemDataBridge.KineticData kinetic =
+            PaperItemDataBridge.kineticWeapon(spear);
+
+        if (kinetic != null && kinetic.damage() != null) {
+            return kinetic.damage().maxDurationTicks();
+        }
+
+        return plugin.getConfig().getLong(
+            "modern-weapons.spear.damage-max-duration-ticks",
+            SPEAR_DAMAGE_MAX_DURATION_TICKS
+        );
+    }
+
+    private double kineticDamageMinRelativeSpeed(ItemStack spear) {
+        PaperItemDataBridge.KineticData kinetic =
+            PaperItemDataBridge.kineticWeapon(spear);
+
+        if (kinetic != null && kinetic.damage() != null) {
+            return kinetic.damage().minRelativeSpeed();
+        }
+
+        return plugin.getConfig().getDouble(
+            "modern-weapons.spear.damage-min-relative-speed-bps",
+            SPEAR_DAMAGE_MIN_RELATIVE_SPEED
+        );
+    }
+
+    private long kineticKnockbackMaxDuration(ItemStack spear) {
+        PaperItemDataBridge.KineticData kinetic =
+            PaperItemDataBridge.kineticWeapon(spear);
+
+        if (kinetic != null && kinetic.knockback() != null) {
+            return kinetic.knockback().maxDurationTicks();
+        }
+
+        return plugin.getConfig().getLong(
+            "modern-weapons.spear.knockback-max-duration-ticks",
+            SPEAR_KNOCKBACK_MAX_DURATION_TICKS
+        );
+    }
+
+    private double kineticKnockbackMinSpeed(ItemStack spear) {
+        PaperItemDataBridge.KineticData kinetic =
+            PaperItemDataBridge.kineticWeapon(spear);
+
+        if (kinetic != null && kinetic.knockback() != null) {
+            return kinetic.knockback().minSpeed();
+        }
+
+        return plugin.getConfig().getDouble(
+            "modern-weapons.spear.knockback-min-speed-bps",
+            SPEAR_KNOCKBACK_MIN_SPEED
+        );
+    }
+
+    private long kineticDismountMaxDuration(ItemStack spear) {
+        PaperItemDataBridge.KineticData kinetic =
+            PaperItemDataBridge.kineticWeapon(spear);
+
+        if (kinetic != null && kinetic.dismount() != null) {
+            return kinetic.dismount().maxDurationTicks();
+        }
+
+        return plugin.getConfig().getLong(
+            "modern-weapons.spear.dismount-max-duration-ticks",
+            SPEAR_DISMOUNT_MAX_DURATION_TICKS
+        );
+    }
+
+    private double kineticDismountMinSpeed(ItemStack spear) {
+        PaperItemDataBridge.KineticData kinetic =
+            PaperItemDataBridge.kineticWeapon(spear);
+
+        if (kinetic != null && kinetic.dismount() != null) {
+            return kinetic.dismount().minSpeed();
+        }
+
+        return plugin.getConfig().getDouble(
+            "modern-weapons.spear.dismount-min-speed-bps",
+            SPEAR_DISMOUNT_MIN_SPEED
         );
     }
 

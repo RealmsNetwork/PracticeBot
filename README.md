@@ -1,95 +1,92 @@
-<div align="center">
+# PracticeBot
 
-![PracticeBot Header](https://builtbybit.com/attachments/%E1%83%91%E1%83%90%E1%83%9C%E1%83%94%E1%83%A0%E1%83%98-png.1427846/?preset=fullr1)
+A Citizens-based Minecraft PvP training bot fork maintained by **THEMPGUY**.
 
-# ⚔️ PracticeBot | Advanced PvP Training Bot
+Repository: https://github.com/RealmsNetwork/PracticeBot  
+Author: THEMPGUY  
+Author URL: https://github.com/THEMPGUYAlt
 
-[![Java](https://img.shields.io/badge/Java-17%20%7C%2021-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)](https://www.oracle.com/java/)
-[![Minecraft](https://img.shields.io/badge/Minecraft-1.20%20--%201.21.x-35A853?style=for-the-badge&logo=minecraft&logoColor=white)](https://papermc.io/)
-[![Platform](https://img.shields.io/badge/Platform-Paper%20%7C%20Purpur%20%7C%20Folia-4285F4?style=for-the-badge)](https://papermc.io/)
-[![BuiltByBit](https://img.shields.io/badge/BuiltByBit-84918-0084FF?style=for-the-badge)](https://builtbybit.com/resources/practicebot-advanced-pvp-training-bot.84918/)
-[![GitBook](https://img.shields.io/badge/Documentation-GitBook-3884FF?style=for-the-badge&logo=gitbook&logoColor=white)](https://edelweiss-network.gitbook.io/practicebot)
-[![Discord](https://img.shields.io/badge/Discord-Join%20Support-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/XJXjbn5xpC)
+## Modern combat
 
----
+This fork keeps the existing Citizens player-NPC architecture and adds a dedicated modern weapon combat layer.
 
-![PracticeBot Overview](https://builtbybit.com/attachments/1-png.1418511/?preset=fullr1)
+- Normal 1.9+ sword PvP
+- Crystal PvP
+- Mace PvP for Java 1.21+
+- Spear PvP for Java 1.21.11+
+- Citizens player NPCs with navigation and server-side movement
+- Mace smash fall-distance damage and launch planning
+- Density, Breach and Wind Burst handling
+- Wind Charge-assisted Mace launches
+- Spear Jab and kinetic Charge behavior
+- Spear minimum reach and extended reach
+- Spear Lunge
+- Shield-aware attack decisions
+- Knockback, sprinting and movement state carried through Citizens traits
+- Per-bot weapon profile persistence
 
----
+Minecraft Java 1.21.11 describes the Spear as a two-attack weapon with Jab and Charge. Charge is a kinetic attack whose damage depends on relative velocity, view direction and weapon data. The same release adds custom attack ranges and the kinetic weapon data component. citeturn644803search0
 
-### 🎮 Supported Combat Modes & Live Showcases
+Minecraft's Mace smash uses fall distance with a falloff of 4 damage per block for the first 3 blocks, 2 for the next 5, then 1 per block beyond 8. Density adds 0.5 damage per fallen block per level, while Breach reduces armor effectiveness by 15% per level. Wind Burst launches the attacker upward after a smash. citeturn787360search5turn787360search2
 
-| UHC PvP Combat | Minecart / Cart Combat |
-|:---:|:---:|
-| ![UHC](https://builtbybit.com/attachments/uhc-pvp-bot-gif.1418576/?preset=fullr1) | ![CART](https://builtbybit.com/attachments/cart-pvp-bot-gif.1418578/?preset=fullr1) |
+## Commands
 
-| Crystal PvP (CPvP) | Mace Combat (1.21+) |
-|:---:|:---:|
-| ![CRYSTAL](https://builtbybit.com/attachments/crystal-pvp-bot-gif.1418579/?preset=fullr1) | ![MACE](https://builtbybit.com/attachments/mace-pvp-bot-gif.1418580/?preset=fullr1) |
+`/spawnbot normal`  
+`/spawnbot crystal`  
+`/spawnbot mace`  
+`/spawnbot spear`
 
-| Normal Sword PvP | Water Combat |
-|:---:|:---:|
-| ![NORMAL](https://builtbybit.com/attachments/normal-pvp-bot-gif.1418581/?preset=fullr1) | ![WATER](https://builtbybit.com/attachments/water-combat-gif.1418582/?preset=fullr1) |
+Spear spawning checks for the runtime Spear material, so the plugin still loads on older 1.21.x servers that do not yet expose 1.21.11 Spear materials.
 
----
+## Configuration
 
-### 🛠️ In-Game GUI Editor
+Default weapon kits are in `plugins/PracticeBot/default_inv.yml`.
 
-![In-Game GUI Editor](https://builtbybit.com/attachments/in-game-gui-editor-gif.1418637/?preset=fullr1)
+Modern AI tuning is in `plugins/PracticeBot/config.yml` under `modern-weapons`.
 
----
+The default Mace kit uses Density V, Wind Burst III and 16 Wind Charges. The default Spear kit uses a Netherite Spear with Sharpness V and Lunge III.
 
-![Included](https://builtbybit.com/attachments/5-png.1418512/?preset=fullr1)
+The Spear charge velocity multiplier is configurable because the public release notes document the kinetic calculation model but do not expose every per-material item-component constant in Bukkit's older 1.21.1 compile API. The bot therefore uses the documented kinetic formula while keeping that multiplier server-configurable.
 
----
+## Build
 
-</div>
+Requirements:
 
-## 🌟 Why PracticeBot?
+- Java 21
+- Maven 3.9+
+- Paper/Purpur 1.21+
+- Citizens
 
-**PracticeBot** is more than a basic NPC that follows and attacks players. Every combat mode has its own equipment, movement, decisions, survival behavior, techniques, and configurable settings.
-
-<div align="center">
-
-![Human-Like Intelligence](https://builtbybit.com/attachments/description-01-human-like-intelligence-png.1418701/?preset=fullr1)
-
-![In-Game Management](https://builtbybit.com/attachments/description-02-in-game-management-png.1418702/?preset=fullr1)
-
-![Performance & Requirements](https://builtbybit.com/attachments/description-03-performance-requirements-png.1418703/?preset=fullr1)
-
----
-
-### 📖 [OPEN PRACTICEBOT DOCUMENTATION](https://edelweiss-network.gitbook.io/practicebot)
-
-*The official documentation contains installation instructions, license activation, commands, permissions, configuration options, GUI editing, templates, PlaceholderAPI placeholders, Developer API examples, and troubleshooting.*
-
----
-
-![Commands](https://builtbybit.com/attachments/description-04-basic-commands-png.1418704/?preset=fullr1)
-
-### 📋 [Commands & Permissions Guide](https://edelweiss-network.gitbook.io/practicebot/server-owner-guide/commands)
-
----
-
-[![Support](https://builtbybit.com/attachments/untitled-1-png.1418712/?preset=fullr1)](https://discord.gg/XJXjbn5xpC)
-
-### 💬 [JOIN THE PRACTICEBOT DISCORD](https://discord.gg/XJXjbn5xpC)
-
----
-
-### 💻 Build from Source (Maven)
+Build locally:
 
 ```bash
-# Clone the repository
-git clone https://github.com/bb99kra/PracticeBot-Source.git
-
-# Enter repository directory
-cd PracticeBot-Source
-
-# Build with Maven
-mvn clean package
+mvn -B clean test package
 ```
 
-The output JAR file will be generated in `target/PracticeBot-1.6.2.jar`.
+The JAR is generated under `target/`.
 
-</div>
+## GitHub Actions
+
+Every push and pull request runs the build/test workflow and stores the resulting plugin JAR as an Actions artifact.
+
+Pushing a tag matching `v*.*.*` runs the release workflow. It rebuilds and tests the plugin, uploads the JAR as an artifact, and publishes the JAR to a GitHub Release.
+
+Example:
+
+```bash
+git tag v1.7.0
+git push origin v1.7.0
+```
+
+## Compatibility
+
+- Mace: Java 1.21+
+- Spear: Java 1.21.11+
+- Java: 21
+- Citizens: use the Citizens build compatible with your server
+
+The Maven build still targets the existing Paper 1.21.1 API. Spear materials are resolved by runtime name rather than a compile-time 1.21.11 enum reference.
+
+## Notes
+
+Bukkit/Citizens does not provide one public API call that reproduces every internal vanilla fake-player interaction. Where the public API does not expose a direct weapon action, the modern combat layer uses the documented vanilla model and server-side motion/damage handling instead of treating Mace or Spear as renamed swords.

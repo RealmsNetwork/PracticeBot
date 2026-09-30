@@ -12,6 +12,7 @@ import java.util.Map;
 
 public final class ConfigMigrator {
     private static final int CURRENT_VERSION = 2;
+    private static final int CURRENT_INVENTORY_VERSION = 2;
 
     private ConfigMigrator() {
     }
@@ -146,6 +147,70 @@ public final class ConfigMigrator {
         plugin.getLogger().info(
             "Migrated config.yml from version " + current +
                 " to version " + CURRENT_VERSION +
+                " (" + changed + " paths updated)."
+        );
+
+        return true;
+    }
+
+    public static boolean migrateDefaultInventory(
+        PracticeBotPlugin plugin,
+        FileConfiguration inventory
+    ) {
+        if (inventory == null) {
+            return false;
+        }
+
+        int current = inventory.getInt(
+            "inventory-config-version", 1
+        );
+
+        if (current >= CURRENT_INVENTORY_VERSION) {
+            return false;
+        }
+
+        int changed = 0;
+
+        Map<String, Object> defaults = new LinkedHashMap<>();
+        defaults.put("inventory-config-version", CURRENT_INVENTORY_VERSION);
+        defaults.put("weapon.type", "sword");
+        defaults.put("weapon.mobility.firework-rockets", 24);
+        defaults.put("weapon.mace.density", 5);
+        defaults.put("weapon.mace.breach", 0);
+        defaults.put("weapon.mace.wind-burst", 3);
+        defaults.put("weapon.mace.wind-charges", 16);
+        defaults.put("weapon.spear.material", "netherite");
+        defaults.put("weapon.spear.sharpness", 5);
+        defaults.put("weapon.spear.lunge", 3);
+        defaults.put("weapon.cart.tnt-minecarts", 16);
+        defaults.put("weapon.cart.powered-rails", 16);
+        defaults.put("weapon.cart.rails", 32);
+        defaults.put("weapon.cart.arrows", 32);
+        defaults.put("weapon.cart.power", 5);
+        defaults.put("weapon.cart.punch", 2);
+
+        for (Map.Entry<String, Object> entry : defaults.entrySet()) {
+            if (!inventory.contains(entry.getKey())) {
+                inventory.set(entry.getKey(), entry.getValue());
+                changed++;
+            }
+        }
+
+        inventory.set(
+            "inventory-config-version",
+            CURRENT_INVENTORY_VERSION
+        );
+
+        if (changed == 0 && current != CURRENT_INVENTORY_VERSION) {
+            changed = 1;
+        }
+
+        plugin.saveDefaultInventoryConfig();
+
+        plugin.getLogger().info(
+            "Migrated default_inv.yml from version " +
+                current + " to version " +
+                CURRENT_INVENTORY_VERSION +
                 " (" + changed + " paths updated)."
         );
 

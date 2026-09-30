@@ -15,13 +15,15 @@ class ModernWeaponCombatTest {
 
    @Test
    void netheriteSpearChargeUsesVelocityMultiplier() {
-      assertEquals(6.7344,
-         ModernWeaponCombat.spearChargeDamage(5.0, 5.612, 1.20, 1.0), 0.0001);
+      assertEquals(6.0,
+         ModernWeaponCombat.spearChargeDamage(5.612, 1.20), 0.0001);
    }
 
    @Test
-   void spearChargeNeverDropsBelowBaseDamage() {
-      assertEquals(5.0,
-         ModernWeaponCombat.spearChargeDamage(5.0, 2.0, 1.20, 0.0), 1.0E-9);
+   void spearChargeFloorsTheKineticDamage() {
+      assertEquals(6.0,
+         ModernWeaponCombat.spearChargeDamage(5.612, 1.20), 1.0E-9);
+      assertEquals(0.0,
+         ModernWeaponCombat.spearChargeDamage(2.0, 1.20), 1.0E-9);
    }
 }

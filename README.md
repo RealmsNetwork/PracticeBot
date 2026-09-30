@@ -90,3 +90,8 @@ The Maven build still targets the existing Paper 1.21.1 API. Spear materials are
 ## Notes
 
 Bukkit/Citizens does not provide one public API call that reproduces every internal vanilla fake-player interaction. Where the public API does not expose a direct weapon action, the modern combat layer uses the documented vanilla model and server-side motion/damage handling instead of treating Mace or Spear as renamed swords.
+
+
+## 1.8.0 highlights
+
+This release adds the expanded modern PvP layer used by the fork: Elytra Mace/Spear profiles, server-aware damage, real per-bot simulated latency, low-health pearl disengage, Wind Charge Reset compatibility, FastCrystals-aware CPvP scheduling, optional Paper attribute-swap simulation, and Cart PvP equipment/controller support.

@@ -132,7 +132,7 @@ public final class ModernWeaponCombat {
 
         if (isSpear(item) &&
             trait.spearChargeStartedAt > 0L &&
-            now - trait.spearChargeStartedAt >= spearDelayMs()) {
+            now - trait.spearChargeStartedAt >= spearDelayMs(item)) {
             return now >= trait.modernWeaponCooldownUntil;
         }
 

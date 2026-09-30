@@ -300,7 +300,7 @@ public class j {
          return bow;
       }
 
-      if ("mace".equals(profile)) {
+      if (profile.startsWith("mace")) {
          ItemStack mace = new ItemStack(Material.MACE);
          int density = Math.max(0, this.ax.getDefaultInvConfig().getInt("weapon.mace.density", 5));
          int breach = Math.max(0, this.ax.getDefaultInvConfig().getInt("weapon.mace.breach", 0));
@@ -325,7 +325,7 @@ public class j {
          return mace;
       }
 
-      if ("spear".equals(profile)) {
+      if (profile.startsWith("spear")) {
          String configured = this.ax.getDefaultInvConfig().getString("weapon.spear.material", "netherite");
          String normalized = configured == null ? "NETHERITE" : configured.trim().toUpperCase(Locale.ROOT);
          if ("GOLD".equals(normalized)) normalized = "GOLDEN";

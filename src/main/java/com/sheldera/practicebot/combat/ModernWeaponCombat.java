@@ -634,7 +634,7 @@ public final class ModernWeaponCombat {
         }
     }
 
-    private double spearJabCooldownMs(Player bot) {
+    private long spearJabCooldownMs(Player bot) {
         String name = bot.getInventory().getItemInMainHand().getType().name();
 
         long ticks;
@@ -685,6 +685,15 @@ public final class ModernWeaponCombat {
                 Math.max(1.0D, itemAndOtherBonus)
             )
         );
+    }
+
+    private double itemAttackDamage(Player bot) {
+        AttributeInstance attribute =
+            bot.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE);
+
+        return attribute == null
+            ? 1.0D
+            : Math.max(1.0D, attribute.getValue());
     }
 
     private double attributeDamageBonus(Player bot) {

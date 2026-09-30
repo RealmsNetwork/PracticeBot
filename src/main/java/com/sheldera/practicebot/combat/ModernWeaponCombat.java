@@ -1013,7 +1013,7 @@ public final class ModernWeaponCombat {
         );
     }
 
-undefined    private void applyLunge(Player bot) {
+    private void applyLunge(Player bot) {
         int lunge = enchantLevel(
             bot.getInventory().getItemInMainHand(), "lunge"
         );

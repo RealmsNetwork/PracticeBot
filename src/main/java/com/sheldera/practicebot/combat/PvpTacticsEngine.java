@@ -439,7 +439,7 @@ public final class PvpTacticsEngine {
                 if (profile.startsWith("mace")) {
                     bot.setFallDistance(Math.max(
                         bot.getFallDistance(),
-                        plugin.getConfig().getDouble("tactics.elytra.mace-min-smash-fall", 2.0D)
+                        (float) plugin.getConfig().getDouble("tactics.elytra.mace-min-smash-fall", 2.0D)
                     ));
                 }
 

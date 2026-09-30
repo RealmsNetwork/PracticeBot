@@ -65,7 +65,6 @@ public final class CartPvpController {
                 return false;
             }
             cart = spawned;
-        }
         } catch (Exception ex) {
             plugin.debugLog(() -> "CartPvP minecart spawn failed: " + ex.getMessage());
             return false;

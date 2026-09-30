@@ -69,10 +69,11 @@ public final class PvpTacticsEngine {
             if (tryWindChargeReset(bot, target, trait, now)) {
                 return;
             }
+        }
 
-            if (tryElytraApproach(bot, target, trait, now, profile)) {
-                return;
-            }
+        if (profile.endsWith("_elytra") &&
+            tryElytraApproach(bot, target, trait, now, profile)) {
+            return;
         }
 
         if ("cart".equals(profile) || "cart_elytra".equals(profile)) {
@@ -517,13 +518,24 @@ public final class PvpTacticsEngine {
                 if (profile.startsWith("mace")) {
                     bot.setFallDistance(Math.max(
                         bot.getFallDistance(),
-                        (float) plugin.getConfig().getDouble("tactics.elytra.mace-min-smash-fall", 2.0D)
+                        (float) plugin.getConfig().getDouble(
+                            "tactics.elytra.mace-min-smash-fall", 2.0D
+                        )
                     ));
+                } else if (profile.startsWith("spear")) {
+                    trait.spearChargeStartedAt = now -
+                        plugin.getConfig().getLong(
+                            "modern-weapons.spear.charge-delay-ms", 400L
+                        );
                 }
 
-                trait.lastTactic = profile.startsWith("mace")
-                    ? "elytra-mace-dive"
-                    : "elytra-spear-dive";
+                if (profile.startsWith("mace")) {
+                    trait.lastTactic = "elytra-mace-dive";
+                } else if (profile.startsWith("spear")) {
+                    trait.lastTactic = "elytra-spear-dive";
+                } else {
+                    trait.lastTactic = "elytra-cart-dive";
+                }
             }
         }
 

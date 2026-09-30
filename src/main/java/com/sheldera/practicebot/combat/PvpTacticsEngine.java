@@ -181,21 +181,54 @@ public final class PvpTacticsEngine {
     }
 
     private void initializeLatencyProfile(BotTrait trait) {
-        if (trait.simulatedPingMs > 0) {
+        int min = Math.max(
+            0,
+            plugin.getConfig().getInt(
+                "tactics.humanization.ping.min-ms", 35
+            )
+        );
+        int max = Math.max(
+            min,
+            plugin.getConfig().getInt(
+                "tactics.humanization.ping.max-ms", 180
+            )
+        );
+
+        if (trait.simulatedPingMs <= 0) {
+            // Mean-of-two sampling creates a realistic concentration around the
+            // middle rather than producing the same number for every bot.
+            int a = ThreadLocalRandom.current().nextInt(min, max + 1);
+            int b = ThreadLocalRandom.current().nextInt(min, max + 1);
+            trait.simulatedPingMs =
+                Math.max(min, Math.min(max, (a + b) / 2));
+            trait.lastPingDriftAt = System.currentTimeMillis();
             return;
         }
 
-        int min = plugin.getConfig().getInt("tactics.humanization.ping.min-ms", 35);
-        int max = plugin.getConfig().getInt("tactics.humanization.ping.max-ms", 180);
+        long now = System.currentTimeMillis();
+        long driftInterval = plugin.getConfig().getLong(
+            "tactics.humanization.ping.drift-interval-ms", 7000L
+        );
 
-        min = Math.max(0, min);
-        max = Math.max(min, max);
+        if (driftInterval <= 0L ||
+            now - trait.lastPingDriftAt < driftInterval) {
+            return;
+        }
 
-        // Mean-of-two sampling creates more typical middle-range latency and fewer
-        // artificial extremes than a flat random distribution.
-        int a = ThreadLocalRandom.current().nextInt(min, max + 1);
-        int b = ThreadLocalRandom.current().nextInt(min, max + 1);
-        trait.simulatedPingMs = Math.max(min, Math.min(max, (a + b) / 2));
+        int drift = Math.max(
+            0,
+            plugin.getConfig().getInt(
+                "tactics.humanization.ping.drift-ms", 18
+            )
+        );
+
+        int delta = ThreadLocalRandom.current().nextInt(
+            -drift, drift + 1
+        );
+
+        trait.simulatedPingMs =
+            Math.max(min, Math.min(max, trait.simulatedPingMs + delta));
+        trait.lastPingDriftAt = now;
     }
 
     private long nextDecisionDelay(BotTrait trait) {
@@ -231,8 +264,33 @@ public final class PvpTacticsEngine {
     private void updateHumanAim(Player bot, Player target, BotTrait trait) {
         Location current = bot.getLocation();
 
-        Vector delta = target.getEyeLocation().toVector()
-            .subtract(bot.getEyeLocation().toVector());
+        double leadSeconds = Math.min(
+            0.30D,
+            Math.max(
+                0.04D,
+                (trait.simulatedPingMs / 1000.0D) *
+                    plugin.getConfig().getDouble(
+                        "tactics.humanization.aim.lead-ping-factor", 0.65D
+                    )
+            )
+        );
+
+        Vector predicted = target.getEyeLocation().toVector()
+            .add(target.getVelocity().clone().multiply(leadSeconds));
+
+        // Human aim is not perfectly centered. Small vertical/horizontal aim
+        // offsets represent real target tracking rather than a ray-lock.
+        double aimNoise = plugin.getConfig().getDouble(
+            "tactics.humanization.aim.target-offset", 0.10D
+        );
+
+        predicted.add(new Vector(
+            ThreadLocalRandom.current().nextDouble(-aimNoise, aimNoise),
+            ThreadLocalRandom.current().nextDouble(-aimNoise * 0.5D, aimNoise * 0.5D),
+            ThreadLocalRandom.current().nextDouble(-aimNoise, aimNoise)
+        ));
+
+        Vector delta = predicted.subtract(bot.getEyeLocation().toVector());
 
         if (delta.lengthSquared() < 1.0E-5D) {
             return;
@@ -295,10 +353,11 @@ public final class PvpTacticsEngine {
             "tactics.humanization.strafe-switch-ms", 380L
         );
 
-        if (now - trait.lastCartActionAt > switchEvery) {
+        if (now - trait.lastStrafeSwitchAt > switchEvery) {
             if (ThreadLocalRandom.current().nextDouble() < 0.22D) {
                 trait.strafeDirection *= -1;
             }
+            trait.lastStrafeSwitchAt = now;
         }
 
         Vector toTarget = target.getLocation().toVector()

@@ -142,6 +142,8 @@ public class BotTrait extends Trait {
    public long windChargeResetCooldownUntil = 0L;
    public long elytraFlightUntil = 0L;
    public long lastCartActionAt = 0L;
+   public long lastStrafeSwitchAt = 0L;
+   public long lastPingDriftAt = 0L;
    public long lastRocketBoostAt = 0L;
    public int strafeDirection = 1;
    public String lastTactic = "none";

@@ -1,4 +1,4 @@
-config-version: 4
+config-version: 5
 # ==========================================================
 #  PracticeBot - Configuration
 #  Author: THEMPGUY
@@ -373,6 +373,8 @@ tactics:
       min-ms: 35
       max-ms: 180
       jitter-ms: 8
+      drift-ms: 18
+      drift-interval-ms: 7000
       action-latency-fraction: 0.35
 
     reaction:
@@ -382,6 +384,8 @@ tactics:
     aim:
       max-degrees-per-update: 24.0
       jitter-degrees: 0.6
+      lead-ping-factor: 0.65
+      target-offset: 0.10
 
     attack:
       min-delay-ms: 8.0

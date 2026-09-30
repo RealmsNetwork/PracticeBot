@@ -125,6 +125,8 @@ public class PracticeBotPlugin extends JavaPlugin {
    }
 
    private void initializeConfiguration() {
+      this.saveDefaultConfig();
+      ConfigMigrator.migrate(this);
       this.config = new b(this);
       this.config.a();
       h.a(this);

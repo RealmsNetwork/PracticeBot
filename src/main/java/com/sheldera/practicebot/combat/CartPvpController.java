@@ -85,9 +85,6 @@ public final class CartPvpController {
             direction.getZ() * (speed + randomJitter)
         ));
 
-        cart.setExplosionSpeedFactor((float) plugin.getConfig().getDouble(
-            "tactics.cart-pvp.explosion-speed-factor", 1.0D
-        ));
 
         int fuse = (int) plugin.getConfig().getLong("tactics.cart-pvp.fuse-ticks", 45L);
         cart.setFuseTicks(Math.max(5, Math.min(200, fuse)));

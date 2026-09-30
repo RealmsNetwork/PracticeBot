@@ -5,7 +5,7 @@ import com.sheldera.practicebot.PracticeBotPlugin;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.Particle;
-import org.bukkit.PotionEffectType;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.Sound;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;

@@ -335,6 +335,26 @@ pvp:
 
 
 # ----------------------------------------------------------
+#  MODERN WEAPON AI
+# ----------------------------------------------------------
+modern-weapons:
+  mace:
+    # Native Minecraft smash damage is fall-distance based.
+    # The bot tries to create a safe launch window before dropping.
+    wind-charge-enabled: true
+    wind-charge-launch-height: 7.0
+    assisted-jump-without-wind-charge: true
+    launch-min-distance: 2.8
+    launch-max-distance: 4.5
+
+  spear:
+    # Java 1.21.11+ Spear supports Jab and a kinetic Charge.
+    charge-enabled: true
+    charge-delay-ms: 400
+    contact-cooldown-ms: 500
+    min-relative-speed-bps: 3.0
+
+# ----------------------------------------------------------
 #  SHIELD SYSTEM
 # ----------------------------------------------------------
 shield:

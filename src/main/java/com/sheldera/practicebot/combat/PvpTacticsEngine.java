@@ -466,11 +466,9 @@ public final class PvpTacticsEngine {
         }
 
         direction.normalize();
-        player.setRotation(player.getLocation().getYawForDirection(direction),
-            (float) Math.max(-90.0D, Math.min(
-                90.0D,
-                -Math.toDegrees(Math.asin(direction.getY()))
-            )));
+        Location view = player.getLocation().clone();
+        view.setDirection(direction);
+        player.setRotation(view.getYaw(), view.getPitch());
     }
 
     private ItemStack find(Player player, Material material) {

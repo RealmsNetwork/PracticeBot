@@ -40,8 +40,12 @@ leggings-material: netherite
 #
 #  type:
 #    sword - existing normal PvP
-#    mace  - Java 1.21+ Mace combat
-#    spear - Java 1.21.11+ Spear combat
+#    mace        - Java 1.21+ Mace combat
+#    spear       - Java 1.21.11+ Spear combat
+#    mace_elytra - Mace + Elytra / rocket aerial combat
+#    spear_elytra- Spear + Elytra aerial charge combat
+#    cart        - TNT minecart / Flame bow combat
+#    cart_elytra - Cart PvP + Elytra mobility
 # ----------------------------------------------------------
 weapon:
   type: sword
@@ -56,6 +60,17 @@ weapon:
     material: netherite
     sharpness: 5
     lunge: 3
+
+  mobility:
+    firework-rockets: 24
+
+  cart:
+    tnt-minecarts: 16
+    powered-rails: 16
+    rails: 32
+    arrows: 32
+    power: 5
+    punch: 2
 
 # ----------------------------------------------------------
 #  OFFHAND ITEM

@@ -477,9 +477,11 @@ public final class ModernWeaponCombat {
         double minReach = range == null
             ? SPEAR_MIN_REACH
             : range.minReach();
+
         double maxReach = range == null
             ? SPEAR_MAX_REACH
             : range.maxReach();
+
         double margin = range == null
             ? SPEAR_HITBOX_MARGIN
             : range.hitboxMargin();
@@ -495,18 +497,6 @@ public final class ModernWeaponCombat {
         }
 
         trait.modernWeaponTarget = target.getUniqueId();
-
-        ItemStack spear = bot.getInventory().getItemInMainHand();
-        PaperItemDataBridge.AttackRangeData range =
-            PaperItemDataBridge.attackRange(spear);
-
-        double minReach = range == null
-            ? SPEAR_MIN_REACH
-            : range.minReach();
-
-        double maxReach = range == null
-            ? SPEAR_MAX_REACH
-            : range.maxReach();
 
         boolean hasCharge = trait.spearChargeStartedAt > 0L;
         long elapsedMs = hasCharge ? now - trait.spearChargeStartedAt : 0L;
@@ -535,8 +525,6 @@ public final class ModernWeaponCombat {
             trait.spearChargeStartedAt = 0L;
         }
 
-        // Jab is a primary-action attack. Keep it grounded, and never use
-        // Lunge while gliding because vanilla explicitly disallows it.
         if (bot.isOnGround() &&
             now >= trait.modernWeaponCooldownUntil &&
             now - trait.lastAttackTime >= attackCooldownMs(bot)) {

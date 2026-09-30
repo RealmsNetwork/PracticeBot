@@ -1,13 +1,13 @@
 name: PracticeBot
 main: com.sheldera.practicebot.PracticeBotPlugin
-version: 1.6.2
+version: 1.7.0
 api-version: 1.21
-author: Sheldera
+author: THEMPGUY
 
 description: >
   A customizable PvP practice bot using Citizens.
 
-website: https://discord.gg/6y4P6ycubQ
+website: https://github.com/THEMPGUYAlt
 
 depend: [Citizens]
 softdepend: [PlaceholderAPI]
@@ -15,7 +15,7 @@ softdepend: [PlaceholderAPI]
 commands:
   spawnbot:
     description: Spawn your personal PvP bot.
-    usage: "/spawnbot [normal|crystal]"
+    usage: "/spawnbot [normal|crystal|mace|spear]"
     aliases: [bot]
 
   practicebot:
@@ -43,6 +43,14 @@ permissions:
 
   practicebot.spawn.cpvp:
     description: Allows spawning Crystal PvP bots.
+    default: true
+
+  practicebot.spawn.mace:
+    description: Allows spawning Mace PvP bots.
+    default: true
+
+  practicebot.spawn.spear:
+    description: Allows spawning Spear PvP bots.
     default: true
 
   practicebot.admin:

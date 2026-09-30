@@ -7,6 +7,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.minecart.ExplosiveMinecart;
@@ -50,6 +51,11 @@ public final class CartPvpController {
             return false;
         }
 
+        ItemStack minecart = find(bot, Material.TNT_MINECART);
+        if (minecart == null || minecart.getAmount() <= 0) {
+            return false;
+        }
+
         World world = bot.getWorld();
         Location spawn = rail.getLocation().add(0.5D, 0.05D, 0.5D);
         ExplosiveMinecart cart;
@@ -59,6 +65,7 @@ public final class CartPvpController {
                 return false;
             }
             cart = spawned;
+        }
         } catch (Exception ex) {
             plugin.debugLog(() -> "CartPvP minecart spawn failed: " + ex.getMessage());
             return false;
@@ -88,6 +95,9 @@ public final class CartPvpController {
 
         int fuse = (int) plugin.getConfig().getLong("tactics.cart-pvp.fuse-ticks", 45L);
         cart.setFuseTicks(Math.max(5, Math.min(200, fuse)));
+
+        minecart.setAmount(minecart.getAmount() - 1);
+
         try {
             cart.ignite();
         } catch (Throwable ignored) {
@@ -98,6 +108,15 @@ public final class CartPvpController {
         trait.tacticCooldownUntil = now + 700L;
         trait.lastTactic = "cart-pressure";
         return true;
+    }
+
+    private ItemStack find(Player player, Material material) {
+        for (ItemStack item : player.getInventory().getContents()) {
+            if (item != null && item.getType() == material && item.getAmount() > 0) {
+                return item;
+            }
+        }
+        return null;
     }
 
     private Block findLaunchRail(Player bot, Player target) {

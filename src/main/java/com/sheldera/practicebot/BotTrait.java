@@ -235,6 +235,7 @@ public class BotTrait extends Trait {
       this.spearChargeStartedAt = 0L;
       this.spearLastHitAt = 0L;
       this.modernWeaponTarget = null;
+      this.simulatedPingMs = 0;
       this.tacticNextDecisionAt = 0L;
       this.tacticCooldownUntil = 0L;
       this.windChargeResetCooldownUntil = 0L;

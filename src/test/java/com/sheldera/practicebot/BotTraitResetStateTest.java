@@ -1,6 +1,10 @@
 package com.sheldera.practicebot;
 
+import org.bukkit.Material;
+import org.bukkit.inventory.ItemStack;
 import org.junit.jupiter.api.Test;
+
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -15,11 +19,16 @@ class BotTraitResetStateTest {
         trait.maceLaunchStartedAt = 8000L;
         trait.maceLaunchActive = true;
         trait.maceWindChargePending = true;
+        trait.maceRestoreWeapon = new ItemStack(Material.MACE);
         trait.maceRestoreAt = 7000L;
         trait.maceAttemptedThisFall = true;
         trait.maceMissThisAttack = true;
+        trait.maceMissOffsetDegrees = 7.5D;
+        trait.maceLaunchOriginY = 90.0D;
+        trait.macePeakY = 100.0D;
         trait.spearChargeStartedAt = 6000L;
         trait.spearLastHitAt = 5000L;
+        trait.modernWeaponTarget = UUID.randomUUID();
         trait.simulatedPingMs = 145;
         trait.tacticNextDecisionAt = 4000L;
         trait.tacticCooldownUntil = 3000L;
@@ -41,6 +50,9 @@ class BotTraitResetStateTest {
         assertEquals(0L, trait.maceRestoreAt);
         assertFalse(trait.maceAttemptedThisFall);
         assertFalse(trait.maceMissThisAttack);
+        assertEquals(0.0D, trait.maceMissOffsetDegrees);
+        assertEquals(0.0D, trait.maceLaunchOriginY);
+        assertEquals(0.0D, trait.macePeakY);
         assertEquals(0L, trait.spearChargeStartedAt);
         assertEquals(0L, trait.spearLastHitAt);
         assertNull(trait.modernWeaponTarget);

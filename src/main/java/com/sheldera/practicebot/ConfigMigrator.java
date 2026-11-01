@@ -11,7 +11,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public final class ConfigMigrator {
-    private static final int CURRENT_VERSION = 6;
+    private static final int CURRENT_VERSION = 7;
     private static final int CURRENT_INVENTORY_VERSION = 3;
 
     private ConfigMigrator() {
@@ -49,6 +49,36 @@ public final class ConfigMigrator {
         defaults.put("modern-weapons.mace.target-lead-seconds", 0.08D);
         defaults.put("modern-weapons.mace.aim-max-degrees-per-tick", 32.0D);
         defaults.put("modern-weapons.mace.aim-jitter-degrees", 0.15D);
+
+        String[] maceDifficultyLevels = {
+            "EASY", "NORMAL", "HARD", "EXPERT", "HACKER", "MASTER", "NIGHTMARE"
+        };
+        double[][] maceDifficultyDefaults = {
+            {32.0D, 10.0D, 0.0D, 8.0D, 1.2D},
+            {25.0D, 9.0D, 0.02D, 11.0D, 0.95D},
+            {18.0D, 7.5D, 0.04D, 15.0D, 0.7D},
+            {13.0D, 6.5D, 0.05D, 20.0D, 0.5D},
+            {9.0D, 5.5D, 0.06D, 24.0D, 0.35D},
+            {5.0D, 4.0D, 0.07D, 29.0D, 0.2D},
+            {2.0D, 3.0D, 0.08D, 32.0D, 0.15D}
+        };
+        String[] maceDifficultySettings = {
+            "miss-chance-percent",
+            "miss-offset-degrees",
+            "target-lead-seconds",
+            "aim-max-degrees-per-tick",
+            "aim-jitter-degrees"
+        };
+
+        for (int i = 0; i < maceDifficultyLevels.length; i++) {
+            for (int j = 0; j < maceDifficultySettings.length; j++) {
+                defaults.put(
+                    "modern-weapons.mace.difficulty-levels." +
+                        maceDifficultyLevels[i] + "." + maceDifficultySettings[j],
+                    maceDifficultyDefaults[i][j]
+                );
+            }
+        }
 
         defaults.put("modern-weapons.spear.charge-enabled", true);
         defaults.put("modern-weapons.spear.charge-delay-ms", 400L);

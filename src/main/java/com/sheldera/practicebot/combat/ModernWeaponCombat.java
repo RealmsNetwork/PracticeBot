@@ -315,7 +315,7 @@ public final class ModernWeaponCombat {
             MaceDifficultyTuning.getDouble(plugin, trait, "miss-chance-percent", 10.0D);
         double missOffset = Math.max(0.0D, MaceDifficultyTuning.getDouble(plugin, trait, "miss-offset-degrees", 6.0D));
         trait.maceMissOffsetDegrees = trait.maceMissThisAttack
-            ? ThreadLocalRandom.current().nextDouble(-missOffset, missOffset) : 0.0D;
+            ? randomSigned(missOffset) : 0.0D;
         trait.maceLaunchStartedAt = now;
         trait.maceLaunchOriginY = bot.getLocation().getY();
         trait.macePeakY = bot.getLocation().getY();
@@ -369,8 +369,8 @@ public final class ModernWeaponCombat {
             yaw += (float) trait.maceMissOffsetDegrees;
         } else {
             float jitter = (float) MaceDifficultyTuning.getDouble(plugin, trait, "aim-jitter-degrees", 0.15D);
-            yaw += (float) ThreadLocalRandom.current().nextDouble(-jitter, jitter);
-            pitch += (float) ThreadLocalRandom.current().nextDouble(-jitter, jitter);
+            yaw += (float) randomSigned(jitter);
+            pitch += (float) randomSigned(jitter);
         }
         bot.setRotation(yaw, Math.max(-90.0F, Math.min(90.0F, pitch)));
     }
@@ -1574,6 +1574,13 @@ public final class ModernWeaponCombat {
         }
 
         return maxY;
+    }
+
+    private static double randomSigned(double magnitude) {
+        double safeMagnitude = Math.max(0.0D, magnitude);
+        return safeMagnitude == 0.0D
+            ? 0.0D
+            : ThreadLocalRandom.current().nextDouble(-safeMagnitude, safeMagnitude);
     }
 
     private boolean isElytraProfile(BotTrait trait) {

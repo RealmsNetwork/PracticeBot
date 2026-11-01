@@ -1,6 +1,7 @@
 package com.sheldera.practicebot.combat;
 
 import com.sheldera.practicebot.BotTrait;
+import com.sheldera.practicebot.TemplateDifficultyTuning;
 import com.sheldera.practicebot.MaceDifficultyTuning;
 import com.sheldera.practicebot.PracticeBotPlugin;
 import org.bukkit.GameMode;
@@ -1159,21 +1160,18 @@ public final class ModernWeaponCombat {
     }
 
     private boolean humanMisplay(BotTrait trait, long now) {
-        double chance = plugin.getConfig().getDouble(
-            "tactics.humanization.mistake-chance-percent", 3.0D
-        );
+        double chance = TemplateDifficultyTuning.getDouble(plugin, trait, "mistake-chance-percent", 3.0D,
+            "tactics.humanization.mistake-chance-percent");
 
         if (chance <= 0.0D ||
             ThreadLocalRandom.current().nextDouble(100.0D) >= chance) {
             return false;
         }
 
-        long min = plugin.getConfig().getLong(
-            "tactics.humanization.mistake-delay-min-ms", 55L
-        );
-        long max = plugin.getConfig().getLong(
-            "tactics.humanization.mistake-delay-max-ms", 180L
-        );
+        long min = TemplateDifficultyTuning.getLong(plugin, trait, "mistake-delay-min-ms", 55L,
+            "tactics.humanization.mistake-delay-min-ms");
+        long max = TemplateDifficultyTuning.getLong(plugin, trait, "mistake-delay-max-ms", 180L,
+            "tactics.humanization.mistake-delay-max-ms");
 
         long delay = ThreadLocalRandom.current().nextLong(
             Math.max(0L, Math.min(min, max)),
@@ -1188,17 +1186,14 @@ public final class ModernWeaponCombat {
     private void applyHumanAttackDelay(BotTrait trait, long now) {
         int ping = Math.max(0, trait.simulatedPingMs);
 
-        double fraction = plugin.getConfig().getDouble(
-            "tactics.humanization.ping.action-latency-fraction", 0.35D
-        );
+        double fraction = TemplateDifficultyTuning.getDouble(plugin, trait, "ping-action-latency-fraction", 0.35D,
+            "tactics.humanization.ping.action-latency-fraction");
 
-        double min = plugin.getConfig().getDouble(
-            "tactics.humanization.attack.min-delay-ms", 8.0D
-        );
+        double min = TemplateDifficultyTuning.getDouble(plugin, trait, "attack-delay-min-ms", 8.0D,
+            "tactics.humanization.attack.min-delay-ms");
 
-        double max = plugin.getConfig().getDouble(
-            "tactics.humanization.attack.max-delay-ms", 42.0D
-        );
+        double max = TemplateDifficultyTuning.getDouble(plugin, trait, "attack-delay-max-ms", 42.0D,
+            "tactics.humanization.attack.max-delay-ms");
 
         double reaction = ThreadLocalRandom.current().nextDouble(
             Math.min(min, max),

@@ -122,3 +122,39 @@ settings:
 ```
 
 The Water profile equips a Riptide trident and water utility; Riptide only propels the player while wet. UHC natural regeneration is cancelled per bot, rather than changing the world's gamerule for every player.
+
+
+## Template-aware difficulty
+
+PracticeBot reads the difficulty and kit directly from template keys in the existing
+`<kit>_<difficulty>_<player>` format. The kit and tier are stored on the Citizens
+bot trait, so all templates use the same difficulty system without duplicating
+per-player tuning blocks.
+
+Supported tiers are `EASY`, `NORMAL`, `HARD`, `EXPERT`, `HACKER`,
+`MASTER`, and `NIGHTMARE`. This works with the existing template prefixes
+(`tank`, `axeandshield`, `nethpot`, `smpkit`, `diamondpot`, `bowpvp`,
+`beast`, `diasmp`, `cpvpffa`, and `cartpvp`) and future prefixes such as
+`macepvp`, `macerocket`, `spearelytra`, and `spearmace`.
+
+Difficulty values are resolved in this order:
+
+1. `template-difficulty.kits.<kit>.<tier>` for a kit-specific override.
+2. `template-difficulty.profiles.<profile>.<tier>` for NORMAL, CRYSTAL, CART,
+   MACE, SPEAR, UHC, or WATER behavior.
+3. `template-difficulty.defaults.<tier>` for shared reaction, simulated latency,
+   aim, movement, mistakes, attack delays, and pearl decisions.
+4. Existing config values as backward-compatible fallbacks.
+
+For example, an optional `template-difficulty.kits.bowpvp.EASY` section can
+change only Easy Bow PvP aim, while all other kits continue using the shared
+Easy values. New kit prefixes work automatically; no Java changes are required
+just to add another kit override.
+
+Mace retains its existing `modern-weapons.mace.difficulty-levels` settings as
+legacy fallbacks. Mace and Spear Elytra profiles and Cart PvP have additional
+per-tier movement/launch tuning. Vanilla Mace damage and Spear kinetic weapon
+thresholds are not changed by the difficulty system.
+
+Templates without a valid tier in their key (including direct `/spawnbot`
+spawns) fall back to their existing combat aggression setting.

@@ -488,9 +488,56 @@ public final class ModernWeaponCombat {
         return true;
     }
 
+    /**
+     * Ask the actual server-side player entity to attack. This is important for
+     * Mace combat: vanilla's attack pipeline owns smash damage, impact particles,
+     * sounds, knockback, enchantments, durability, and Wind Burst behavior.
+     *
+     * The project compiles against the older public Paper API, so resolve the
+     * CraftBukkit handle and its native attack(Entity) method reflectively.
+     */
+    private boolean invokeNativeMeleeAttack(Player bot, LivingEntity target) {
+        try {
+            Object botHandle = bot.getClass().getMethod("getHandle").invoke(bot);
+            Object targetHandle = target.getClass().getMethod("getHandle").invoke(target);
+            java.lang.reflect.Method attack = null;
+
+            for (java.lang.reflect.Method method : botHandle.getClass().getMethods()) {
+                if (!"attack".equals(method.getName()) ||
+                    method.getParameterCount() != 1 ||
+                    !method.getParameterTypes()[0].isInstance(targetHandle)) {
+                    continue;
+                }
+                attack = method;
+                break;
+            }
+
+            if (attack == null) {
+                plugin.debugLog(() -> "Native Mace attack unavailable: no compatible server attack(Entity) method");
+                return false;
+            }
+
+            attack.invoke(botHandle, targetHandle);
+            return true;
+        } catch (ReflectiveOperationException | RuntimeException ex) {
+            plugin.debugLog(() -> "Native Mace attack failed: " + ex.getClass().getSimpleName() +
+                ": " + ex.getMessage());
+            return false;
+        }
+    }
+
     private void performMaceHit(
         Player bot, Player target, BotTrait trait, long now
     ) {
+        if (invokeNativeMeleeAttack(bot, target)) {
+            plugin.addCombatTag(target);
+            trait.lastAttackTime = now;
+            trait.modernWeaponCooldownUntil = now + attackCooldownMs(bot);
+            applyHumanAttackDelay(trait, now);
+            return;
+        }
+
+        // Compatibility fallback for server forks that hide their native handle API.
         bot.swingMainHand();
 
         double damage = itemAttackDamage(bot);
@@ -520,9 +567,42 @@ public final class ModernWeaponCombat {
         double fallDistance,
         long now
     ) {
+        ItemStack mace = bot.getInventory().getItemInMainHand();
+        int windBurst = enchantLevel(mace, "wind_burst");
+
+        if (invokeNativeMeleeAttack(bot, target)) {
+            // Vanilla has already performed the full smash and reset fall distance.
+            // Track its native Wind Burst launch without applying a second launch.
+            plugin.addCombatTag(target);
+            if (windBurst > 0) {
+                trait.maceLaunchActive = true;
+                trait.maceWindChargePending = false;
+                trait.maceAttemptedThisFall = false;
+                trait.maceMissThisAttack = ThreadLocalRandom.current().nextDouble(100.0D) <
+                    MaceDifficultyTuning.getDouble(plugin, trait, "miss-chance-percent", 10.0D);
+                double missOffset = Math.max(0.0D,
+                    MaceDifficultyTuning.getDouble(plugin, trait, "miss-offset-degrees", 6.0D));
+                trait.maceMissOffsetDegrees = trait.maceMissThisAttack && missOffset > 0.0D
+                    ? ThreadLocalRandom.current().nextDouble(-missOffset, missOffset) : 0.0D;
+                trait.maceLaunchStartedAt = now;
+                trait.maceLaunchOriginY = bot.getLocation().getY();
+                trait.macePeakY = bot.getLocation().getY();
+                trait.lastTactic = "mace-wind-burst";
+            } else {
+                trait.maceLaunchActive = false;
+            }
+
+            trait.lastAttackTime = now;
+            trait.modernWeaponCooldownUntil = now + 300L;
+            trait.maceLaunchStartedAt = now;
+            applyHumanAttackDelay(trait, now);
+            return;
+        }
+
+        // Compatibility fallback for server forks that hide their native handle API.
         bot.swingMainHand();
 
-        ItemStack mace = bot.getInventory().getItemInMainHand();
+        mace = bot.getInventory().getItemInMainHand();
         int density = enchantLevel(mace, "density");
         int breach = enchantLevel(mace, "breach");
 

@@ -1,4 +1,4 @@
-config-version: 7
+config-version: 8
 # ==========================================================
 #  PracticeBot - Configuration
 #  Author: THEMPGUY
@@ -410,6 +410,334 @@ modern-weapons:
     # Kept configurable because the public Bukkit 1.21.1 API cannot expose the
     # 1.21.11 per-material item-component constant directly.
     charge-velocity-multiplier: 1.0
+
+# Template-key-based difficulty tuning shared by every kit.
+# The key format is <kit>_<difficulty>_<player>. Any kit prefix automatically
+# receives these tier defaults; optional per-kit overrides take precedence.
+template-difficulty:
+  defaults:
+    EASY:
+      ping-min-ms: 80
+      ping-max-ms: 160
+      ping-jitter-ms: 16
+      ping-drift-ms: 24
+      ping-drift-interval-ms: 5000
+      ping-action-latency-fraction: 0.60
+      reaction-min-ms: 220
+      reaction-max-ms: 360
+      aim-min-lead-seconds: 0.0
+      aim-lead-ping-factor: 0.0
+      aim-target-offset: 0.34
+      aim-max-degrees-per-update: 12.0
+      aim-jitter-degrees: 1.4
+      movement-enabled: true
+      movement-jitter: 0.008
+      strafe-switch-ms: 700
+      strafe-direction-change-chance: 0.14
+      mistake-chance-percent: 18.0
+      mistake-delay-min-ms: 70
+      mistake-delay-max-ms: 160
+      attack-delay-min-ms: 70.0
+      attack-delay-max-ms: 160.0
+      pearl-enabled: true
+      pearl-low-health-threshold: 0.28
+      pearl-min-distance: 4.0
+      pearl-max-distance: 10.0
+      pearl-chance-percent: 15.0
+      pearl-cooldown-ms: 10000
+    NORMAL:
+      ping-min-ms: 60
+      ping-max-ms: 130
+      ping-jitter-ms: 12
+      ping-drift-ms: 20
+      ping-drift-interval-ms: 6000
+      ping-action-latency-fraction: 0.52
+      reaction-min-ms: 180
+      reaction-max-ms: 300
+      aim-min-lead-seconds: 0.02
+      aim-lead-ping-factor: 0.25
+      aim-target-offset: 0.24
+      aim-max-degrees-per-update: 16.0
+      aim-jitter-degrees: 1.0
+      movement-enabled: true
+      movement-jitter: 0.011
+      strafe-switch-ms: 560
+      strafe-direction-change-chance: 0.17
+      mistake-chance-percent: 13.0
+      mistake-delay-min-ms: 50
+      mistake-delay-max-ms: 120
+      attack-delay-min-ms: 50.0
+      attack-delay-max-ms: 120.0
+      pearl-enabled: true
+      pearl-low-health-threshold: 0.30
+      pearl-min-distance: 3.5
+      pearl-max-distance: 11.0
+      pearl-chance-percent: 28.0
+      pearl-cooldown-ms: 8500
+    HARD:
+      ping-min-ms: 45
+      ping-max-ms: 100
+      ping-jitter-ms: 10
+      ping-drift-ms: 15
+      ping-drift-interval-ms: 6500
+      ping-action-latency-fraction: 0.45
+      reaction-min-ms: 140
+      reaction-max-ms: 230
+      aim-min-lead-seconds: 0.03
+      aim-lead-ping-factor: 0.35
+      aim-target-offset: 0.18
+      aim-max-degrees-per-update: 20.0
+      aim-jitter-degrees: 0.75
+      movement-enabled: true
+      movement-jitter: 0.014
+      strafe-switch-ms: 460
+      strafe-direction-change-chance: 0.20
+      mistake-chance-percent: 9.0
+      mistake-delay-min-ms: 35
+      mistake-delay-max-ms: 90
+      attack-delay-min-ms: 35.0
+      attack-delay-max-ms: 90.0
+      pearl-enabled: true
+      pearl-low-health-threshold: 0.33
+      pearl-min-distance: 3.0
+      pearl-max-distance: 12.0
+      pearl-chance-percent: 40.0
+      pearl-cooldown-ms: 7600
+    EXPERT:
+      ping-min-ms: 35
+      ping-max-ms: 85
+      ping-jitter-ms: 8
+      ping-drift-ms: 12
+      ping-drift-interval-ms: 7000
+      ping-action-latency-fraction: 0.40
+      reaction-min-ms: 110
+      reaction-max-ms: 185
+      aim-min-lead-seconds: 0.03
+      aim-lead-ping-factor: 0.45
+      aim-target-offset: 0.13
+      aim-max-degrees-per-update: 26.0
+      aim-jitter-degrees: 0.55
+      movement-enabled: true
+      movement-jitter: 0.017
+      strafe-switch-ms: 390
+      strafe-direction-change-chance: 0.23
+      mistake-chance-percent: 6.0
+      mistake-delay-min-ms: 25
+      mistake-delay-max-ms: 70
+      attack-delay-min-ms: 25.0
+      attack-delay-max-ms: 70.0
+      pearl-enabled: true
+      pearl-low-health-threshold: 0.35
+      pearl-min-distance: 2.5
+      pearl-max-distance: 13.0
+      pearl-chance-percent: 48.0
+      pearl-cooldown-ms: 7000
+    HACKER:
+      ping-min-ms: 25
+      ping-max-ms: 70
+      ping-jitter-ms: 7
+      ping-drift-ms: 10
+      ping-drift-interval-ms: 7500
+      ping-action-latency-fraction: 0.35
+      reaction-min-ms: 85
+      reaction-max-ms: 155
+      aim-min-lead-seconds: 0.03
+      aim-lead-ping-factor: 0.55
+      aim-target-offset: 0.09
+      aim-max-degrees-per-update: 32.0
+      aim-jitter-degrees: 0.40
+      movement-enabled: true
+      movement-jitter: 0.020
+      strafe-switch-ms: 320
+      strafe-direction-change-chance: 0.25
+      mistake-chance-percent: 3.0
+      mistake-delay-min-ms: 15
+      mistake-delay-max-ms: 55
+      attack-delay-min-ms: 15.0
+      attack-delay-max-ms: 55.0
+      pearl-enabled: true
+      pearl-low-health-threshold: 0.38
+      pearl-min-distance: 2.5
+      pearl-max-distance: 14.0
+      pearl-chance-percent: 55.0
+      pearl-cooldown-ms: 6500
+    MASTER:
+      ping-min-ms: 20
+      ping-max-ms: 60
+      ping-jitter-ms: 6
+      ping-drift-ms: 8
+      ping-drift-interval-ms: 8000
+      ping-action-latency-fraction: 0.30
+      reaction-min-ms: 65
+      reaction-max-ms: 125
+      aim-min-lead-seconds: 0.03
+      aim-lead-ping-factor: 0.60
+      aim-target-offset: 0.065
+      aim-max-degrees-per-update: 38.0
+      aim-jitter-degrees: 0.28
+      movement-enabled: true
+      movement-jitter: 0.022
+      strafe-switch-ms: 270
+      strafe-direction-change-chance: 0.28
+      mistake-chance-percent: 1.0
+      mistake-delay-min-ms: 8
+      mistake-delay-max-ms: 35
+      attack-delay-min-ms: 8.0
+      attack-delay-max-ms: 35.0
+      pearl-enabled: true
+      pearl-low-health-threshold: 0.40
+      pearl-min-distance: 2.5
+      pearl-max-distance: 15.0
+      pearl-chance-percent: 65.0
+      pearl-cooldown-ms: 6000
+    NIGHTMARE:
+      ping-min-ms: 15
+      ping-max-ms: 50
+      ping-jitter-ms: 5
+      ping-drift-ms: 7
+      ping-drift-interval-ms: 9000
+      ping-action-latency-fraction: 0.25
+      reaction-min-ms: 45
+      reaction-max-ms: 95
+      aim-min-lead-seconds: 0.03
+      aim-lead-ping-factor: 0.65
+      aim-target-offset: 0.04
+      aim-max-degrees-per-update: 45.0
+      aim-jitter-degrees: 0.18
+      movement-enabled: true
+      movement-jitter: 0.025
+      strafe-switch-ms: 230
+      strafe-direction-change-chance: 0.30
+      mistake-chance-percent: 0.5
+      mistake-delay-min-ms: 4
+      mistake-delay-max-ms: 20
+      attack-delay-min-ms: 4.0
+      attack-delay-max-ms: 20.0
+      pearl-enabled: true
+      pearl-low-health-threshold: 0.42
+      pearl-min-distance: 2.5
+      pearl-max-distance: 16.0
+      pearl-chance-percent: 75.0
+      pearl-cooldown-ms: 5500
+  profiles:
+    CART:
+      EASY:
+        cart-cooldown-ms: 6500
+        cart-min-distance: 6.5
+        cart-max-distance: 14.0
+        cart-launch-speed: 0.45
+        cart-fuse-ticks: 55
+        cart-rail-search-radius: 2
+        cart-followup-delay-ms: 1100
+        elytra-start-min-distance: 12.0
+        elytra-start-max-distance: 22.0
+        elytra-launch-y: 0.42
+        elytra-flight-window-ms: 2800
+        elytra-rocket-interval-ms: 950
+        elytra-dive-distance: 3.6
+        elytra-cart-dive-y: -0.70
+      NORMAL:
+        cart-cooldown-ms: 5500
+        cart-min-distance: 6.0
+        cart-max-distance: 15.0
+        cart-launch-speed: 0.55
+        cart-fuse-ticks: 52
+        cart-rail-search-radius: 3
+        cart-followup-delay-ms: 950
+        elytra-start-min-distance: 11.0
+        elytra-start-max-distance: 24.0
+        elytra-launch-y: 0.46
+        elytra-flight-window-ms: 3100
+        elytra-rocket-interval-ms: 850
+        elytra-dive-distance: 3.8
+        elytra-cart-dive-y: -0.76
+      HARD:
+        cart-cooldown-ms: 4500
+        cart-min-distance: 5.5
+        cart-max-distance: 16.0
+        cart-launch-speed: 0.62
+        cart-fuse-ticks: 50
+        cart-rail-search-radius: 4
+        cart-followup-delay-ms: 850
+        elytra-start-min-distance: 10.0
+        elytra-start-max-distance: 25.0
+        elytra-launch-y: 0.50
+        elytra-flight-window-ms: 3400
+        elytra-rocket-interval-ms: 780
+        elytra-dive-distance: 4.0
+        elytra-cart-dive-y: -0.80
+      EXPERT:
+        cart-cooldown-ms: 3800
+        cart-min-distance: 5.0
+        cart-max-distance: 17.0
+        cart-launch-speed: 0.70
+        cart-fuse-ticks: 48
+        cart-rail-search-radius: 5
+        cart-followup-delay-ms: 750
+        elytra-start-min-distance: 9.5
+        elytra-start-max-distance: 26.0
+        elytra-launch-y: 0.54
+        elytra-flight-window-ms: 3700
+        elytra-rocket-interval-ms: 720
+        elytra-dive-distance: 4.2
+        elytra-cart-dive-y: -0.84
+      HACKER:
+        cart-cooldown-ms: 3200
+        cart-min-distance: 5.0
+        cart-max-distance: 18.0
+        cart-launch-speed: 0.76
+        cart-fuse-ticks: 46
+        cart-rail-search-radius: 6
+        cart-followup-delay-ms: 700
+        elytra-start-min-distance: 9.0
+        elytra-start-max-distance: 27.0
+        elytra-launch-y: 0.57
+        elytra-flight-window-ms: 3900
+        elytra-rocket-interval-ms: 680
+        elytra-dive-distance: 4.3
+        elytra-cart-dive-y: -0.88
+      MASTER:
+        cart-cooldown-ms: 2800
+        cart-min-distance: 4.5
+        cart-max-distance: 20.0
+        cart-launch-speed: 0.82
+        cart-fuse-ticks: 44
+        cart-rail-search-radius: 6
+        cart-followup-delay-ms: 650
+        elytra-start-min-distance: 8.5
+        elytra-start-max-distance: 28.0
+        elytra-launch-y: 0.60
+        elytra-flight-window-ms: 4100
+        elytra-rocket-interval-ms: 640
+        elytra-dive-distance: 4.4
+        elytra-cart-dive-y: -0.92
+      NIGHTMARE:
+        cart-cooldown-ms: 2400
+        cart-min-distance: 4.0
+        cart-max-distance: 22.0
+        cart-launch-speed: 0.88
+        cart-fuse-ticks: 42
+        cart-rail-search-radius: 8
+        cart-followup-delay-ms: 600
+        elytra-start-min-distance: 8.0
+        elytra-start-max-distance: 30.0
+        elytra-launch-y: 0.63
+        elytra-flight-window-ms: 4300
+        elytra-rocket-interval-ms: 600
+        elytra-dive-distance: 4.5
+        elytra-cart-dive-y: -0.96
+  # Optional per-kit overrides are resolved before profile/default values.
+  # kits:
+  #   bowpvp:
+  #     EASY:
+  #       aim-target-offset: 0.45
+  #       aim-max-degrees-per-update: 9.0
+  #   macepvp:
+  #     EASY:
+  #       miss-chance-percent: 36.0
+  #   spearelytra:
+  #     EASY:
+  #       aim-target-offset: 0.38
 
 # ----------------------------------------------------------
 #  TACTICAL / HUMANIZATION SETTINGS

@@ -620,6 +620,127 @@ template-difficulty:
       pearl-chance-percent: 75.0
       pearl-cooldown-ms: 5500
   profiles:
+    MACE:
+      EASY:
+        elytra-start-min-distance: 12
+        elytra-start-max-distance: 22
+        elytra-launch-y: 0.42
+        elytra-flight-window-ms: 2800
+        elytra-rocket-interval-ms: 950
+        elytra-dive-distance: 3.6
+        elytra-mace-dive-y: -1.1
+      NORMAL:
+        elytra-start-min-distance: 11
+        elytra-start-max-distance: 24
+        elytra-launch-y: 0.46
+        elytra-flight-window-ms: 3100
+        elytra-rocket-interval-ms: 850
+        elytra-dive-distance: 3.8
+        elytra-mace-dive-y: -1.22
+      HARD:
+        elytra-start-min-distance: 10
+        elytra-start-max-distance: 25
+        elytra-launch-y: 0.5
+        elytra-flight-window-ms: 3400
+        elytra-rocket-interval-ms: 780
+        elytra-dive-distance: 4
+        elytra-mace-dive-y: -1.32
+      EXPERT:
+        elytra-start-min-distance: 9.5
+        elytra-start-max-distance: 26
+        elytra-launch-y: 0.54
+        elytra-flight-window-ms: 3700
+        elytra-rocket-interval-ms: 720
+        elytra-dive-distance: 4.2
+        elytra-mace-dive-y: -1.4
+      HACKER:
+        elytra-start-min-distance: 9
+        elytra-start-max-distance: 27
+        elytra-launch-y: 0.57
+        elytra-flight-window-ms: 3900
+        elytra-rocket-interval-ms: 680
+        elytra-dive-distance: 4.3
+        elytra-mace-dive-y: -1.45
+      MASTER:
+        elytra-start-min-distance: 8.5
+        elytra-start-max-distance: 28
+        elytra-launch-y: 0.6
+        elytra-flight-window-ms: 4100
+        elytra-rocket-interval-ms: 640
+        elytra-dive-distance: 4.4
+        elytra-mace-dive-y: -1.5
+      NIGHTMARE:
+        elytra-start-min-distance: 8
+        elytra-start-max-distance: 30
+        elytra-launch-y: 0.63
+        elytra-flight-window-ms: 4300
+        elytra-rocket-interval-ms: 600
+        elytra-dive-distance: 4.5
+        elytra-mace-dive-y: -1.55
+    SPEAR:
+      EASY:
+        elytra-start-min-distance: 11
+        elytra-start-max-distance: 21
+        elytra-launch-y: 0.4
+        elytra-flight-window-ms: 2600
+        elytra-rocket-interval-ms: 1050
+        elytra-dive-distance: 3.5
+        elytra-spear-dive-y: -0.55
+        spear-charge-delay-ms: 180
+      NORMAL:
+        elytra-start-min-distance: 10.5
+        elytra-start-max-distance: 23
+        elytra-launch-y: 0.44
+        elytra-flight-window-ms: 2900
+        elytra-rocket-interval-ms: 900
+        elytra-dive-distance: 3.8
+        elytra-spear-dive-y: -0.62
+        spear-charge-delay-ms: 230
+      HARD:
+        elytra-start-min-distance: 10
+        elytra-start-max-distance: 24
+        elytra-launch-y: 0.48
+        elytra-flight-window-ms: 3200
+        elytra-rocket-interval-ms: 820
+        elytra-dive-distance: 4
+        elytra-spear-dive-y: -0.7
+        spear-charge-delay-ms: 280
+      EXPERT:
+        elytra-start-min-distance: 9.5
+        elytra-start-max-distance: 25
+        elytra-launch-y: 0.52
+        elytra-flight-window-ms: 3500
+        elytra-rocket-interval-ms: 760
+        elytra-dive-distance: 4.2
+        elytra-spear-dive-y: -0.78
+        spear-charge-delay-ms: 330
+      HACKER:
+        elytra-start-min-distance: 9
+        elytra-start-max-distance: 26
+        elytra-launch-y: 0.56
+        elytra-flight-window-ms: 3800
+        elytra-rocket-interval-ms: 700
+        elytra-dive-distance: 4.3
+        elytra-spear-dive-y: -0.83
+        spear-charge-delay-ms: 380
+      MASTER:
+        elytra-start-min-distance: 8.5
+        elytra-start-max-distance: 28
+        elytra-launch-y: 0.6
+        elytra-flight-window-ms: 4000
+        elytra-rocket-interval-ms: 650
+        elytra-dive-distance: 4.4
+        elytra-spear-dive-y: -0.88
+        spear-charge-delay-ms: 400
+      NIGHTMARE:
+        elytra-start-min-distance: 8
+        elytra-start-max-distance: 30
+        elytra-launch-y: 0.63
+        elytra-flight-window-ms: 4200
+        elytra-rocket-interval-ms: 600
+        elytra-dive-distance: 4.5
+        elytra-spear-dive-y: -0.93
+        spear-charge-delay-ms: 400
     CART:
       EASY:
         cart-cooldown-ms: 6500

@@ -84,7 +84,10 @@ public final class CartPvpController {
 
         double speed = TemplateDifficultyTuning.getDouble(plugin, trait, "cart-launch-speed", 0.8D, "tactics.cart-pvp.launch-speed");
         double jitter = TemplateDifficultyTuning.getDouble(plugin, trait, "movement-jitter", 0.015D, "tactics.humanization.movement-jitter");
-        double randomJitter = ThreadLocalRandom.current().nextDouble(-jitter, jitter);
+        double safeJitter = Math.max(0.0D, jitter);
+        double randomJitter = safeJitter == 0.0D
+            ? 0.0D
+            : ThreadLocalRandom.current().nextDouble(-safeJitter, safeJitter);
 
         cart.setVelocity(new Vector(
             direction.getX() * (speed + randomJitter),

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Routed Mace normal hits and falling smashes through Minecraft's native server attack pipeline so vanilla controls smash particles, sounds, damage, knockback, enchantments, and Wind Burst; removed the fake critical-particle/damage fallback.
+- Added regression coverage for the vanilla 1.5-block smash threshold and invalid/blocked fall states.
 - Added template-aware difficulty resolution for every `<kit>_<difficulty>_<player>` template key.
 - Applied shared tier tuning for reaction, simulated latency, aim, movement, mistakes, attack delays, and pearl decisions across standard, Crystal, Cart, Mace, Spear, UHC, and Water profiles.
 - Added optional per-kit overrides and profile-specific Cart, Mace Elytra, and Spear Elytra tuning.

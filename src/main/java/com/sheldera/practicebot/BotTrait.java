@@ -210,7 +210,17 @@ public class BotTrait extends Trait {
    }
 
    public void onSpawn() {
+      // A bot can die during the short window where its Mace is temporarily
+      // replaced by a Wind Charge. Preserve that weapon before clearing the
+      // transient restore marker so the respawned NPC does not keep the charge.
+      ItemStack pendingMaceRestore = this.maceRestoreWeapon == null
+         ? null
+         : this.maceRestoreWeapon.clone();
       this.resetAllStates();
+      if (pendingMaceRestore != null && this.npc != null &&
+          this.npc.isSpawned() && this.npc.getEntity() instanceof Player player) {
+         player.getInventory().setItemInMainHand(pendingMaceRestore);
+      }
       this.armAttackWarmup();
       if (this.frozen && this.npc != null && this.npc.getEntity() != null) {
          this.captureFrozenAnchor(this.npc.getEntity().getLocation());
@@ -220,6 +230,32 @@ public class BotTrait extends Trait {
    public void resetAllStates() {
       long var1 = System.currentTimeMillis();
       this.lastAttackTime = 0L;
+      // Weapon-specific state must never survive a Citizens NPC respawn.
+      this.modernWeaponCooldownUntil = 0L;
+      this.maceLaunchStartedAt = 0L;
+      this.maceLaunchActive = false;
+      this.maceWindChargePending = false;
+      this.maceRestoreWeapon = null;
+      this.maceRestoreAt = 0L;
+      this.maceAttemptedThisFall = false;
+      this.maceMissThisAttack = false;
+      this.maceMissOffsetDegrees = 0.0D;
+      this.maceLaunchOriginY = 0.0D;
+      this.macePeakY = 0.0D;
+      this.spearChargeStartedAt = 0L;
+      this.spearLastHitAt = 0L;
+      this.modernWeaponTarget = null;
+      this.simulatedPingMs = 0;
+      this.tacticNextDecisionAt = 0L;
+      this.tacticCooldownUntil = 0L;
+      this.windChargeResetCooldownUntil = 0L;
+      this.elytraFlightUntil = 0L;
+      this.lastCartActionAt = 0L;
+      this.lastStrafeSwitchAt = 0L;
+      this.lastPingDriftAt = 0L;
+      this.lastRocketBoostAt = 0L;
+      this.strafeDirection = 1;
+      this.lastTactic = "none";
       this.pendingDelayedAttack = false;
       this.pendingDelayedAttackId = 0L;
       this.canBlockAfterAttackTime = 0L;

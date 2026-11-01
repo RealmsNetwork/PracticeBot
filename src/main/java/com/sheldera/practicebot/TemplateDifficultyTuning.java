@@ -102,11 +102,11 @@ public final class TemplateDifficultyTuning {
         }
 
         String normalized = profile.trim().toLowerCase(Locale.ROOT);
-        if (normalized.contains("mace")) {
-            return "MACE";
-        }
         if (normalized.contains("spear")) {
             return "SPEAR";
+        }
+        if (normalized.contains("mace")) {
+            return "MACE";
         }
         if (normalized.startsWith("cart")) {
             return "CART";

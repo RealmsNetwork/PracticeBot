@@ -38,7 +38,13 @@ public final class TemplateDifficultyTuning {
         }
 
         String[] parts = templateKey.trim().split("_", 3);
-        return parts.length == 3 ? parts : null;
+        if (parts.length != 3 ||
+            normalizeKit(parts[0]).isEmpty() ||
+            normalizeDifficulty(parts[1]).isEmpty() ||
+            parts[2].isBlank()) {
+            return null;
+        }
+        return parts;
     }
 
     public static String normalizeKit(String kit) {

@@ -454,7 +454,7 @@ public final class ModernWeaponCombat {
             bot.getVelocity().getY() < -0.02D;
         double fallDistance = Math.max(0.0D, bot.getFallDistance());
 
-        if (falling && fallDistance > MACE_MIN_SMASH_FALL &&
+        if (falling && fallDistance >= MACE_MIN_SMASH_FALL &&
             !bot.hasPotionEffect(PotionEffectType.SLOW_FALLING)) {
             if (trait.maceAttemptedThisFall) return true;
             trait.maceAttemptedThisFall = true;

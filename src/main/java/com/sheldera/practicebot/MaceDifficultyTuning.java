@@ -1,59 +1,28 @@
 package com.sheldera.practicebot;
 
-import java.util.Locale;
-
 /**
- * Resolves Mace aim tuning from the difficulty encoded in a bot template key.
- *
- * Template keys use the established kit_difficulty_player format, for example
- * macepvp_easy_1Wenzy. Non-template Mace bots fall back to combat aggression.
+ * Backwards-compatible facade for code that used the original Mace tuning
+ * helper. Template parsing and the shared resolver now live in
+ * TemplateDifficultyTuning so every kit can use the same tier system.
  */
 public final class MaceDifficultyTuning {
     private MaceDifficultyTuning() {
     }
 
     public static String difficultyFromTemplateKey(String templateKey) {
-        if (templateKey == null || templateKey.isBlank()) {
-            return "";
-        }
-
-        String[] parts = templateKey.trim().toLowerCase(Locale.ROOT).split("_", 3);
-        if (parts.length < 3) {
-            return "";
-        }
-
-        return normalizeDifficulty(parts[1]);
+        return TemplateDifficultyTuning.difficultyFromTemplateKey(templateKey);
     }
 
     public static String normalizeDifficulty(String difficulty) {
-        if (difficulty == null) {
-            return "";
-        }
-
-        return switch (difficulty.trim().toUpperCase(Locale.ROOT)) {
-            case "EASY", "NORMAL", "HARD", "EXPERT", "HACKER", "MASTER", "NIGHTMARE" ->
-                difficulty.trim().toUpperCase(Locale.ROOT);
-            default -> "";
-        };
+        return TemplateDifficultyTuning.normalizeDifficulty(difficulty);
     }
 
     public static String difficultyFromAggression(int aggression) {
-        return switch (aggression) {
-            case 0 -> "EASY";
-            case 1 -> "NORMAL";
-            default -> "HARD";
-        };
+        return TemplateDifficultyTuning.difficultyFromAggression(aggression);
     }
 
     public static String difficultyFor(BotTrait trait) {
-        if (trait == null) {
-            return "NORMAL";
-        }
-
-        String templateDifficulty = normalizeDifficulty(trait.getMaceDifficulty());
-        return templateDifficulty.isEmpty()
-            ? difficultyFromAggression(trait.getPvpAggression())
-            : templateDifficulty;
+        return TemplateDifficultyTuning.difficultyFor(trait);
     }
 
     public static double getDouble(
@@ -62,17 +31,16 @@ public final class MaceDifficultyTuning {
         String setting,
         double fallback
     ) {
-        if (plugin == null || setting == null || setting.isBlank()) {
-            return fallback;
-        }
-
-        String levelPath = "modern-weapons.mace.difficulty-levels." +
+        String tierPath = "modern-weapons.mace.difficulty-levels." +
             difficultyFor(trait) + "." + setting;
-        String legacyPath = "modern-weapons.mace." + setting;
 
-        return plugin.getConfig().getDouble(
-            levelPath,
-            plugin.getConfig().getDouble(legacyPath, fallback)
+        return TemplateDifficultyTuning.getDouble(
+            plugin,
+            trait,
+            setting,
+            fallback,
+            tierPath,
+            "modern-weapons.mace." + setting
         );
     }
 }

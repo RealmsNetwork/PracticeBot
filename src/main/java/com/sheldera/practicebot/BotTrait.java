@@ -61,6 +61,7 @@ public class BotTrait extends Trait {
    private String leggingsMaterial = "netherite";
    private String swordType = "sharp_kb";
    private String weaponProfile = "sword";
+   private String maceDifficulty = "";
    private String offhandType = "totem";
    private int totemCount = 64;
    private ItemStack customMainHand = null;
@@ -653,6 +654,14 @@ public class BotTrait extends Trait {
       return this.weaponProfile;
    }
 
+   public String getMaceDifficulty() {
+      return this.maceDifficulty;
+   }
+
+   public void setMaceDifficultyFromTemplateKey(String templateKey) {
+      this.maceDifficulty = MaceDifficultyTuning.difficultyFromTemplateKey(templateKey);
+   }
+
    public void setWeaponProfile(String profile) {
       this.weaponProfile = this.normalizeWeaponProfile(profile);
       this.modernWeaponCooldownUntil = 0L;
@@ -1194,6 +1203,7 @@ public class BotTrait extends Trait {
       this.refreshArmorTypeSnapshot();
       this.swordType = var1.getString("swordType", this.swordType);
       this.weaponProfile = this.normalizeWeaponProfile(var1.getString("weaponProfile", this.weaponProfile));
+      this.maceDifficulty = MaceDifficultyTuning.normalizeDifficulty(var1.getString("maceDifficulty", this.maceDifficulty));
       this.offhandType = var1.getString("offhandType", this.offhandType);
       this.totemCount = var1.getInt("totemCount", this.totemCount);
       this.attackWarmupTicks = Math.max(0L, var1.getLong("attackWarmupTicks", this.attackWarmupTicks));
@@ -1328,6 +1338,7 @@ public class BotTrait extends Trait {
       var1.setString("leggingsMaterial", this.leggingsMaterial);
       var1.setString("swordType", this.swordType);
       var1.setString("weaponProfile", this.weaponProfile);
+      var1.setString("maceDifficulty", this.maceDifficulty);
       var1.setString("offhandType", this.offhandType);
       var1.setInt("totemCount", this.totemCount);
       var1.setLong("attackWarmupTicks", this.attackWarmupTicks);

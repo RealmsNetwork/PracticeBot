@@ -345,6 +345,22 @@ public class j {
       }
    }
 
+   private void giveItems(Player player, Material material, int amount) {
+      if (player == null || material == null || amount <= 0) return;
+
+      int remaining = amount;
+      int stackSize = Math.max(1, material.getMaxStackSize());
+      while (remaining > 0) {
+         int stackAmount = Math.min(remaining, stackSize);
+         ItemStack stack = new ItemStack(material, stackAmount);
+         java.util.Map<Integer, ItemStack> leftovers = player.getInventory().addItem(stack);
+         for (ItemStack leftover : leftovers.values()) {
+            player.getWorld().dropItemNaturally(player.getLocation(), leftover);
+         }
+         remaining -= stackAmount;
+      }
+   }
+
    private void giveWindCharges(Player player, FileConfiguration defaults) {
       int amount = Math.max(0, Math.min(64, defaults.getInt("weapon.mace.wind-charges", 16)));
       if (amount <= 0) return;

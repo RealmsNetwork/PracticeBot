@@ -1,6 +1,7 @@
 package com.sheldera.practicebot.combat;
 
 import com.sheldera.practicebot.BotTrait;
+import com.sheldera.practicebot.MaceDifficultyTuning;
 import com.sheldera.practicebot.PracticeBotPlugin;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -310,10 +311,8 @@ public final class ModernWeaponCombat {
         trait.maceWindChargePending = launchedWindCharge;
         trait.maceAttemptedThisFall = false;
         trait.maceMissThisAttack = ThreadLocalRandom.current().nextDouble(100.0D) <
-            plugin.getConfig().getDouble("modern-weapons.mace.miss-chance-percent", 10.0D);
-        double missOffset = Math.max(0.0D, plugin.getConfig().getDouble(
-            "modern-weapons.mace.miss-offset-degrees", 6.0D
-        ));
+            MaceDifficultyTuning.getDouble(plugin, trait, "miss-chance-percent", 10.0D);
+        double missOffset = Math.max(0.0D, MaceDifficultyTuning.getDouble(plugin, trait, "miss-offset-degrees", 6.0D));
         trait.maceMissOffsetDegrees = trait.maceMissThisAttack
             ? ThreadLocalRandom.current().nextDouble(-missOffset, missOffset) : 0.0D;
         trait.maceLaunchStartedAt = now;
@@ -348,9 +347,7 @@ public final class ModernWeaponCombat {
     }
 
     private void updateMaceAim(Player bot, Player target, BotTrait trait) {
-        double lead = plugin.getConfig().getDouble(
-            "modern-weapons.mace.target-lead-seconds", 0.08D
-        );
+        double lead = MaceDifficultyTuning.getDouble(plugin, trait, "target-lead-seconds", 0.08D);
         Vector predicted = target.getEyeLocation().toVector()
             .add(target.getVelocity().clone().multiply(Math.max(0.0D, Math.min(0.25D, lead))));
         Vector direction = predicted.subtract(bot.getEyeLocation().toVector());
@@ -361,9 +358,7 @@ public final class ModernWeaponCombat {
         desired.setDirection(direction);
         float yawDelta = wrapDegrees(desired.getYaw() - bot.getLocation().getYaw());
         float pitchDelta = desired.getPitch() - bot.getLocation().getPitch();
-        float maxTurn = (float) plugin.getConfig().getDouble(
-            "modern-weapons.mace.aim-max-degrees-per-tick", 32.0D
-        );
+        float maxTurn = (float) MaceDifficultyTuning.getDouble(plugin, trait, "aim-max-degrees-per-tick", 32.0D);
         yawDelta = Math.max(-maxTurn, Math.min(maxTurn, yawDelta));
         pitchDelta = Math.max(-maxTurn, Math.min(maxTurn, pitchDelta));
         float yaw = bot.getLocation().getYaw() + yawDelta * 0.72F;
@@ -372,9 +367,7 @@ public final class ModernWeaponCombat {
         if (trait.maceMissThisAttack && !trait.maceAttemptedThisFall) {
             yaw += (float) trait.maceMissOffsetDegrees;
         } else {
-            float jitter = (float) plugin.getConfig().getDouble(
-                "modern-weapons.mace.aim-jitter-degrees", 0.15D
-            );
+            float jitter = (float) MaceDifficultyTuning.getDouble(plugin, trait, "aim-jitter-degrees", 0.15D);
             yaw += (float) ThreadLocalRandom.current().nextDouble(-jitter, jitter);
             pitch += (float) ThreadLocalRandom.current().nextDouble(-jitter, jitter);
         }
@@ -593,7 +586,7 @@ public final class ModernWeaponCombat {
             trait.maceWindChargePending = false;
             trait.maceAttemptedThisFall = false;
             trait.maceMissThisAttack = ThreadLocalRandom.current().nextDouble(100.0D) <
-                plugin.getConfig().getDouble("modern-weapons.mace.miss-chance-percent", 10.0D);
+                MaceDifficultyTuning.getDouble(plugin, trait, "miss-chance-percent", 10.0D);
             double missOffset = Math.max(0.0D, plugin.getConfig().getDouble(
                 "modern-weapons.mace.miss-offset-degrees", 6.0D
             ));

@@ -651,7 +651,7 @@ public final class ModernWeaponCombat {
 
         plugin.addCombatTag(target);
 
-        int windBurst = enchantLevel(mace, "wind_burst");
+
 
         if (windBurst > 0) {
             Vector velocity = bot.getVelocity();

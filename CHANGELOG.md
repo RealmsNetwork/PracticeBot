@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.8.3
+
 - Routed Mace normal hits and falling smashes through Minecraft's native server attack pipeline so vanilla controls smash particles, sounds, damage, knockback, enchantments, and Wind Burst; removed the fake critical-particle/damage fallback.
 - Added regression coverage for the vanilla 1.5-block smash threshold and invalid/blocked fall states.
 - Added template-aware difficulty resolution for every `<kit>_<difficulty>_<player>` template key.
@@ -9,10 +11,6 @@
 - Added optional per-kit overrides and profile-specific Cart, Mace Elytra, and Spear Elytra tuning.
 - Added config v8 migration with additive defaults that preserve existing user values.
 - Kept direct bot spawns on the existing combat-aggression fallback and preserved vanilla Mace/Spear damage mechanics.
-
-
-## 1.8.3
-
 - Reset transient Mace, Spear, Elytra, Cart, and tactical combat state whenever a Citizens bot respawns, preventing stale Wind Charge/flight state from disabling its AI.
 
 ## 1.8.2

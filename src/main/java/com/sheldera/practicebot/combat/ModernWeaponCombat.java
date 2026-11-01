@@ -587,9 +587,7 @@ public final class ModernWeaponCombat {
             trait.maceAttemptedThisFall = false;
             trait.maceMissThisAttack = ThreadLocalRandom.current().nextDouble(100.0D) <
                 MaceDifficultyTuning.getDouble(plugin, trait, "miss-chance-percent", 10.0D);
-            double missOffset = Math.max(0.0D, plugin.getConfig().getDouble(
-                "modern-weapons.mace.miss-offset-degrees", 6.0D
-            ));
+            double missOffset = Math.max(0.0D, MaceDifficultyTuning.getDouble(plugin, trait, "miss-offset-degrees", 6.0D));
             trait.maceMissOffsetDegrees = trait.maceMissThisAttack && missOffset > 0.0D
                 ? ThreadLocalRandom.current().nextDouble(-missOffset, missOffset) : 0.0D;
             trait.maceLaunchStartedAt = now;

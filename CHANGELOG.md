@@ -8,6 +8,11 @@
 - Added config v8 migration with additive defaults that preserve existing user values.
 - Kept direct bot spawns on the existing combat-aggression fallback and preserved vanilla Mace/Spear damage mechanics.
 
+
+## 1.8.3
+
+- Reset transient Mace, Spear, Elytra, Cart, and tactical combat state whenever a Citizens bot respawns, preventing stale Wind Charge/flight state from disabling its AI.
+
 ## 1.8.2
 
 - Fixed ground Mace launch to fire a real Wind Charge projectile downward and use the server's native burst physics and particles instead of consuming the item and faking launch velocity.

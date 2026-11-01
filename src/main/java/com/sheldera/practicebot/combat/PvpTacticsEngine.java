@@ -551,7 +551,7 @@ public final class PvpTacticsEngine {
                         MaceDifficultyTuning.getDouble(plugin, trait, "miss-chance-percent", 10.0D);
                     double missOffset = Math.max(0.0D, MaceDifficultyTuning.getDouble(plugin, trait, "miss-offset-degrees", 6.0D));
                     trait.maceMissOffsetDegrees = trait.maceMissThisAttack
-                        ? ThreadLocalRandom.current().nextDouble(-missOffset, missOffset) : 0.0D;
+                        ? randomSigned(missOffset) : 0.0D;
                     trait.maceLaunchStartedAt = now;
                     trait.maceLaunchOriginY = bot.getLocation().getY();
                     trait.macePeakY = bot.getLocation().getY();

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.8.1
+
+- Fixed a Crystal PvP block-candidate scan crash caused by casting a `LinkedHashSet` to `List`.
+- Kept the candidate Y-levels as an ordered `Set<Integer>` and iterated them using their actual collection type.
+
 ## 1.8.0
 
 - Added Elytra Mace and Elytra Spear profiles.

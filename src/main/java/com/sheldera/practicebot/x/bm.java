@@ -193,9 +193,9 @@ public final class bm {
          Block var11 = this.x(var2);
          Block var12 = null;
          double var13 = -999.0;
-         List var15 = this.o(var1, var2, var4, var5);
-         Set var16 = this.n(var1, var2, var4, var5);
-         HashSet var17 = new HashSet();
+         List<Location> var15 = this.o(var1, var2, var4, var5);
+         Set<Integer> var16 = this.n(var1, var2, var4, var5);
+         HashSet<String> var17 = new HashSet<>();
          boolean var18 = var4 != null && this.fS.c(var2, var4) && var5 <= var4.mJ;
          boolean var19 = this.fS.l(var1, var2);
          boolean var20 = !var19 && this.fS.m(var1, var2);
@@ -205,9 +205,9 @@ public final class bm {
          } else if (!var21 && this.fS.cx().b(var1, var2, var7)) {
             return null;
          } else {
-            for (int var23 : (java.util.List<Integer>)(java.util.List<?>) var16) {
+            for (int var23 : var16) {
                if (var23 >= var8.getMinHeight() && var23 < var8.getMaxHeight()) {
-                  for (Location var25 : (java.util.List<Location>)(java.util.List<?>) var15) {
+                  for (Location var25 : var15) {
                      int var26 = var25.getBlockX();
                      int var27 = var25.getBlockZ();
 

@@ -210,7 +210,17 @@ public class BotTrait extends Trait {
    }
 
    public void onSpawn() {
+      // A bot can die during the short window where its Mace is temporarily
+      // replaced by a Wind Charge. Preserve that weapon before clearing the
+      // transient restore marker so the respawned NPC does not keep the charge.
+      ItemStack pendingMaceRestore = this.maceRestoreWeapon == null
+         ? null
+         : this.maceRestoreWeapon.clone();
       this.resetAllStates();
+      if (pendingMaceRestore != null && this.npc != null &&
+          this.npc.isSpawned() && this.npc.getEntity() instanceof Player player) {
+         player.getInventory().setItemInMainHand(pendingMaceRestore);
+      }
       this.armAttackWarmup();
       if (this.frozen && this.npc != null && this.npc.getEntity() != null) {
          this.captureFrozenAnchor(this.npc.getEntity().getLocation());

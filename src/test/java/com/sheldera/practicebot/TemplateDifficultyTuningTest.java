@@ -83,6 +83,38 @@ class TemplateDifficultyTuningTest {
     }
 
     @Test
+    void applyingANewTemplateClearsStaleTacticalState() {
+        BotTrait trait = new BotTrait();
+        trait.simulatedPingMs = 150;
+        trait.lastPingDriftAt = 900L;
+        trait.tacticNextDecisionAt = 800L;
+        trait.tacticCooldownUntil = 700L;
+        trait.windChargeResetCooldownUntil = 600L;
+        trait.elytraFlightUntil = 500L;
+        trait.lastCartActionAt = 400L;
+        trait.lastStrafeSwitchAt = 300L;
+        trait.lastRocketBoostAt = 200L;
+        trait.strafeDirection = -1;
+        trait.lastTactic = "stale-tactic";
+
+        trait.setTemplateFromKey("macepvp_easy_1Wenzy");
+
+        assertEquals("macepvp", trait.getTemplateKit());
+        assertEquals("EASY", trait.getTemplateDifficulty());
+        assertEquals(0, trait.simulatedPingMs);
+        assertEquals(0L, trait.lastPingDriftAt);
+        assertEquals(0L, trait.tacticNextDecisionAt);
+        assertEquals(0L, trait.tacticCooldownUntil);
+        assertEquals(0L, trait.windChargeResetCooldownUntil);
+        assertEquals(0L, trait.elytraFlightUntil);
+        assertEquals(0L, trait.lastCartActionAt);
+        assertEquals(0L, trait.lastStrafeSwitchAt);
+        assertEquals(0L, trait.lastRocketBoostAt);
+        assertEquals(1, trait.strafeDirection);
+        assertEquals("none", trait.lastTactic);
+    }
+
+    @Test
     void directlySpawnedBotsStillUseTheirCombatAggressionAsFallback() {
         assertEquals("EASY", TemplateDifficultyTuning.difficultyFromAggression(0));
         assertEquals("NORMAL", TemplateDifficultyTuning.difficultyFromAggression(1));

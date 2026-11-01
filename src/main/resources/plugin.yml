@@ -1,6 +1,6 @@
 name: PracticeBot
 main: com.sheldera.practicebot.PracticeBotPlugin
-version: 1.8.0
+version: ${project.version}
 api-version: 1.21
 author: THEMPGUY
 

@@ -263,9 +263,9 @@ public final class PvpTacticsEngine {
         double aimNoise = TemplateDifficultyTuning.getDouble(plugin, trait, "aim-target-offset", 0.10D, "tactics.humanization.aim.target-offset");
 
         predicted.add(new Vector(
-            ThreadLocalRandom.current().nextDouble(-aimNoise, aimNoise),
-            ThreadLocalRandom.current().nextDouble(-aimNoise * 0.5D, aimNoise * 0.5D),
-            ThreadLocalRandom.current().nextDouble(-aimNoise, aimNoise)
+            randomSigned(aimNoise),
+            randomSigned(aimNoise * 0.5D),
+            randomSigned(aimNoise)
         ));
 
         Vector delta = predicted.subtract(bot.getEyeLocation().toVector());
@@ -295,11 +295,11 @@ public final class PvpTacticsEngine {
 
         float yaw = current.getYaw()
             + (float) (yawDelta * smoothing)
-            + (float) ThreadLocalRandom.current().nextDouble(-jitter, jitter);
+            + (float) randomSigned(jitter);
 
         float pitch = current.getPitch()
             + (float) (pitchDelta * smoothing)
-            + (float) ThreadLocalRandom.current().nextDouble(-jitter * 0.5D, jitter * 0.5D);
+            + (float) randomSigned(jitter * 0.5D);
 
         bot.setRotation(yaw, Math.max(-90.0F, Math.min(90.0F, pitch)));
     }
@@ -599,6 +599,13 @@ public final class PvpTacticsEngine {
             }
         }
         return null;
+    }
+
+    private static double randomSigned(double magnitude) {
+        double safeMagnitude = Math.max(0.0D, magnitude);
+        return safeMagnitude == 0.0D
+            ? 0.0D
+            : ThreadLocalRandom.current().nextDouble(-safeMagnitude, safeMagnitude);
     }
 
     private float wrapDegrees(float value) {

@@ -7,7 +7,6 @@ import com.sheldera.practicebot.PracticeBotPlugin;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
@@ -442,6 +441,15 @@ public final class ModernWeaponCombat {
         return value;
     }
 
+    static boolean shouldPerformMaceSmash(
+        boolean falling, double fallDistance, boolean slowFalling
+    ) {
+        return falling &&
+            Double.isFinite(fallDistance) &&
+            fallDistance >= MACE_MIN_SMASH_FALL &&
+            !slowFalling;
+    }
+
     private boolean tryMace(Player bot, Player target, BotTrait trait, long now) {
         double distance = bot.getLocation().distance(target.getLocation());
         if (distance > MACE_MAX_REACH + SPEAR_HITBOX_MARGIN) return true;
@@ -455,8 +463,9 @@ public final class ModernWeaponCombat {
             bot.getVelocity().getY() < -0.02D;
         double fallDistance = Math.max(0.0D, bot.getFallDistance());
 
-        if (falling && fallDistance > MACE_MIN_SMASH_FALL &&
-            !bot.hasPotionEffect(PotionEffectType.SLOW_FALLING)) {
+        if (shouldPerformMaceSmash(
+            falling, fallDistance, bot.hasPotionEffect(PotionEffectType.SLOW_FALLING)
+        )) {
             if (trait.maceAttemptedThisFall) return true;
             trait.maceAttemptedThisFall = true;
             if (!maceAimHitsTarget(bot, target)) {
@@ -471,7 +480,7 @@ public final class ModernWeaponCombat {
                 shieldBlock(target);
                 return true;
             }
-            performMaceSmash(bot, target, trait, fallDistance, now);
+            performMaceSmash(bot, target, trait, now);
             return true;
         }
 
@@ -488,107 +497,99 @@ public final class ModernWeaponCombat {
         return true;
     }
 
+    /**
+     * Ask the actual server-side player entity to attack. This is important for
+     * Mace combat: vanilla's attack pipeline owns smash damage, impact particles,
+     * sounds, knockback, enchantments, durability, and Wind Burst behavior.
+     *
+     * The project compiles against the older public Paper API, so resolve the
+     * CraftBukkit handle and its native attack(Entity) method reflectively.
+     */
+    private boolean invokeNativeMeleeAttack(Player bot, LivingEntity target) {
+        try {
+            Object botHandle = bot.getClass().getMethod("getHandle").invoke(bot);
+            Object targetHandle = target.getClass().getMethod("getHandle").invoke(target);
+            java.lang.reflect.Method attack = null;
+
+            for (java.lang.reflect.Method method : botHandle.getClass().getMethods()) {
+                if (!"attack".equals(method.getName()) ||
+                    method.getParameterCount() != 1 ||
+                    !"Entity".equals(method.getParameterTypes()[0].getSimpleName()) ||
+                    !method.getParameterTypes()[0].getName().startsWith("net.minecraft.world.entity.") ||
+                    !method.getParameterTypes()[0].isInstance(targetHandle)) {
+                    continue;
+                }
+                attack = method;
+                break;
+            }
+
+            if (attack == null) {
+                plugin.debugLog(() -> "Native Mace attack unavailable: no compatible server attack(Entity) method");
+                return false;
+            }
+
+            // Send the visible swing animation, then let vanilla decide whether
+            // this is a normal hit or a full falling Mace smash.
+            bot.swingMainHand();
+            attack.invoke(botHandle, targetHandle);
+            return true;
+        } catch (ReflectiveOperationException | RuntimeException ex) {
+            plugin.debugLog(() -> "Native Mace attack failed: " + ex.getClass().getSimpleName() +
+                ": " + ex.getMessage());
+            return false;
+        }
+    }
+
     private void performMaceHit(
         Player bot, Player target, BotTrait trait, long now
     ) {
-        bot.swingMainHand();
-
-        double damage = itemAttackDamage(bot);
-        damage += attributeSwapBonus(bot, trait);
-
-        target.damage(Math.max(0.0D, damage), bot);
-        applyKnockback(target, bot, 0.45D, 0.32D);
+        if (!invokeNativeMeleeAttack(bot, target)) {
+            // Do not fake a Mace hit if vanilla's attack pipeline is unavailable.
+            // A simulated damage call would lose the actual weapon mechanics again.
+            trait.lastAttackTime = now;
+            trait.modernWeaponCooldownUntil = now + 350L;
+            trait.lastTactic = "mace-native-attack-unavailable";
+            applyHumanAttackDelay(trait, now);
+            return;
+        }
 
         plugin.addCombatTag(target);
-
         trait.lastAttackTime = now;
         trait.modernWeaponCooldownUntil = now + attackCooldownMs(bot);
         applyHumanAttackDelay(trait, now);
-
-        bot.getWorld().playSound(
-            target.getLocation(),
-            Sound.ENTITY_PLAYER_ATTACK_STRONG,
-            0.9F,
-            0.8F
-        );
     }
 
     private void performMaceSmash(
         Player bot,
         Player target,
         BotTrait trait,
-        double fallDistance,
         long now
     ) {
-        bot.swingMainHand();
-
         ItemStack mace = bot.getInventory().getItemInMainHand();
-        int density = enchantLevel(mace, "density");
-        int breach = enchantLevel(mace, "breach");
+        int windBurst = enchantLevel(mace, "wind_burst");
 
-        double damage = itemAttackDamage(bot)
-            + maceSmashBonus(fallDistance)
-            + (0.5D * density * fallDistance)
-            + attributeSwapBonus(bot, trait);
-
-        if (breach > 0) {
-            damage = compensateForBreach(damage, target, breach);
+        if (!invokeNativeMeleeAttack(bot, target)) {
+            // Never substitute custom damage/particles for a vanilla Mace smash.
+            trait.lastAttackTime = now;
+            trait.modernWeaponCooldownUntil = now + 350L;
+            trait.lastTactic = "mace-native-smash-unavailable";
+            trait.maceLaunchActive = false;
+            applyHumanAttackDelay(trait, now);
+            return;
         }
-
-        // A vanilla Mace smash is already its own special damage calculation.
-        // Do not apply the normal 1.5x critical multiplier on top.
-        target.damage(Math.max(0.0D, damage), bot);
-
-        double knockback = fallDistance > 5.0D ? 1.0D : 0.55D;
-
-        applyKnockback(
-            target,
-            bot,
-            knockback,
-            Math.min(0.9D, 0.30D + fallDistance * 0.035D)
-        );
-
-        applyMaceAreaKnockback(target, bot, fallDistance);
-
-        bot.setFallDistance(0.0F);
-
-        bot.getWorld().spawnParticle(
-            Particle.CRIT,
-            target.getLocation().add(0.0D, 1.0D, 0.0D),
-            12,
-            0.35D,
-            0.35D,
-            0.35D,
-            0.1D
-        );
-
-        bot.getWorld().playSound(
-            target.getLocation(),
-            Sound.ENTITY_PLAYER_ATTACK_CRIT,
-            1.0F,
-            0.65F
-        );
 
         plugin.addCombatTag(target);
 
-        int windBurst = enchantLevel(mace, "wind_burst");
-
+        // Vanilla owns smash damage, impact particles/sounds, area knockback,
+        // fall-distance reset, enchantments, and the Wind Burst launch.
         if (windBurst > 0) {
-            Vector velocity = bot.getVelocity();
-
-            velocity.setY(velocityForHeight(7.0D * windBurst));
-            velocity.setX(velocity.getX() * 0.35D);
-            velocity.setZ(velocity.getZ() * 0.35D);
-
-            bot.setVelocity(velocity);
-            bot.setFallDistance(0.0F);
-
             trait.maceLaunchActive = true;
             trait.maceWindChargePending = false;
             trait.maceAttemptedThisFall = false;
             trait.maceMissThisAttack = ThreadLocalRandom.current().nextDouble(100.0D) <
                 MaceDifficultyTuning.getDouble(plugin, trait, "miss-chance-percent", 10.0D);
-            double missOffset = Math.max(0.0D, MaceDifficultyTuning.getDouble(plugin, trait, "miss-offset-degrees", 6.0D));
+            double missOffset = Math.max(0.0D,
+                MaceDifficultyTuning.getDouble(plugin, trait, "miss-offset-degrees", 6.0D));
             trait.maceMissOffsetDegrees = trait.maceMissThisAttack && missOffset > 0.0D
                 ? ThreadLocalRandom.current().nextDouble(-missOffset, missOffset) : 0.0D;
             trait.maceLaunchStartedAt = now;

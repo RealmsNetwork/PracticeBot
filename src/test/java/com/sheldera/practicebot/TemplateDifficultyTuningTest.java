@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -39,6 +40,23 @@ class TemplateDifficultyTuningTest {
             assertEquals(testCase[2],
                 TemplateDifficultyTuning.difficultyFromTemplateKey(testCase[0]),
                 testCase[0] + " tier");
+        }
+
+        String[] allKits = {
+            "tank", "axeandshield", "nethpot", "smpkit", "diamondpot",
+            "bowpvp", "beast", "diasmp", "cpvpffa", "cartpvp",
+            "builduhc", "macepvp", "macerocket", "spearelytra", "spearmace"
+        };
+        String[] allTiers = {
+            "EASY", "NORMAL", "HARD", "EXPERT", "HACKER", "MASTER", "NIGHTMARE"
+        };
+
+        for (String kit : allKits) {
+            for (String tier : allTiers) {
+                String key = kit + "_" + tier.toLowerCase(Locale.ROOT) + "_Example";
+                assertEquals(kit, TemplateDifficultyTuning.kitFromTemplateKey(key), key + " kit");
+                assertEquals(tier, TemplateDifficultyTuning.difficultyFromTemplateKey(key), key + " tier");
+            }
         }
     }
 

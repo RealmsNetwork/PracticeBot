@@ -1,6 +1,8 @@
 package com.sheldera.practicebot.combat;
 
 import com.sheldera.practicebot.BotTrait;
+import com.sheldera.practicebot.TemplateDifficultyTuning;
+import com.sheldera.practicebot.MaceDifficultyTuning;
 import com.sheldera.practicebot.PracticeBotPlugin;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -310,12 +312,10 @@ public final class ModernWeaponCombat {
         trait.maceWindChargePending = launchedWindCharge;
         trait.maceAttemptedThisFall = false;
         trait.maceMissThisAttack = ThreadLocalRandom.current().nextDouble(100.0D) <
-            plugin.getConfig().getDouble("modern-weapons.mace.miss-chance-percent", 10.0D);
-        double missOffset = Math.max(0.0D, plugin.getConfig().getDouble(
-            "modern-weapons.mace.miss-offset-degrees", 6.0D
-        ));
+            MaceDifficultyTuning.getDouble(plugin, trait, "miss-chance-percent", 10.0D);
+        double missOffset = Math.max(0.0D, MaceDifficultyTuning.getDouble(plugin, trait, "miss-offset-degrees", 6.0D));
         trait.maceMissOffsetDegrees = trait.maceMissThisAttack
-            ? ThreadLocalRandom.current().nextDouble(-missOffset, missOffset) : 0.0D;
+            ? randomSigned(missOffset) : 0.0D;
         trait.maceLaunchStartedAt = now;
         trait.maceLaunchOriginY = bot.getLocation().getY();
         trait.macePeakY = bot.getLocation().getY();
@@ -348,9 +348,7 @@ public final class ModernWeaponCombat {
     }
 
     private void updateMaceAim(Player bot, Player target, BotTrait trait) {
-        double lead = plugin.getConfig().getDouble(
-            "modern-weapons.mace.target-lead-seconds", 0.08D
-        );
+        double lead = MaceDifficultyTuning.getDouble(plugin, trait, "target-lead-seconds", 0.08D);
         Vector predicted = target.getEyeLocation().toVector()
             .add(target.getVelocity().clone().multiply(Math.max(0.0D, Math.min(0.25D, lead))));
         Vector direction = predicted.subtract(bot.getEyeLocation().toVector());
@@ -361,9 +359,7 @@ public final class ModernWeaponCombat {
         desired.setDirection(direction);
         float yawDelta = wrapDegrees(desired.getYaw() - bot.getLocation().getYaw());
         float pitchDelta = desired.getPitch() - bot.getLocation().getPitch();
-        float maxTurn = (float) plugin.getConfig().getDouble(
-            "modern-weapons.mace.aim-max-degrees-per-tick", 32.0D
-        );
+        float maxTurn = (float) MaceDifficultyTuning.getDouble(plugin, trait, "aim-max-degrees-per-tick", 32.0D);
         yawDelta = Math.max(-maxTurn, Math.min(maxTurn, yawDelta));
         pitchDelta = Math.max(-maxTurn, Math.min(maxTurn, pitchDelta));
         float yaw = bot.getLocation().getYaw() + yawDelta * 0.72F;
@@ -372,11 +368,9 @@ public final class ModernWeaponCombat {
         if (trait.maceMissThisAttack && !trait.maceAttemptedThisFall) {
             yaw += (float) trait.maceMissOffsetDegrees;
         } else {
-            float jitter = (float) plugin.getConfig().getDouble(
-                "modern-weapons.mace.aim-jitter-degrees", 0.15D
-            );
-            yaw += (float) ThreadLocalRandom.current().nextDouble(-jitter, jitter);
-            pitch += (float) ThreadLocalRandom.current().nextDouble(-jitter, jitter);
+            float jitter = (float) MaceDifficultyTuning.getDouble(plugin, trait, "aim-jitter-degrees", 0.15D);
+            yaw += (float) randomSigned(jitter);
+            pitch += (float) randomSigned(jitter);
         }
         bot.setRotation(yaw, Math.max(-90.0F, Math.min(90.0F, pitch)));
     }
@@ -593,10 +587,8 @@ public final class ModernWeaponCombat {
             trait.maceWindChargePending = false;
             trait.maceAttemptedThisFall = false;
             trait.maceMissThisAttack = ThreadLocalRandom.current().nextDouble(100.0D) <
-                plugin.getConfig().getDouble("modern-weapons.mace.miss-chance-percent", 10.0D);
-            double missOffset = Math.max(0.0D, plugin.getConfig().getDouble(
-                "modern-weapons.mace.miss-offset-degrees", 6.0D
-            ));
+                MaceDifficultyTuning.getDouble(plugin, trait, "miss-chance-percent", 10.0D);
+            double missOffset = Math.max(0.0D, MaceDifficultyTuning.getDouble(plugin, trait, "miss-offset-degrees", 6.0D));
             trait.maceMissOffsetDegrees = trait.maceMissThisAttack && missOffset > 0.0D
                 ? ThreadLocalRandom.current().nextDouble(-missOffset, missOffset) : 0.0D;
             trait.maceLaunchStartedAt = now;
@@ -1168,21 +1160,18 @@ public final class ModernWeaponCombat {
     }
 
     private boolean humanMisplay(BotTrait trait, long now) {
-        double chance = plugin.getConfig().getDouble(
-            "tactics.humanization.mistake-chance-percent", 3.0D
-        );
+        double chance = TemplateDifficultyTuning.getDouble(plugin, trait, "mistake-chance-percent", 3.0D,
+            "tactics.humanization.mistake-chance-percent");
 
         if (chance <= 0.0D ||
             ThreadLocalRandom.current().nextDouble(100.0D) >= chance) {
             return false;
         }
 
-        long min = plugin.getConfig().getLong(
-            "tactics.humanization.mistake-delay-min-ms", 55L
-        );
-        long max = plugin.getConfig().getLong(
-            "tactics.humanization.mistake-delay-max-ms", 180L
-        );
+        long min = TemplateDifficultyTuning.getLong(plugin, trait, "mistake-delay-min-ms", 55L,
+            "tactics.humanization.mistake-delay-min-ms");
+        long max = TemplateDifficultyTuning.getLong(plugin, trait, "mistake-delay-max-ms", 180L,
+            "tactics.humanization.mistake-delay-max-ms");
 
         long delay = ThreadLocalRandom.current().nextLong(
             Math.max(0L, Math.min(min, max)),
@@ -1197,17 +1186,14 @@ public final class ModernWeaponCombat {
     private void applyHumanAttackDelay(BotTrait trait, long now) {
         int ping = Math.max(0, trait.simulatedPingMs);
 
-        double fraction = plugin.getConfig().getDouble(
-            "tactics.humanization.ping.action-latency-fraction", 0.35D
-        );
+        double fraction = TemplateDifficultyTuning.getDouble(plugin, trait, "ping-action-latency-fraction", 0.35D,
+            "tactics.humanization.ping.action-latency-fraction");
 
-        double min = plugin.getConfig().getDouble(
-            "tactics.humanization.attack.min-delay-ms", 8.0D
-        );
+        double min = TemplateDifficultyTuning.getDouble(plugin, trait, "attack-delay-min-ms", 8.0D,
+            "tactics.humanization.attack.min-delay-ms");
 
-        double max = plugin.getConfig().getDouble(
-            "tactics.humanization.attack.max-delay-ms", 42.0D
-        );
+        double max = TemplateDifficultyTuning.getDouble(plugin, trait, "attack-delay-max-ms", 42.0D,
+            "tactics.humanization.attack.max-delay-ms");
 
         double reaction = ThreadLocalRandom.current().nextDouble(
             Math.min(min, max),
@@ -1588,6 +1574,13 @@ public final class ModernWeaponCombat {
         }
 
         return maxY;
+    }
+
+    private static double randomSigned(double magnitude) {
+        double safeMagnitude = Math.max(0.0D, magnitude);
+        return safeMagnitude == 0.0D
+            ? 0.0D
+            : ThreadLocalRandom.current().nextDouble(-safeMagnitude, safeMagnitude);
     }
 
     private boolean isElytraProfile(BotTrait trait) {

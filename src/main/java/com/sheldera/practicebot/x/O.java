@@ -1643,6 +1643,7 @@ public class O implements Listener {
       if (var1 != null && var2 != null) {
          var2.setBotType(var1.botType);
          var2.setWeaponProfile(var1.weaponProfile);
+         var2.setTemplateFromKey(var1.key);
          var2.setAttackWarmupTicks(var1.warmupTicks);
          switch (var1.botType) {
             case CRYSTAL, CPVP:

@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- Added template-aware difficulty resolution for every `<kit>_<difficulty>_<player>` template key.
+- Applied shared tier tuning for reaction, simulated latency, aim, movement, mistakes, attack delays, and pearl decisions across standard, Crystal, Cart, Mace, Spear, UHC, and Water profiles.
+- Added optional per-kit overrides and profile-specific Cart, Mace Elytra, and Spear Elytra tuning.
+- Added config v8 migration with additive defaults that preserve existing user values.
+- Kept direct bot spawns on the existing combat-aggression fallback and preserved vanilla Mace/Spear damage mechanics.
+
+
 ## 1.8.3
 
 - Reset transient Mace, Spear, Elytra, Cart, and tactical combat state whenever a Citizens bot respawns, preventing stale Wind Charge/flight state from disabling its AI.

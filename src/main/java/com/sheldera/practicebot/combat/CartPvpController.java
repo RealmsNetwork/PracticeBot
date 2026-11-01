@@ -1,6 +1,7 @@
 package com.sheldera.practicebot.combat;
 
 import com.sheldera.practicebot.BotTrait;
+import com.sheldera.practicebot.TemplateDifficultyTuning;
 import com.sheldera.practicebot.PracticeBotPlugin;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -34,19 +35,19 @@ public final class CartPvpController {
         }
 
         if (now - trait.lastCartActionAt <
-            plugin.getConfig().getLong("tactics.cart-pvp.cooldown-ms", 3500L)) {
+            TemplateDifficultyTuning.getLong(plugin, trait, "cart-cooldown-ms", 3500L, "tactics.cart-pvp.cooldown-ms")) {
             return false;
         }
 
         double distance = bot.getLocation().distance(target.getLocation());
-        double minDistance = plugin.getConfig().getDouble("tactics.cart-pvp.min-distance", 5.0D);
-        double maxDistance = plugin.getConfig().getDouble("tactics.cart-pvp.max-distance", 18.0D);
+        double minDistance = TemplateDifficultyTuning.getDouble(plugin, trait, "cart-min-distance", 5.0D, "tactics.cart-pvp.min-distance");
+        double maxDistance = TemplateDifficultyTuning.getDouble(plugin, trait, "cart-max-distance", 18.0D, "tactics.cart-pvp.max-distance");
 
         if (distance < minDistance || distance > maxDistance) {
             return false;
         }
 
-        Block rail = findLaunchRail(bot, target);
+        Block rail = findLaunchRail(bot, target, trait);
         if (rail == null) {
             return false;
         }
@@ -81,9 +82,12 @@ public final class CartPvpController {
 
         direction.normalize();
 
-        double speed = plugin.getConfig().getDouble("tactics.cart-pvp.launch-speed", 0.8D);
-        double jitter = plugin.getConfig().getDouble("tactics.humanization.movement-jitter", 0.015D);
-        double randomJitter = ThreadLocalRandom.current().nextDouble(-jitter, jitter);
+        double speed = TemplateDifficultyTuning.getDouble(plugin, trait, "cart-launch-speed", 0.8D, "tactics.cart-pvp.launch-speed");
+        double jitter = TemplateDifficultyTuning.getDouble(plugin, trait, "movement-jitter", 0.015D, "tactics.humanization.movement-jitter");
+        double safeJitter = Math.max(0.0D, jitter);
+        double randomJitter = safeJitter == 0.0D
+            ? 0.0D
+            : ThreadLocalRandom.current().nextDouble(-safeJitter, safeJitter);
 
         cart.setVelocity(new Vector(
             direction.getX() * (speed + randomJitter),
@@ -92,19 +96,13 @@ public final class CartPvpController {
         ));
 
 
-        int fuse = (int) plugin.getConfig().getLong("tactics.cart-pvp.fuse-ticks", 45L);
+        int fuse = (int) TemplateDifficultyTuning.getLong(plugin, trait, "cart-fuse-ticks", 45L, "tactics.cart-pvp.fuse-ticks");
         cart.setFuseTicks(Math.max(5, Math.min(200, fuse)));
 
         minecart.setAmount(minecart.getAmount() - 1);
 
-        try {
-            cart.ignite();
-        } catch (Throwable ignored) {
-            // Older Paper builds may not expose the helper; the cart remains harmless.
-        }
-
         trait.lastCartActionAt = now;
-        trait.tacticCooldownUntil = now + 700L;
+        trait.tacticCooldownUntil = now + TemplateDifficultyTuning.getLong(plugin, trait, "cart-followup-delay-ms", 700L);
         trait.lastTactic = "cart-pressure";
         return true;
     }
@@ -118,7 +116,7 @@ public final class CartPvpController {
         return null;
     }
 
-    private Block findLaunchRail(Player bot, Player target) {
+    private Block findLaunchRail(Player bot, Player target, BotTrait trait) {
         Location origin = bot.getLocation();
         Vector direction = target.getLocation().toVector()
             .subtract(origin.toVector());
@@ -130,7 +128,7 @@ public final class CartPvpController {
 
         direction.normalize();
 
-        int radius = plugin.getConfig().getInt("tactics.cart-pvp.rail-search-radius", 6);
+        int radius = TemplateDifficultyTuning.getInt(plugin, trait, "cart-rail-search-radius", 6, "tactics.cart-pvp.rail-search-radius");
         Block best = null;
         double bestScore = Double.MAX_VALUE;
 

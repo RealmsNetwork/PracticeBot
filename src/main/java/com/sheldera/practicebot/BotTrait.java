@@ -61,6 +61,8 @@ public class BotTrait extends Trait {
    private String leggingsMaterial = "netherite";
    private String swordType = "sharp_kb";
    private String weaponProfile = "sword";
+   private String templateDifficulty = "";
+   private String templateKit = "";
    private String offhandType = "totem";
    private int totemCount = 64;
    private ItemStack customMainHand = null;
@@ -689,6 +691,42 @@ public class BotTrait extends Trait {
       return this.weaponProfile;
    }
 
+   public String getTemplateDifficulty() {
+      return this.templateDifficulty;
+   }
+
+   public String getTemplateKit() {
+      return this.templateKit;
+   }
+
+   public void setTemplateFromKey(String templateKey) {
+      this.templateKit = TemplateDifficultyTuning.kitFromTemplateKey(templateKey);
+      this.templateDifficulty = TemplateDifficultyTuning.difficultyFromTemplateKey(templateKey);
+      this.simulatedPingMs = 0;
+      this.lastPingDriftAt = 0L;
+      this.tacticNextDecisionAt = 0L;
+      this.tacticCooldownUntil = 0L;
+      this.windChargeResetCooldownUntil = 0L;
+      this.elytraFlightUntil = 0L;
+      this.lastCartActionAt = 0L;
+      this.lastStrafeSwitchAt = 0L;
+      this.lastRocketBoostAt = 0L;
+      this.strafeDirection = 1;
+      this.lastTactic = "none";
+   }
+
+   /** @deprecated Use {@link #getTemplateDifficulty()} instead. */
+   @Deprecated
+   public String getMaceDifficulty() {
+      return this.templateDifficulty;
+   }
+
+   /** @deprecated Use {@link #setTemplateFromKey(String)} instead. */
+   @Deprecated
+   public void setMaceDifficultyFromTemplateKey(String templateKey) {
+      this.setTemplateFromKey(templateKey);
+   }
+
    public void setWeaponProfile(String profile) {
       this.weaponProfile = this.normalizeWeaponProfile(profile);
       this.modernWeaponCooldownUntil = 0L;
@@ -1230,6 +1268,8 @@ public class BotTrait extends Trait {
       this.refreshArmorTypeSnapshot();
       this.swordType = var1.getString("swordType", this.swordType);
       this.weaponProfile = this.normalizeWeaponProfile(var1.getString("weaponProfile", this.weaponProfile));
+      this.templateDifficulty = TemplateDifficultyTuning.normalizeDifficulty(var1.getString("templateDifficulty", var1.getString("maceDifficulty", this.templateDifficulty)));
+      this.templateKit = TemplateDifficultyTuning.normalizeKit(var1.getString("templateKit", this.templateKit));
       this.offhandType = var1.getString("offhandType", this.offhandType);
       this.totemCount = var1.getInt("totemCount", this.totemCount);
       this.attackWarmupTicks = Math.max(0L, var1.getLong("attackWarmupTicks", this.attackWarmupTicks));
@@ -1364,6 +1404,8 @@ public class BotTrait extends Trait {
       var1.setString("leggingsMaterial", this.leggingsMaterial);
       var1.setString("swordType", this.swordType);
       var1.setString("weaponProfile", this.weaponProfile);
+      var1.setString("templateDifficulty", this.templateDifficulty);
+      var1.setString("templateKit", this.templateKit);
       var1.setString("offhandType", this.offhandType);
       var1.setInt("totemCount", this.totemCount);
       var1.setLong("attackWarmupTicks", this.attackWarmupTicks);

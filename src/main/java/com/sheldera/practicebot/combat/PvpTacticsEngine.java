@@ -1,6 +1,7 @@
 package com.sheldera.practicebot.combat;
 
 import com.sheldera.practicebot.BotTrait;
+import com.sheldera.practicebot.MaceDifficultyTuning;
 import com.sheldera.practicebot.PracticeBotPlugin;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -580,10 +581,8 @@ public final class PvpTacticsEngine {
                     trait.maceWindChargePending = false;
                     trait.maceAttemptedThisFall = false;
                     trait.maceMissThisAttack = ThreadLocalRandom.current().nextDouble(100.0D) <
-                        plugin.getConfig().getDouble("modern-weapons.mace.miss-chance-percent", 10.0D);
-                    double missOffset = Math.max(0.0D, plugin.getConfig().getDouble(
-                        "modern-weapons.mace.miss-offset-degrees", 6.0D
-                    ));
+                        MaceDifficultyTuning.getDouble(plugin, trait, "miss-chance-percent", 10.0D);
+                    double missOffset = Math.max(0.0D, MaceDifficultyTuning.getDouble(plugin, trait, "miss-offset-degrees", 6.0D));
                     trait.maceMissOffsetDegrees = trait.maceMissThisAttack
                         ? ThreadLocalRandom.current().nextDouble(-missOffset, missOffset) : 0.0D;
                     trait.maceLaunchStartedAt = now;

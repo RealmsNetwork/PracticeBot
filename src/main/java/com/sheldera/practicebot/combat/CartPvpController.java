@@ -47,7 +47,7 @@ public final class CartPvpController {
             return false;
         }
 
-        Block rail = findLaunchRail(bot, target);
+        Block rail = findLaunchRail(bot, target, trait);
         if (rail == null) {
             return false;
         }
@@ -119,7 +119,7 @@ public final class CartPvpController {
         return null;
     }
 
-    private Block findLaunchRail(Player bot, Player target) {
+    private Block findLaunchRail(Player bot, Player target, BotTrait trait) {
         Location origin = bot.getLocation();
         Vector direction = target.getLocation().toVector()
             .subtract(origin.toVector());

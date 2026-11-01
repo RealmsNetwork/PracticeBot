@@ -2,6 +2,7 @@ package com.sheldera.practicebot.combat;
 
 import com.sheldera.practicebot.BotTrait;
 import com.sheldera.practicebot.MaceDifficultyTuning;
+import com.sheldera.practicebot.TemplateDifficultyTuning;
 import com.sheldera.practicebot.PracticeBotPlugin;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -115,7 +116,7 @@ public final class PvpTacticsEngine {
         BotTrait trait,
         long now
     ) {
-        if (!plugin.getConfig().getBoolean("tactics.pearl.enabled", true)) {
+        if (!TemplateDifficultyTuning.getBoolean(plugin, trait, "pearl-enabled", true, "tactics.pearl.enabled")) {
             return false;
         }
 
@@ -128,24 +129,16 @@ public final class PvpTacticsEngine {
         double maxHealthValue = maxHealthAttribute == null ? 20.0D : maxHealthAttribute.getValue();
         double healthRatio = maxHealthValue <= 0.0D ? 1.0D : bot.getHealth() / maxHealthValue;
 
-        if (healthRatio > plugin.getConfig().getDouble(
-            "tactics.pearl.low-health-threshold", 0.35D
-        )) {
+        if (healthRatio > TemplateDifficultyTuning.getDouble(plugin, trait, "pearl-low-health-threshold", 0.35D, "tactics.pearl.low-health-threshold")) {
             return false;
         }
 
         double distance = bot.getLocation().distance(target.getLocation());
-        if (distance < plugin.getConfig().getDouble(
-            "tactics.pearl.min-distance", 2.5D
-        ) || distance > plugin.getConfig().getDouble(
-            "tactics.pearl.max-distance", 12.0D
-        )) {
+        if (distance < TemplateDifficultyTuning.getDouble(plugin, trait, "pearl-min-distance", 2.5D, "tactics.pearl.min-distance") || distance > TemplateDifficultyTuning.getDouble(plugin, trait, "pearl-max-distance", 12.0D, "tactics.pearl.max-distance")) {
             return false;
         }
 
-        if (ThreadLocalRandom.current().nextDouble(100.0D) >= plugin.getConfig().getDouble(
-            "tactics.pearl.chance-percent", 45.0D
-        )) {
+        if (ThreadLocalRandom.current().nextDouble(100.0D) >= TemplateDifficultyTuning.getDouble(plugin, trait, "pearl-chance-percent", 45.0D, "tactics.pearl.chance-percent")) {
             return false;
         }
 
@@ -174,9 +167,7 @@ public final class PvpTacticsEngine {
         pearl.setAmount(pearl.getAmount() - 1);
 
         trait.lastTactic = "pearl-disengage";
-        trait.tacticCooldownUntil = now + plugin.getConfig().getLong(
-            "tactics.pearl.cooldown-ms", 7000L
-        );
+        trait.tacticCooldownUntil = now + TemplateDifficultyTuning.getLong(plugin, trait, "pearl-cooldown-ms", 7000L, "tactics.pearl.cooldown-ms");
 
         return true;
     }
@@ -184,15 +175,11 @@ public final class PvpTacticsEngine {
     private void initializeLatencyProfile(BotTrait trait) {
         int min = Math.max(
             0,
-            plugin.getConfig().getInt(
-                "tactics.humanization.ping.min-ms", 35
-            )
+            TemplateDifficultyTuning.getInt(plugin, trait, "ping-min-ms", 35, "tactics.humanization.ping.min-ms")
         );
         int max = Math.max(
             min,
-            plugin.getConfig().getInt(
-                "tactics.humanization.ping.max-ms", 180
-            )
+            TemplateDifficultyTuning.getInt(plugin, trait, "ping-max-ms", 180, "tactics.humanization.ping.max-ms")
         );
 
         if (trait.simulatedPingMs <= 0) {
@@ -207,9 +194,7 @@ public final class PvpTacticsEngine {
         }
 
         long now = System.currentTimeMillis();
-        long driftInterval = plugin.getConfig().getLong(
-            "tactics.humanization.ping.drift-interval-ms", 7000L
-        );
+        long driftInterval = TemplateDifficultyTuning.getLong(plugin, trait, "ping-drift-interval-ms", 7000L, "tactics.humanization.ping.drift-interval-ms");
 
         if (driftInterval <= 0L ||
             now - trait.lastPingDriftAt < driftInterval) {
@@ -218,9 +203,7 @@ public final class PvpTacticsEngine {
 
         int drift = Math.max(
             0,
-            plugin.getConfig().getInt(
-                "tactics.humanization.ping.drift-ms", 18
-            )
+            TemplateDifficultyTuning.getInt(plugin, trait, "ping-drift-ms", 18, "tactics.humanization.ping.drift-ms")
         );
 
         int delta = ThreadLocalRandom.current().nextInt(
@@ -233,21 +216,13 @@ public final class PvpTacticsEngine {
     }
 
     private long nextDecisionDelay(BotTrait trait) {
-        int jitter = plugin.getConfig().getInt(
-            "tactics.humanization.ping.jitter-ms", 8
-        );
+        int jitter = TemplateDifficultyTuning.getInt(plugin, trait, "ping-jitter-ms", 8, "tactics.humanization.ping.jitter-ms");
 
-        double networkFraction = plugin.getConfig().getDouble(
-            "tactics.humanization.ping.action-latency-fraction", 0.45D
-        );
+        double networkFraction = TemplateDifficultyTuning.getDouble(plugin, trait, "ping-action-latency-fraction", 0.45D, "tactics.humanization.ping.action-latency-fraction");
 
-        double reactionMin = plugin.getConfig().getDouble(
-            "tactics.humanization.reaction.min-ms", 85.0D
-        );
+        double reactionMin = TemplateDifficultyTuning.getDouble(plugin, trait, "reaction-min-ms", 85.0D, "tactics.humanization.reaction.min-ms");
 
-        double reactionMax = plugin.getConfig().getDouble(
-            "tactics.humanization.reaction.max-ms", 210.0D
-        );
+        double reactionMax = TemplateDifficultyTuning.getDouble(plugin, trait, "reaction-max-ms", 210.0D, "tactics.humanization.reaction.max-ms");
 
         double reaction = ThreadLocalRandom.current().nextDouble(
             Math.min(reactionMin, reactionMax),
@@ -265,14 +240,18 @@ public final class PvpTacticsEngine {
     private void updateHumanAim(Player bot, Player target, BotTrait trait) {
         Location current = bot.getLocation();
 
+        double minimumLead = TemplateDifficultyTuning.getDouble(
+            plugin, trait, "aim-min-lead-seconds", 0.04D
+        );
+        double leadFactor = TemplateDifficultyTuning.getDouble(
+            plugin, trait, "aim-lead-ping-factor", 0.65D,
+            "tactics.humanization.aim.lead-ping-factor"
+        );
         double leadSeconds = Math.min(
             0.30D,
             Math.max(
-                0.04D,
-                (trait.simulatedPingMs / 1000.0D) *
-                    plugin.getConfig().getDouble(
-                        "tactics.humanization.aim.lead-ping-factor", 0.65D
-                    )
+                Math.max(0.0D, minimumLead),
+                (trait.simulatedPingMs / 1000.0D) * Math.max(0.0D, leadFactor)
             )
         );
 
@@ -281,9 +260,7 @@ public final class PvpTacticsEngine {
 
         // Human aim is not perfectly centered. Small vertical/horizontal aim
         // offsets represent real target tracking rather than a ray-lock.
-        double aimNoise = plugin.getConfig().getDouble(
-            "tactics.humanization.aim.target-offset", 0.10D
-        );
+        double aimNoise = TemplateDifficultyTuning.getDouble(plugin, trait, "aim-target-offset", 0.10D, "tactics.humanization.aim.target-offset");
 
         predicted.add(new Vector(
             ThreadLocalRandom.current().nextDouble(-aimNoise, aimNoise),
@@ -307,18 +284,14 @@ public final class PvpTacticsEngine {
         double smoothing = 0.34D - Math.min(0.16D, ping / 1200.0D);
         smoothing = Math.max(0.16D, smoothing);
 
-        double maxTurn = plugin.getConfig().getDouble(
-            "tactics.humanization.aim.max-degrees-per-update", 24.0D
-        );
+        double maxTurn = TemplateDifficultyTuning.getDouble(plugin, trait, "aim-max-degrees-per-update", 24.0D, "tactics.humanization.aim.max-degrees-per-update");
 
         yawDelta = (float) Math.max(-maxTurn, Math.min(maxTurn, yawDelta));
 
         double pitchDelta = desiredPitch - current.getPitch();
         pitchDelta = Math.max(-maxTurn, Math.min(maxTurn, pitchDelta));
 
-        double jitter = plugin.getConfig().getDouble(
-            "tactics.humanization.aim.jitter-degrees", 0.6D
-        );
+        double jitter = TemplateDifficultyTuning.getDouble(plugin, trait, "aim-jitter-degrees", 0.6D, "tactics.humanization.aim.jitter-degrees");
 
         float yaw = current.getYaw()
             + (float) (yawDelta * smoothing)
@@ -334,9 +307,7 @@ public final class PvpTacticsEngine {
     private void applyHumanMovementNoise(
         Player bot, Player target, BotTrait trait, long now
     ) {
-        if (!plugin.getConfig().getBoolean(
-            "tactics.humanization.movement-enabled", true
-        )) {
+        if (!TemplateDifficultyTuning.getBoolean(plugin, trait, "movement-enabled", true, "tactics.humanization.movement-enabled")) {
             return;
         }
 
@@ -350,12 +321,10 @@ public final class PvpTacticsEngine {
             return;
         }
 
-        long switchEvery = plugin.getConfig().getLong(
-            "tactics.humanization.strafe-switch-ms", 380L
-        );
+        long switchEvery = TemplateDifficultyTuning.getLong(plugin, trait, "strafe-switch-ms", 380L, "tactics.humanization.strafe-switch-ms");
 
         if (now - trait.lastStrafeSwitchAt > switchEvery) {
-            if (ThreadLocalRandom.current().nextDouble() < 0.22D) {
+            if (ThreadLocalRandom.current().nextDouble() < TemplateDifficultyTuning.getDouble(plugin, trait, "strafe-direction-change-chance", 0.22D)) {
                 trait.strafeDirection *= -1;
             }
             trait.lastStrafeSwitchAt = now;
@@ -374,9 +343,7 @@ public final class PvpTacticsEngine {
         Vector tangent = new Vector(-toTarget.getZ(), 0.0D, toTarget.getX())
             .multiply(trait.strafeDirection);
 
-        double amount = plugin.getConfig().getDouble(
-            "tactics.humanization.movement-jitter", 0.015D
-        );
+        double amount = TemplateDifficultyTuning.getDouble(plugin, trait, "movement-jitter", 0.015D, "tactics.humanization.movement-jitter");
 
         Vector current = bot.getVelocity();
         current.setX(current.getX() + tangent.getX() * amount);
@@ -493,7 +460,7 @@ public final class PvpTacticsEngine {
         Player bot, Player target, BotTrait trait, long now, String profile
     ) {
         if (!profile.endsWith("_elytra") ||
-            !plugin.getConfig().getBoolean("tactics.elytra.enabled", true)) {
+            !TemplateDifficultyTuning.getBoolean(plugin, trait, "elytra-enabled", true, "tactics.elytra.enabled")) {
             return false;
         }
 
@@ -506,8 +473,8 @@ public final class PvpTacticsEngine {
 
         if (!bot.isGliding()) {
             if (now < trait.elytraFlightUntil ||
-                distance < plugin.getConfig().getDouble("tactics.elytra.start-min-distance", 9.0D) ||
-                distance > plugin.getConfig().getDouble("tactics.elytra.start-max-distance", 28.0D)) {
+                distance < TemplateDifficultyTuning.getDouble(plugin, trait, "elytra-start-min-distance", 9.0D, "tactics.elytra.start-min-distance") ||
+                distance > TemplateDifficultyTuning.getDouble(plugin, trait, "elytra-start-max-distance", 28.0D, "tactics.elytra.start-max-distance")) {
                 return false;
             }
 
@@ -518,7 +485,7 @@ public final class PvpTacticsEngine {
             setLookDirection(bot, target.getEyeLocation());
 
             Vector velocity = bot.getVelocity();
-            velocity.setY(plugin.getConfig().getDouble("tactics.elytra.launch-y", 0.58D));
+            velocity.setY(TemplateDifficultyTuning.getDouble(plugin, trait, "elytra-launch-y", 0.58D, "tactics.elytra.launch-y"));
             bot.setVelocity(velocity);
 
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
@@ -529,7 +496,7 @@ public final class PvpTacticsEngine {
             }, 1L);
 
             trait.elytraFlightUntil = now +
-                plugin.getConfig().getLong("tactics.elytra.flight-window-ms", 4200L);
+                TemplateDifficultyTuning.getLong(plugin, trait, "elytra-flight-window-ms", 4200L, "tactics.elytra.flight-window-ms");
             trait.lastTactic = profile.startsWith("mace")
                 ? "elytra-mace-launch"
                 : "elytra-spear-launch";
@@ -539,7 +506,7 @@ public final class PvpTacticsEngine {
         setLookDirection(bot, target.getEyeLocation());
 
         if (now - trait.lastRocketBoostAt >
-            plugin.getConfig().getLong("tactics.elytra.rocket-interval-ms", 650L)) {
+            TemplateDifficultyTuning.getLong(plugin, trait, "elytra-rocket-interval-ms", 650L, "tactics.elytra.rocket-interval-ms")) {
             ItemStack rocket = find(bot, Material.FIREWORK_ROCKET);
 
             if (rocket != null && rocket.getAmount() > 0) {
@@ -554,9 +521,7 @@ public final class PvpTacticsEngine {
             }
         }
 
-        if (distance <= plugin.getConfig().getDouble(
-            "tactics.elytra.dive-distance", 4.25D
-        )) {
+        if (distance <= TemplateDifficultyTuning.getDouble(plugin, trait, "elytra-dive-distance", 4.25D, "tactics.elytra.dive-distance")) {
             Vector dive = target.getLocation().toVector()
                 .subtract(bot.getLocation().toVector());
 
@@ -564,8 +529,10 @@ public final class PvpTacticsEngine {
                 dive.normalize();
 
                 double downward = profile.startsWith("mace")
-                    ? plugin.getConfig().getDouble("tactics.elytra.mace-dive-y", -1.45D)
-                    : plugin.getConfig().getDouble("tactics.elytra.spear-dive-y", -0.85D);
+                    ? TemplateDifficultyTuning.getDouble(plugin, trait, "elytra-mace-dive-y", -1.45D, "tactics.elytra.mace-dive-y")
+                    : profile.startsWith("spear")
+                        ? TemplateDifficultyTuning.getDouble(plugin, trait, "elytra-spear-dive-y", -0.85D, "tactics.elytra.spear-dive-y")
+                        : TemplateDifficultyTuning.getDouble(plugin, trait, "elytra-cart-dive-y", -0.85D);
 
                 bot.setGliding(false);
 
@@ -590,9 +557,7 @@ public final class PvpTacticsEngine {
                     trait.macePeakY = bot.getLocation().getY();
                 } else if (profile.startsWith("spear")) {
                     trait.spearChargeStartedAt = now -
-                        plugin.getConfig().getLong(
-                            "modern-weapons.spear.charge-delay-ms", 400L
-                        );
+                        TemplateDifficultyTuning.getLong(plugin, trait, "spear-charge-delay-ms", 400L, "modern-weapons.spear.charge-delay-ms");
                 }
 
                 if (profile.startsWith("mace")) {

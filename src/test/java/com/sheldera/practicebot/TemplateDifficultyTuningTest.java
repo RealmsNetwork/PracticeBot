@@ -56,9 +56,10 @@ class TemplateDifficultyTuningTest {
         try (InputStream stream = getClass().getClassLoader().getResourceAsStream("config.yml")) {
             assertNotNull(stream, "bundled config.yml must be present");
 
-            FileConfiguration config = YamlConfiguration.loadConfiguration(
-                new InputStreamReader(stream, StandardCharsets.UTF_8)
-            );
+            FileConfiguration config;
+            try (InputStreamReader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
+                config = YamlConfiguration.loadConfiguration(reader);
+            }
 
             assertEquals(8, config.getInt("config-version"));
 

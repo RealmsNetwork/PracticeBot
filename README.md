@@ -135,7 +135,7 @@ Supported tiers are `EASY`, `NORMAL`, `HARD`, `EXPERT`, `HACKER`,
 `MASTER`, and `NIGHTMARE`. This works with the existing template prefixes
 (`tank`, `axeandshield`, `nethpot`, `smpkit`, `diamondpot`, `bowpvp`,
 `beast`, `diasmp`, `cpvpffa`, and `cartpvp`) and future prefixes such as
-`macepvp`, `macerocket`, `spearelytra`, and `spearmace`.
+`builduhc`, `macepvp`, `macerocket`, `spearelytra`, and `spearmace`.
 
 Difficulty values are resolved in this order:
 

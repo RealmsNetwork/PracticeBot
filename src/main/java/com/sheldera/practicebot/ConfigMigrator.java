@@ -95,6 +95,64 @@ public final class ConfigMigrator {
             }
         }
 
+
+        String[] maceElytraDifficultySettings = {
+            "elytra-start-min-distance",
+            "elytra-start-max-distance",
+            "elytra-launch-y",
+            "elytra-flight-window-ms",
+            "elytra-rocket-interval-ms",
+            "elytra-dive-distance",
+            "elytra-mace-dive-y"
+        };
+        Object[][] maceElytraDifficultyDefaults = {
+            {12L, 22L, 0.42D, 2800L, 950L, 3.6D, -1.1D},
+            {11L, 24L, 0.46D, 3100L, 850L, 3.8D, -1.22D},
+            {10L, 25L, 0.5D, 3400L, 780L, 4L, -1.32D},
+            {9.5D, 26L, 0.54D, 3700L, 720L, 4.2D, -1.4D},
+            {9L, 27L, 0.57D, 3900L, 680L, 4.3D, -1.45D},
+            {8.5D, 28L, 0.6D, 4100L, 640L, 4.4D, -1.5D},
+            {8L, 30L, 0.63D, 4300L, 600L, 4.5D, -1.55D}
+        };
+
+        String[] spearElytraDifficultySettings = {
+            "elytra-start-min-distance",
+            "elytra-start-max-distance",
+            "elytra-launch-y",
+            "elytra-flight-window-ms",
+            "elytra-rocket-interval-ms",
+            "elytra-dive-distance",
+            "elytra-spear-dive-y",
+            "spear-charge-delay-ms"
+        };
+        Object[][] spearElytraDifficultyDefaults = {
+            {11L, 21L, 0.4D, 2600L, 1050L, 3.5D, -0.55D, 180L},
+            {10.5D, 23L, 0.44D, 2900L, 900L, 3.8D, -0.62D, 230L},
+            {10L, 24L, 0.48D, 3200L, 820L, 4L, -0.7D, 280L},
+            {9.5D, 25L, 0.52D, 3500L, 760L, 4.2D, -0.78D, 330L},
+            {9L, 26L, 0.56D, 3800L, 700L, 4.3D, -0.83D, 380L},
+            {8.5D, 28L, 0.6D, 4000L, 650L, 4.4D, -0.88D, 400L},
+            {8L, 30L, 0.63D, 4200L, 600L, 4.5D, -0.93D, 400L}
+        };
+
+        for (int tierIndex = 0; tierIndex < templateDifficultyLevels.length; tierIndex++) {
+            for (int settingIndex = 0; settingIndex < maceElytraDifficultySettings.length; settingIndex++) {
+                defaults.put(
+                    "template-difficulty.profiles.MACE." +
+                        templateDifficultyLevels[tierIndex] + "." +
+                        maceElytraDifficultySettings[settingIndex],
+                    maceElytraDifficultyDefaults[tierIndex][settingIndex]
+                );
+            }
+            for (int settingIndex = 0; settingIndex < spearElytraDifficultySettings.length; settingIndex++) {
+                defaults.put(
+                    "template-difficulty.profiles.SPEAR." +
+                        templateDifficultyLevels[tierIndex] + "." +
+                        spearElytraDifficultySettings[settingIndex],
+                    spearElytraDifficultyDefaults[tierIndex][settingIndex]
+                );
+            }
+        }
         String[] cartDifficultySettings = {
             "cart-cooldown-ms",
             "cart-min-distance",

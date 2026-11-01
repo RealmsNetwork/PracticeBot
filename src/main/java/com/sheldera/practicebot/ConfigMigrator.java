@@ -11,7 +11,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public final class ConfigMigrator {
-    private static final int CURRENT_VERSION = 7;
+    private static final int CURRENT_VERSION = 8;
     private static final int CURRENT_INVENTORY_VERSION = 3;
 
     private ConfigMigrator() {
@@ -38,6 +38,99 @@ public final class ConfigMigrator {
         Map<String, Object> defaults = new LinkedHashMap<>();
 
         defaults.put("config-version", CURRENT_VERSION);
+
+        // Shared defaults for every <kit>_<difficulty>_<player> template.
+        // These additions are non-destructive: user-defined values remain intact.
+        String[] templateDifficultyLevels = {
+            "EASY", "NORMAL", "HARD", "EXPERT", "HACKER", "MASTER", "NIGHTMARE"
+        };
+        String[] commonDifficultySettings = {
+            "ping-min-ms",
+            "ping-max-ms",
+            "ping-jitter-ms",
+            "ping-drift-ms",
+            "ping-drift-interval-ms",
+            "ping-action-latency-fraction",
+            "reaction-min-ms",
+            "reaction-max-ms",
+            "aim-min-lead-seconds",
+            "aim-lead-ping-factor",
+            "aim-target-offset",
+            "aim-max-degrees-per-update",
+            "aim-jitter-degrees",
+            "movement-enabled",
+            "movement-jitter",
+            "strafe-switch-ms",
+            "strafe-direction-change-chance",
+            "mistake-chance-percent",
+            "mistake-delay-min-ms",
+            "mistake-delay-max-ms",
+            "attack-delay-min-ms",
+            "attack-delay-max-ms",
+            "pearl-enabled",
+            "pearl-low-health-threshold",
+            "pearl-min-distance",
+            "pearl-max-distance",
+            "pearl-chance-percent",
+            "pearl-cooldown-ms"
+        };
+        Object[][] commonDifficultyDefaults = {
+            {80, 160, 16, 24, 5000, 0.6D, 220, 360, 0, 0, 0.34D, 12, 1.4D, true, 0.008D, 700, 0.14D, 18, 70, 160, 70, 160, true, 0.28D, 4, 10, 15, 10000},
+            {60, 130, 12, 20, 6000, 0.52D, 180, 300, 0.02D, 0.25D, 0.24D, 16, 1, true, 0.011D, 560, 0.17D, 13, 50, 120, 50, 120, true, 0.3D, 3.5D, 11, 28, 8500},
+            {45, 100, 10, 15, 6500, 0.45D, 140, 230, 0.03D, 0.35D, 0.18D, 20, 0.75D, true, 0.014D, 460, 0.2D, 9, 35, 90, 35, 90, true, 0.33D, 3, 12, 40, 7600},
+            {35, 85, 8, 12, 7000, 0.4D, 110, 185, 0.03D, 0.45D, 0.13D, 26, 0.55D, true, 0.017D, 390, 0.23D, 6, 25, 70, 25, 70, true, 0.35D, 2.5D, 13, 48, 7000},
+            {25, 70, 7, 10, 7500, 0.35D, 85, 155, 0.03D, 0.55D, 0.09D, 32, 0.4D, true, 0.02D, 320, 0.25D, 3, 15, 55, 15, 55, true, 0.38D, 2.5D, 14, 55, 6500},
+            {20, 60, 6, 8, 8000, 0.3D, 65, 125, 0.03D, 0.6D, 0.065D, 38, 0.28D, true, 0.022D, 270, 0.28D, 1, 8, 35, 8, 35, true, 0.4D, 2.5D, 15, 65, 6000},
+            {15, 50, 5, 7, 9000, 0.25D, 45, 95, 0.03D, 0.65D, 0.04D, 45, 0.18D, true, 0.025D, 230, 0.3D, 0.5D, 4, 20, 4, 20, true, 0.42D, 2.5D, 16, 75, 5500}
+        };
+
+        for (int tierIndex = 0; tierIndex < templateDifficultyLevels.length; tierIndex++) {
+            for (int settingIndex = 0; settingIndex < commonDifficultySettings.length; settingIndex++) {
+                defaults.put(
+                    "template-difficulty.defaults." +
+                        templateDifficultyLevels[tierIndex] + "." +
+                        commonDifficultySettings[settingIndex],
+                    commonDifficultyDefaults[tierIndex][settingIndex]
+                );
+            }
+        }
+
+        String[] cartDifficultySettings = {
+            "cart-cooldown-ms",
+            "cart-min-distance",
+            "cart-max-distance",
+            "cart-launch-speed",
+            "cart-fuse-ticks",
+            "cart-rail-search-radius",
+            "cart-followup-delay-ms",
+            "elytra-start-min-distance",
+            "elytra-start-max-distance",
+            "elytra-launch-y",
+            "elytra-flight-window-ms",
+            "elytra-rocket-interval-ms",
+            "elytra-dive-distance",
+            "elytra-cart-dive-y"
+        };
+        Object[][] cartDifficultyDefaults = {
+            {6500L, 6.5D, 14L, 0.45D, 55L, 2L, 1100L, 12L, 22L, 0.42D, 2800L, 950L, 3.6D, -0.7D},
+            {5500L, 6L, 15L, 0.55D, 52L, 3L, 950L, 11L, 24L, 0.46D, 3100L, 850L, 3.8D, -0.76D},
+            {4500L, 5.5D, 16L, 0.62D, 50L, 4L, 850L, 10L, 25L, 0.5D, 3400L, 780L, 4L, -0.8D},
+            {3800L, 5L, 17L, 0.7D, 48L, 5L, 750L, 9.5D, 26L, 0.54D, 3700L, 720L, 4.2D, -0.84D},
+            {3200L, 5L, 18L, 0.76D, 46L, 6L, 700L, 9L, 27L, 0.57D, 3900L, 680L, 4.3D, -0.88D},
+            {2800L, 4.5D, 20L, 0.82D, 44L, 6L, 650L, 8.5D, 28L, 0.6D, 4100L, 640L, 4.4D, -0.92D},
+            {2400L, 4L, 22L, 0.88D, 42L, 8L, 600L, 8L, 30L, 0.63D, 4300L, 600L, 4.5D, -0.96D}
+        };
+
+        for (int tierIndex = 0; tierIndex < templateDifficultyLevels.length; tierIndex++) {
+            for (int settingIndex = 0; settingIndex < cartDifficultySettings.length; settingIndex++) {
+                defaults.put(
+                    "template-difficulty.profiles.CART." +
+                        templateDifficultyLevels[tierIndex] + "." +
+                        cartDifficultySettings[settingIndex],
+                    cartDifficultyDefaults[tierIndex][settingIndex]
+                );
+            }
+        }
 
         defaults.put("modern-weapons.mace.wind-charge-enabled", true);
         defaults.put("modern-weapons.mace.wind-charge-launch-height", 7.0D);

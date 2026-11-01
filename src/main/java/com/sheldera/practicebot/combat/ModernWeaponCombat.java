@@ -441,6 +441,15 @@ public final class ModernWeaponCombat {
         return value;
     }
 
+    static boolean shouldPerformMaceSmash(
+        boolean falling, double fallDistance, boolean slowFalling
+    ) {
+        return falling &&
+            Double.isFinite(fallDistance) &&
+            fallDistance >= MACE_MIN_SMASH_FALL &&
+            !slowFalling;
+    }
+
     private boolean tryMace(Player bot, Player target, BotTrait trait, long now) {
         double distance = bot.getLocation().distance(target.getLocation());
         if (distance > MACE_MAX_REACH + SPEAR_HITBOX_MARGIN) return true;
@@ -454,8 +463,9 @@ public final class ModernWeaponCombat {
             bot.getVelocity().getY() < -0.02D;
         double fallDistance = Math.max(0.0D, bot.getFallDistance());
 
-        if (falling && fallDistance >= MACE_MIN_SMASH_FALL &&
-            !bot.hasPotionEffect(PotionEffectType.SLOW_FALLING)) {
+        if (shouldPerformMaceSmash(
+            falling, fallDistance, bot.hasPotionEffect(PotionEffectType.SLOW_FALLING)
+        )) {
             if (trait.maceAttemptedThisFall) return true;
             trait.maceAttemptedThisFall = true;
             if (!maceAimHitsTarget(bot, target)) {

@@ -101,12 +101,6 @@ public final class CartPvpController {
 
         minecart.setAmount(minecart.getAmount() - 1);
 
-        try {
-            cart.ignite();
-        } catch (Throwable ignored) {
-            // Older Paper builds may not expose the helper; the cart remains harmless.
-        }
-
         trait.lastCartActionAt = now;
         trait.tacticCooldownUntil = now + TemplateDifficultyTuning.getLong(plugin, trait, "cart-followup-delay-ms", 700L);
         trait.lastTactic = "cart-pressure";

@@ -14,6 +14,22 @@ class ModernWeaponCombatTest {
    }
 
    @Test
+   void maceSmashStartsAtVanillaOnePointFiveBlockThreshold() {
+      assertEquals(true,
+         ModernWeaponCombat.shouldPerformMaceSmash(true, 1.5, false));
+      assertEquals(true,
+         ModernWeaponCombat.shouldPerformMaceSmash(true, 1.5001, false));
+      assertEquals(false,
+         ModernWeaponCombat.shouldPerformMaceSmash(true, 1.4999, false));
+      assertEquals(false,
+         ModernWeaponCombat.shouldPerformMaceSmash(false, 2.0, false));
+      assertEquals(false,
+         ModernWeaponCombat.shouldPerformMaceSmash(true, 2.0, true));
+      assertEquals(false,
+         ModernWeaponCombat.shouldPerformMaceSmash(true, Double.NaN, false));
+   }
+
+   @Test
    void bareMaceAtTwoBlocksMatchesPublishedExample() {
       assertEquals(14.0,
          ModernWeaponCombat.maceSmashDamage(6.0, 2.0, 0), 1.0E-9);

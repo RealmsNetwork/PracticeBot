@@ -11,8 +11,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public final class ConfigMigrator {
-    private static final int CURRENT_VERSION = 5;
-    private static final int CURRENT_INVENTORY_VERSION = 2;
+    private static final int CURRENT_VERSION = 6;
+    private static final int CURRENT_INVENTORY_VERSION = 3;
 
     private ConfigMigrator() {
     }
@@ -41,9 +41,14 @@ public final class ConfigMigrator {
 
         defaults.put("modern-weapons.mace.wind-charge-enabled", true);
         defaults.put("modern-weapons.mace.wind-charge-launch-height", 7.0D);
-        defaults.put("modern-weapons.mace.assisted-jump-without-wind-charge", true);
-        defaults.put("modern-weapons.mace.launch-min-distance", 2.8D);
-        defaults.put("modern-weapons.mace.launch-max-distance", 4.5D);
+        defaults.put("modern-weapons.mace.assisted-jump-without-wind-charge", false);
+        defaults.put("modern-weapons.mace.launch-min-distance", 3.2D);
+        defaults.put("modern-weapons.mace.launch-max-distance", 10.0D);
+        defaults.put("modern-weapons.mace.miss-chance-percent", 10.0D);
+        defaults.put("modern-weapons.mace.miss-offset-degrees", 6.0D);
+        defaults.put("modern-weapons.mace.target-lead-seconds", 0.08D);
+        defaults.put("modern-weapons.mace.aim-max-degrees-per-tick", 32.0D);
+        defaults.put("modern-weapons.mace.aim-jitter-degrees", 0.15D);
 
         defaults.put("modern-weapons.spear.charge-enabled", true);
         defaults.put("modern-weapons.spear.charge-delay-ms", 400L);
@@ -138,6 +143,12 @@ public final class ConfigMigrator {
         defaults.put("weapon.cart.arrows", 32);
         defaults.put("weapon.cart.power", 5);
         defaults.put("weapon.cart.punch", 2);
+        defaults.put("weapon.uhc.golden-apples", 6);
+        defaults.put("weapon.uhc.cobwebs", 8);
+        defaults.put("weapon.uhc.arrows", 24);
+        defaults.put("weapon.uhc.food", 16);
+        defaults.put("weapon.water.buckets", 2);
+        defaults.put("weapon.water.sponges", 4);
 
         int changed = 0;
 
@@ -209,6 +220,12 @@ public final class ConfigMigrator {
         defaults.put("weapon.cart.arrows", 32);
         defaults.put("weapon.cart.power", 5);
         defaults.put("weapon.cart.punch", 2);
+        defaults.put("weapon.uhc.golden-apples", 6);
+        defaults.put("weapon.uhc.cobwebs", 8);
+        defaults.put("weapon.uhc.arrows", 24);
+        defaults.put("weapon.uhc.food", 16);
+        defaults.put("weapon.water.buckets", 2);
+        defaults.put("weapon.water.sponges", 4);
 
         for (Map.Entry<String, Object> entry : defaults.entrySet()) {
             if (!inventory.contains(entry.getKey())) {

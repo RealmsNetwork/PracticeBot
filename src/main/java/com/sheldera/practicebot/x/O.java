@@ -240,6 +240,7 @@ public class O implements Listener {
             "SHELDERA",
             "SHELDERA"
          );
+         var7.weaponProfile = var3.getWeaponProfile();
          this.a(var7, var3);
          this.ti.put(var1.getUniqueId(), var7);
          this.tj.put(var6.getId(), var1.getUniqueId());
@@ -442,7 +443,8 @@ public class O implements Listener {
          var3.put("{name}", this.k(var1.name, var1.key));
          var3.put("{display_name}", this.k(var1.displayName, var1.key));
          var3.put("{skin}", var1.bq != null && !var1.bq.isBlank() ? var1.bq : "Auto");
-         var3.put("{bot_type}", var1.botType.name());
+         var3.put("{bot_type}", var1.botType.isCrystal() ? "CRYSTAL" : var1.botType.name());
+         var3.put("{weapon_profile}", var1.weaponProfile.toUpperCase(Locale.ROOT));
          var3.put("{target_binding}", this.b(var1.rC));
          var3.put("{death_mode}", var1.rD.name());
          var3.put("{kill_mode}", this.b(var1.rE));
@@ -450,13 +452,13 @@ public class O implements Listener {
          var3.put("{warmup}", this.g(var1.warmupTicks));
 
          var3.put("{settings_name}", switch (var1.botType) {
-            case CPVP -> "CPvP Settings";
+            case CRYSTAL, CPVP -> "Crystal PvP Settings";
             case DUMMY -> "Behavior Settings";
             default -> "Combat Settings";
          });
 
          var3.put("{settings_description}", switch (var1.botType) {
-            case CPVP -> "Edit Crystal PvP settings";
+            case CRYSTAL, CPVP -> "Edit Crystal PvP settings";
             case DUMMY -> "Edit dummy behavior settings";
             default -> "Edit reach, crit, and combat logic";
          });
@@ -465,10 +467,17 @@ public class O implements Listener {
          switch (var5) {
             case "bot_type":
                var4 = switch (var1.botType) {
-                  case CPVP -> Material.END_CRYSTAL;
+                  case CRYSTAL, CPVP -> Material.END_CRYSTAL;
+                  case CART -> Material.TNT_MINECART;
+                  case MACE -> Material.MACE;
+                  case UHC -> Material.GOLDEN_APPLE;
+                  case WATER -> Material.TRIDENT;
                   case DUMMY -> Material.TARGET;
                   default -> Material.IRON_SWORD;
                };
+               break;
+            case "weapon_profile":
+               var4 = var1.weaponProfile.contains("mace") ? Material.MACE : (var1.weaponProfile.contains("spear") ? Material.TRIDENT : (var1.weaponProfile.startsWith("cart") ? Material.TNT_MINECART : Material.DIAMOND_SWORD));
                break;
             case "target_binding":
                var4 = switch (var1.rC) {
@@ -495,7 +504,11 @@ public class O implements Listener {
                break;
             case "combat_menu":
                var4 = switch (var1.botType) {
-                  case CPVP -> Material.END_CRYSTAL;
+                  case CRYSTAL, CPVP -> Material.END_CRYSTAL;
+                  case CART -> Material.TNT_MINECART;
+                  case MACE -> Material.MACE;
+                  case UHC -> Material.GOLDEN_APPLE;
+                  case WATER -> Material.TRIDENT;
                   case DUMMY -> Material.REDSTONE_TORCH;
                   default -> Material.DIAMOND_SWORD;
                };
@@ -1007,6 +1020,13 @@ public class O implements Listener {
                this.c(var2);
                this.a(var1, var2, T.MAIN);
                break;
+               case "weapon_profile":
+                  var2.weaponProfile = this.nextWeaponProfile(var2.weaponProfile);
+                  BotTrait profileTrait = this.i(var2);
+                  if (profileTrait != null) profileTrait.setWeaponProfile(var2.weaponProfile);
+                  this.c(var2);
+                  this.a(var1, var2, T.MAIN);
+                  break;
             case "target_binding":
                var2.rC = switch (var2.rC) {
                   case NONE -> M.BOT;
@@ -1477,8 +1497,8 @@ public class O implements Listener {
       U var7 = var1.tF;
       S var8 = var1.tG;
       R var9 = var1.tH;
-      boolean var10 = var1.botType == a.NORMAL;
-      boolean var11 = var1.botType == a.CPVP;
+      boolean var10 = var1.botType.isStandardCombat();
+      boolean var11 = var1.botType.isCrystal();
       boolean var12 = var1.botType == a.DUMMY;
       return new E(
          var1.key,
@@ -1559,7 +1579,8 @@ public class O implements Listener {
             var11 ? var9.V : var6.bF(),
             var11 ? var9.W : var6.bG(),
             var11 ? var9.X : var6.bH()
-         )
+         ),
+         var1.weaponProfile
       );
    }
 
@@ -1596,21 +1617,23 @@ public class O implements Listener {
 
    private void a(X var1, E var2) {
       E var3 = this.th.getBotTemplateManager().k1(var1.key);
-      var1.tF = U.e(var2.getBotType() == a.NORMAL ? var2 : var3);
+      var1.weaponProfile = var2.getWeaponProfile();
+      var1.tF = U.e(var2.getBotType().isStandardCombat() ? var2 : var3);
       var1.tG = S.d(var2.getBotType() == a.DUMMY ? var2 : var3);
-      var1.tH = R.c(var2.getBotType() == a.CPVP ? var2 : var3);
+      var1.tH = R.c(var2.getBotType().isCrystal() ? var2 : var3);
    }
 
    private void a(X var1, BotTrait var2) {
       if (var1 != null && var2 != null) {
+         var1.weaponProfile = var2.getWeaponProfile();
          switch (var1.botType) {
-            case CPVP:
+            case CRYSTAL, CPVP:
                var1.tH.p(var2.getCpvpSettings());
                break;
             case DUMMY:
                var1.tG.l(var2);
                break;
-            case NORMAL:
+            default:
                var1.tF.l(var2);
          }
       }
@@ -1619,9 +1642,10 @@ public class O implements Listener {
    private void b(X var1, BotTrait var2) {
       if (var1 != null && var2 != null) {
          var2.setBotType(var1.botType);
+         var2.setWeaponProfile(var1.weaponProfile);
          var2.setAttackWarmupTicks(var1.warmupTicks);
          switch (var1.botType) {
-            case CPVP:
+            case CRYSTAL, CPVP:
                var2.setLookAtOwner(false);
                var2.setFollowOwner(false);
                var2.setRandomWalk(false);
@@ -1672,7 +1696,7 @@ public class O implements Listener {
                   var2.setRandomWalk(false);
                }
                break;
-            case NORMAL:
+            default:
                U var3 = var1.tF;
                var2.setLookAtOwner(var3.lookAtTarget);
                var2.setFollowOwner(var3.followTarget);
@@ -1700,24 +1724,34 @@ public class O implements Listener {
 
    private void a(X var1, BotTrait var2, a var3) {
       this.a(var1, var2);
+      String oldDefaultProfile = var1.botType.defaultWeaponProfile();
+      if (var1.weaponProfile == null || var1.weaponProfile.equalsIgnoreCase(oldDefaultProfile)) {
+         var1.weaponProfile = var3.defaultWeaponProfile();
+      }
       var1.botType = var3;
       this.b(var1, var2);
    }
 
    private a b(a var1) {
       return switch (var1) {
-         case CPVP -> a.DUMMY;
+         case NORMAL -> a.CRYSTAL;
+         case CRYSTAL, CPVP -> a.CART;
+         case CART -> a.MACE;
+         case MACE -> a.UHC;
+         case UHC -> a.WATER;
+         case WATER -> a.DUMMY;
          case DUMMY -> a.NORMAL;
-         default -> a.CPVP;
       };
    }
 
+   private String nextWeaponProfile(String current) {
+      List<String> profiles = List.of("sword", "mace", "mace_elytra", "spear", "spear_elytra", "spear_mace", "cart", "cart_elytra", "uhc", "water");
+      int index = profiles.indexOf(current == null ? "sword" : current.toLowerCase(Locale.ROOT));
+      return profiles.get((index + 1 + profiles.size()) % profiles.size());
+   }
+
    private T c(a var1) {
-      return switch (var1) {
-         case CPVP -> T.CPVP;
-         case DUMMY -> T.BEHAVIOR;
-         default -> T.COMBAT;
-      };
+      return var1.isCrystal() ? T.CPVP : (var1 == a.DUMMY ? T.BEHAVIOR : T.COMBAT);
    }
 
    private T a(X var1, T var2) {
@@ -1735,11 +1769,11 @@ public class O implements Listener {
    }
 
    private boolean f(X var1) {
-      return var1 != null && var1.botType == a.NORMAL;
+      return var1 != null && var1.botType.isStandardCombat();
    }
 
    private boolean g(X var1) {
-      return var1 != null && var1.botType == a.CPVP;
+      return var1 != null && var1.botType.isCrystal();
    }
 
    private boolean a(InventoryClickEvent var1) {

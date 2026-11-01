@@ -47,7 +47,7 @@ public final class PracticeBotPlaceholderExpansion extends PlaceholderExpansion 
             case "total_bots" -> String.valueOf(this.countBots(null, false));
             case "active_bots" -> String.valueOf(this.countBots(null, true));
             case "normal_bots" -> String.valueOf(this.countBots(a.NORMAL, false));
-            case "cpvp_bots", "crystal_bots" -> String.valueOf(this.countBots(a.CPVP, false));
+            case "cpvp_bots", "crystal_bots" -> String.valueOf(this.countBots(a.CRYSTAL, false));
             case "dummy_bots" -> String.valueOf(this.countBots(a.DUMMY, false));
             case "player_has_bot" -> this.bool(this.findPlayerBot(var1) != null);
             case "player_bot_name" -> this.playerBotName(var1);

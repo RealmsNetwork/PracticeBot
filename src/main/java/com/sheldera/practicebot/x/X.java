@@ -11,6 +11,7 @@ final class X {
    String displayName;
    String bq;
    a botType;
+   String weaponProfile = "sword";
    private boolean guiAllowed;
    M rC;
    J rD;

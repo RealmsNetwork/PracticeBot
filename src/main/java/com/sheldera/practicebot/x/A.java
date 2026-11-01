@@ -126,7 +126,7 @@ public class A implements Listener {
                         if (!var5 && !var6) {
                            var3.sendMessage(h.ac("not-your-bot"));
                         } else {
-                           if (var4.getBotType() == a.CPVP) {
+                           if (var4.getBotType().isCrystal()) {
                               Bukkit.getScheduler().runTask(this.rs, () -> this.rs.getCrystalPvpGui().a(var3, var2, var4));
                            } else {
                               Bukkit.getScheduler().runTask(this.rs, () -> this.rs.getGuiManager().b(var3, var2, var4));

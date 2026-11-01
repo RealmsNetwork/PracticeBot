@@ -94,24 +94,26 @@ public class k {
       }
 
       String profile = weaponProfile == null ? "sword" : weaponProfile.trim().toLowerCase(Locale.ROOT);
-      if (!profile.equals("mace") &&
-          !profile.equals("mace_elytra") &&
-          !profile.equals("spear") &&
-          !profile.equals("spear_elytra") &&
-          !profile.equals("cart") &&
-          !profile.equals("cart_elytra")) {
+      if (!java.util.Set.of("sword", "mace", "mace_elytra", "spear", "spear_elytra", "spear_mace", "cart", "cart_elytra", "uhc", "water").contains(profile)) {
          profile = "sword";
       }
 
-      if ((profile.equals("spear") || profile.equals("spear_elytra")) &&
+      if ((profile.equals("spear") || profile.equals("spear_elytra") || profile.equals("spear_mace")) &&
           Material.matchMaterial("NETHERITE_SPEAR") == null) {
          player.sendMessage("§cSpear support requires Minecraft Java 1.21.11 or newer.");
          return true;
       }
 
+      a requestedType = switch (profile) {
+         case "cart", "cart_elytra" -> a.CART;
+         case "mace", "mace_elytra", "spear", "spear_elytra", "spear_mace" -> a.MACE;
+         case "uhc" -> a.UHC;
+         case "water" -> a.WATER;
+         default -> a.NORMAL;
+      };
       this.pendingWeaponProfiles.put(player.getUniqueId(), profile);
       try {
-         return this.a(player, a.NORMAL);
+         return this.a(player, requestedType);
       } finally {
          this.pendingWeaponProfiles.remove(player.getUniqueId());
       }
@@ -388,7 +390,7 @@ public class k {
                var4x.setArmorType(var9.getString("armor-type", "netherite"));
                var4x.setHelmetEnchant(var9.getString("helmet-enchant", "protection"));
                var4x.setChestplateEnchant(var9.getString("chestplate-enchant", "protection"));
-               var4x.setLeggingsEnchant(var2 == a.CPVP ? "blast_protection" : var9.getString("leggings-enchant", "protection"));
+               var4x.setLeggingsEnchant(var2.isCrystal() ? "blast_protection" : var9.getString("leggings-enchant", "protection"));
                var4x.setBootsEnchant(var9.getString("boots-enchant", "protection"));
                var4x.setLeggingsMaterial(var9.getString("leggings-material", "netherite"));
                var4x.setOffhandType(var9.getString("offhand-type", "totem"));
@@ -396,10 +398,11 @@ public class k {
                var4x.setCustomMainHand(null);
                String requestedWeapon = this.pendingWeaponProfiles.get(var1.getUniqueId());
                String defaultWeapon = var9.getString("weapon.type", "sword");
-               if (var2 == a.CPVP) {
+               if (var2.isCrystal()) {
                   var4x.setWeaponProfile("sword");
                } else {
-                  var4x.setWeaponProfile(requestedWeapon != null ? requestedWeapon : defaultWeapon);
+                  var4x.setWeaponProfile(requestedWeapon != null ? requestedWeapon :
+                     (var2 == a.NORMAL ? defaultWeapon : var2.defaultWeaponProfile()));
                }
                var4x.setHelmetTrimPattern(var9.getString("helmet-trim-pattern", ""));
                var4x.setHelmetTrimMaterial(var9.getString("helmet-trim-material", ""));
@@ -409,7 +412,7 @@ public class k {
                var4x.setLegsTrimMaterial(var9.getString("legs-trim-material", ""));
                var4x.setBootsTrimPattern(var9.getString("boots-trim-pattern", ""));
                var4x.setBootsTrimMaterial(var9.getString("boots-trim-material", ""));
-               if (var2 == a.CPVP) {
+               if (var2.isCrystal()) {
                   var4x.setPvpEnabled(false);
                   var4x.setFollowOwner(false);
                   var4x.setRandomWalk(false);
@@ -417,6 +420,7 @@ public class k {
                   var4x.setCpvpEnabled(false);
                } else {
                   var4x.setCpvpEnabled(false);
+                  var4x.setPvpEnabled(var2.isStandardCombat());
                }
             }, null, false);
             NPC var7 = this.a(var6);
@@ -425,7 +429,7 @@ public class k {
             } else {
                var7.data().remove("practicebot-api-template");
                this.bj.getApiService().y(var7);
-               String var8 = var2 == a.CPVP ? h.ac("cpvp-bot-spawned") : h.ac("bot-spawned");
+               String var8 = var2.isCrystal() ? h.ac("cpvp-bot-spawned") : h.ac("bot-spawned");
                var1.sendMessage(var8);
                var1.playSound(var1.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0F, 1.2F);
             }
@@ -574,7 +578,7 @@ public class k {
       H var5 = var2.gh();
       K var6 = var2.gi();
       I var7 = var2.gj();
-      boolean var8 = var2.getBotType() == a.CPVP;
+      boolean var8 = var2.getBotType().isCrystal();
       boolean var9 = var2.getBotType() == a.DUMMY;
       var1.setOwner(null);
       M var10 = var2.gb();
@@ -582,6 +586,7 @@ public class k {
       var1.setAutoTargetBotsOnly(var10 == M.BOT);
       var1.setBoundTarget(var3);
       var1.setBotType(var2.getBotType());
+      var1.setWeaponProfile(var2.getWeaponProfile());
       var1.setAttackWarmupTicks(var2.gf());
       var1.setLookAtOwner(var8 ? false : var4.go());
       var1.setFollowOwner(var4.gp());

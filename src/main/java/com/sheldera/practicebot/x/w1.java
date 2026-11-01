@@ -2,6 +2,7 @@ package com.sheldera.practicebot.x;
 
 import com.sheldera.practicebot.BotTrait;
 import com.sheldera.practicebot.api.PracticeBotType;
+import com.sheldera.practicebot.api.PracticeBotWeaponProfile;
 import com.sheldera.practicebot.api.bot.PracticeBotLocationSnapshot;
 import com.sheldera.practicebot.api.bot.PracticeBotStateSnapshot;
 import com.sheldera.practicebot.api.bot.PracticeBotTargetSnapshot;
@@ -36,7 +37,11 @@ final class w1 {
       } else {
          return switch (var0) {
             case NORMAL -> PracticeBotType.NORMAL;
-            case CPVP -> PracticeBotType.CPVP;
+            case CRYSTAL, CPVP -> PracticeBotType.CRYSTAL;
+            case CART -> PracticeBotType.CART;
+            case MACE -> PracticeBotType.MACE;
+            case UHC -> PracticeBotType.UHC;
+            case WATER -> PracticeBotType.WATER;
             case DUMMY -> PracticeBotType.DUMMY;
          };
       }
@@ -98,7 +103,8 @@ final class w1 {
             new BotTemplateView$CpvpView(
                var4.gA(), var4.gB(), var4.aI(), var4.aK(), var4.aL(), var4.aM(), var4.aN(), var4.aO(), var4.aP(), var4.aQ(), var4.aR(), var4.aS(), var4.aT()
             ),
-            new BotTemplateView$SkinView("PLAYER_NAME", var0.fZ(), null, null)
+            new BotTemplateView$SkinView("PLAYER_NAME", var0.fZ(), null, null),
+            PracticeBotWeaponProfile.fromName(var0.getWeaponProfile())
          );
       }
    }

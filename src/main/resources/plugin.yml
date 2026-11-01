@@ -15,7 +15,7 @@ softdepend: [PlaceholderAPI, WindChargeReset, FastCrystals]
 commands:
   spawnbot:
     description: Spawn your personal PvP bot.
-    usage: "/spawnbot [normal|crystal|mace|spear|maceelytra|spearelytra|cart|cartelytra]"
+    usage: "/spawnbot [normal|crystal|cart|cartelytra|mace|maceelytra|spear|spearelytra|spearmace|uhc|water]"
     aliases: [bot]
 
   practicebot:
@@ -45,6 +45,10 @@ permissions:
     description: Allows spawning Crystal PvP bots.
     default: true
 
+  practicebot.spawn.crystal:
+    description: Alias permission for Crystal PvP bot spawning.
+    default: true
+
   practicebot.spawn.mace:
     description: Allows spawning Mace PvP bots.
     default: true
@@ -67,6 +71,14 @@ permissions:
 
   practicebot.spawn.cart.elytra:
     description: Allows spawning Elytra Cart PvP bots.
+    default: true
+
+  practicebot.spawn.uhc:
+    description: Allows spawning UHC practice bots.
+    default: true
+
+  practicebot.spawn.water:
+    description: Allows spawning Water PvP practice bots.
     default: true
 
   practicebot.admin:

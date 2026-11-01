@@ -1,4 +1,4 @@
-inventory-config-version: 2
+inventory-config-version: 3
 # ==========================================================
 #  PracticeBot - Default Bot Inventory Configuration
 #
@@ -45,8 +45,11 @@ leggings-material: netherite
 #    spear       - Java 1.21.11+ Spear combat
 #    mace_elytra - Mace + Elytra / rocket aerial combat
 #    spear_elytra- Spear + Elytra aerial charge combat
+#    spear_mace  - Ground Spear exchanges plus Mace/Wind Charge launches
 #    cart        - TNT minecart / Flame bow combat
 #    cart_elytra - Cart PvP + Elytra mobility
+#    uhc         - UHC melee/utility loadout
+#    water       - Trident + water bucket loadout
 # ----------------------------------------------------------
 weapon:
   type: sword
@@ -72,6 +75,16 @@ weapon:
     arrows: 32
     power: 5
     punch: 2
+
+  uhc:
+    golden-apples: 6
+    cobwebs: 8
+    arrows: 24
+    food: 16
+
+  water:
+    buckets: 2
+    sponges: 4
 
 # ----------------------------------------------------------
 #  OFFHAND ITEM

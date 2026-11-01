@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.8.2
+
+- Fixed ground Mace launch to fire a real Wind Charge projectile downward and use the server's native burst physics and particles instead of consuming the item and faking launch velocity.
+- Added airborne Mace target tracking, line-of-sight/ray-hit validation, configurable imperfect aim, and fresh Wind Burst follow-up attack state.
+- Prevented the generic Wind Charge reset from stealing Mace attack charges during a Mace dive.
+- Added first-class NORMAL, CRYSTAL, CART, MACE, UHC, and WATER bot types while retaining CPVP as a legacy config/API alias.
+- Added a distinct PracticeBotWeaponProfile API enum, template persistence, editor selection, and built-in CART/MACE/UHC/WATER/MACE_ELYTRA/SPEAR_ELYTRA/SPEAR_MACE templates.
+- Added hybrid Spear/Mace hotbar switching, UHC/Water equipment kits, and per-type spawn permissions/commands.
+- Added additive config and default-inventory migrations for the new Mace aim and bot kits.
+
 ## 1.8.1
 
 - Fixed a Crystal PvP block-candidate scan crash caused by casting a `LinkedHashSet` to `List`.

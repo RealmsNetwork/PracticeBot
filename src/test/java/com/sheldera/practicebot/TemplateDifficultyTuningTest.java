@@ -1,8 +1,15 @@
 package com.sheldera.practicebot;
 
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.junit.jupiter.api.Test;
 
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class TemplateDifficultyTuningTest {
     @Test
@@ -41,6 +48,37 @@ class TemplateDifficultyTuningTest {
         assertEquals("", TemplateDifficultyTuning.difficultyFromTemplateKey("arena_normal"));
         assertEquals("", TemplateDifficultyTuning.difficultyFromTemplateKey("tank_legend_Example"));
         assertEquals("", TemplateDifficultyTuning.kitFromTemplateKey("tank__Example"));
+    }
+
+
+    @Test
+    void bundledConfigContainsAllTemplateDifficultyProfilesAndParsesAsYaml() throws Exception {
+        try (InputStream stream = getClass().getClassLoader().getResourceAsStream("config.yml")) {
+            assertNotNull(stream, "bundled config.yml must be present");
+
+            FileConfiguration config = YamlConfiguration.loadConfiguration(
+                new InputStreamReader(stream, StandardCharsets.UTF_8)
+            );
+
+            assertEquals(8, config.getInt("config-version"));
+
+            String[] tiers = {
+                "EASY", "NORMAL", "HARD", "EXPERT", "HACKER", "MASTER", "NIGHTMARE"
+            };
+
+            for (String tier : tiers) {
+                assertNotNull(config.getConfigurationSection(
+                    "template-difficulty.defaults." + tier), tier + " shared defaults");
+                assertNotNull(config.getConfigurationSection(
+                    "template-difficulty.profiles.CART." + tier), tier + " cart profile");
+                assertNotNull(config.getConfigurationSection(
+                    "template-difficulty.profiles.MACE." + tier), tier + " mace profile");
+                assertNotNull(config.getConfigurationSection(
+                    "template-difficulty.profiles.SPEAR." + tier), tier + " spear profile");
+                assertNotNull(config.getConfigurationSection(
+                    "modern-weapons.mace.difficulty-levels." + tier), tier + " legacy mace profile");
+            }
+        }
     }
 
     @Test

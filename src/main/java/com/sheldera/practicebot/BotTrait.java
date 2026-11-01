@@ -669,6 +669,14 @@ public class BotTrait extends Trait {
       this.simulatedPingMs = 0;
       this.lastPingDriftAt = 0L;
       this.tacticNextDecisionAt = 0L;
+      this.tacticCooldownUntil = 0L;
+      this.windChargeResetCooldownUntil = 0L;
+      this.elytraFlightUntil = 0L;
+      this.lastCartActionAt = 0L;
+      this.lastStrafeSwitchAt = 0L;
+      this.lastRocketBoostAt = 0L;
+      this.strafeDirection = 1;
+      this.lastTactic = "none";
    }
 
    /** @deprecated Use {@link #getTemplateDifficulty()} instead. */

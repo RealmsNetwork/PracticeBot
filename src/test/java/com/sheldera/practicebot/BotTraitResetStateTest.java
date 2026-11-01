@@ -1,14 +1,11 @@
 package com.sheldera.practicebot;
 
-import org.bukkit.Material;
-import org.bukkit.inventory.ItemStack;
 import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
 
 class BotTraitResetStateTest {
     @Test
@@ -19,7 +16,6 @@ class BotTraitResetStateTest {
         trait.maceLaunchStartedAt = 8000L;
         trait.maceLaunchActive = true;
         trait.maceWindChargePending = true;
-        trait.maceRestoreWeapon = new ItemStack(Material.MACE);
         trait.maceRestoreAt = 7000L;
         trait.maceAttemptedThisFall = true;
         trait.maceMissThisAttack = true;
@@ -46,7 +42,6 @@ class BotTraitResetStateTest {
         assertEquals(0L, trait.maceLaunchStartedAt);
         assertFalse(trait.maceLaunchActive);
         assertFalse(trait.maceWindChargePending);
-        assertNull(trait.maceRestoreWeapon);
         assertEquals(0L, trait.maceRestoreAt);
         assertFalse(trait.maceAttemptedThisFall);
         assertFalse(trait.maceMissThisAttack);

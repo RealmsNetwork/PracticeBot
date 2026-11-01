@@ -228,6 +228,7 @@ public final class Z {
                String var6 = var5.getString("bot-type", "NORMAL").trim().toUpperCase(Locale.ROOT);
                switch (var6) {
                   case "CPVP":
+                  case "CRYSTAL":
                      var2 |= a(var5, "settings");
                      var2 |= a(var5, "combat");
                      break;

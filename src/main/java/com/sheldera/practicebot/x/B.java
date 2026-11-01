@@ -28,7 +28,11 @@ public class B {
       } else {
          return switch (var2) {
             case NORMAL -> var1.hasPermission("practicebot.spawn.normal");
-            case CPVP -> var1.hasPermission("practicebot.spawn.cpvp");
+            case CRYSTAL, CPVP -> var1.hasPermission("practicebot.spawn.cpvp") || var1.hasPermission("practicebot.spawn.crystal");
+            case CART -> var1.hasPermission("practicebot.spawn.cart");
+            case MACE -> var1.hasPermission("practicebot.spawn.mace");
+            case UHC -> var1.hasPermission("practicebot.spawn.uhc");
+            case WATER -> var1.hasPermission("practicebot.spawn.water");
             case DUMMY -> false;
          };
       }
@@ -36,7 +40,7 @@ public class B {
 
    public boolean br(Player var1) {
       String var2 = this.ru.getConfigManager().bm();
-      return var1.hasPermission(var2) || var1.hasPermission("practicebot.spawn.normal") || var1.hasPermission("practicebot.spawn.cpvp");
+      return var1.hasPermission(var2) || var1.hasPermission("practicebot.spawn.normal") || var1.hasPermission("practicebot.spawn.cpvp") || var1.hasPermission("practicebot.spawn.crystal") || var1.hasPermission("practicebot.spawn.cart") || var1.hasPermission("practicebot.spawn.mace") || var1.hasPermission("practicebot.spawn.uhc") || var1.hasPermission("practicebot.spawn.water");
    }
 
    public D f(Player var1, a var2) {
@@ -66,16 +70,12 @@ public class B {
    }
 
    public a h1(String var1) {
-      if (var1 == null) {
-         return null;
-      } else {
-         String var2 = var1.toLowerCase();
-
-         return switch (var2) {
-            case "normal" -> a.NORMAL;
-            case "crystal" -> a.CPVP;
-            default -> null;
-         };
-      }
+      if (var1 == null || var1.isBlank()) return null;
+      String normalized = var1.trim().toUpperCase(java.util.Locale.ROOT);
+      return switch (normalized) {
+         case "NORMAL", "CART", "MACE", "UHC", "WATER", "DUMMY" -> a.valueOf(normalized);
+         case "CRYSTAL", "CPVP" -> a.CRYSTAL;
+         default -> null;
+      };
    }
 }

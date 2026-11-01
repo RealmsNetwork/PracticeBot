@@ -232,6 +232,13 @@ public class N {
          FileConfiguration var4 = this.sX.getDefaultInvConfig();
          af var5 = var3.e();
          a var6 = this.m0(var2.getString("bot-type", "NORMAL"));
+         String weaponProfile = var2.getString("weapon-profile", var6.defaultWeaponProfile());
+         if (weaponProfile == null) weaponProfile = var6.defaultWeaponProfile();
+         weaponProfile = weaponProfile.trim().toLowerCase(Locale.ROOT);
+         if (!java.util.Set.of("sword", "mace", "mace_elytra", "spear", "spear_elytra", "spear_mace", "cart", "cart_elytra", "uhc", "water").contains(weaponProfile)) {
+            this.sX.getLogger().warning("Unknown weapon-profile '" + weaponProfile + "' in bot_templates.yml, using " + var6.defaultWeaponProfile() + ".");
+            weaponProfile = var6.defaultWeaponProfile();
+         }
          boolean var7 = var2.getBoolean("allow-gui", false);
          M var8 = this.m1(var2.getString("target-binding", "REQUIRED"));
          J var9 = this.n0(var2.getString("death-mode", "REMOVE"));
@@ -251,7 +258,7 @@ public class N {
          boolean var21 = this.a(var15, "resistance", false);
          boolean var22 = this.a(var15, "frozen", false);
          boolean var23 = this.a(var15, "shield-in-main-hand", false);
-         boolean var24 = this.a(var15, "pvp-enabled", var6 == a.NORMAL);
+         boolean var24 = this.a(var15, "pvp-enabled", var6.isStandardCombat());
          G var25 = new G(var16, var17, var18, var19, var20, var21, var22, var23, var24);
          ConfigurationSection var26 = var2.getConfigurationSection("combat");
          H var27 = new H(
@@ -293,7 +300,7 @@ public class N {
          long var38 = this.a(var31, "break-delay-min-ms", "break-delay-ms", var33.aH);
          long var40 = this.a(var31, "break-delay-max-ms", "break-delay-ms", var33.aI);
          I var42 = new I(
-            this.a(var31, "enabled", var6 == a.CPVP),
+            this.a(var31, "enabled", var6.isCrystal()),
             var32,
             this.a(var31, "aggression-weight", var5 != null ? var5.aggressionWeight : var33.aB),
             this.a(var31, "use-pearls", var5 == null || var5.usePearls),
@@ -323,7 +330,7 @@ public class N {
          String var43 = var2.getString("name", var1);
          String var44 = var2.getString("display-name", var43);
          String var45 = var2.getString("skin-name", "");
-         return new E(var1, var43, var44, var45, var6, var7, var8, var9, var10, var11, var13, var25, var27, var30, var42);
+         return new E(var1, var43, var44, var45, var6, var7, var8, var9, var10, var11, var13, var25, var27, var30, var42, weaponProfile);
       } catch (Exception var46) {
          this.sX.getLogger().warning("Failed to load bot template '" + var1 + "': " + var46.getMessage());
          return null;
@@ -409,16 +416,16 @@ public class N {
    }
 
    private a m0(String var1) {
-      if (var1 == null) {
-         return a.NORMAL;
-      } else {
-         try {
-            return a.valueOf(var1.trim().toUpperCase(Locale.ROOT));
-         } catch (IllegalArgumentException var3) {
+      if (var1 == null || var1.isBlank()) return a.NORMAL;
+      String normalized = var1.trim().toUpperCase(Locale.ROOT);
+      return switch (normalized) {
+         case "NORMAL", "CART", "MACE", "UHC", "WATER", "DUMMY" -> a.valueOf(normalized);
+         case "CRYSTAL", "CPVP" -> a.CRYSTAL;
+         default -> {
             this.sX.getLogger().warning("Unknown bot type '" + var1 + "' in bot_templates.yml, using NORMAL.");
-            return a.NORMAL;
+            yield a.NORMAL;
          }
-      }
+      };
    }
 
    private M m1(String var1) {
@@ -650,7 +657,8 @@ public class N {
       var1.set("name", var2.fh());
       var1.set("display-name", var2.fY());
       var1.set("skin-name", var2.fZ());
-      var1.set("bot-type", var2.getBotType().name());
+      var1.set("bot-type", var2.getBotType().isCrystal() ? "CRYSTAL" : var2.getBotType().name());
+      var1.set("weapon-profile", var2.getWeaponProfile());
       var1.set("allow-gui", var2.ga());
       var1.set("target-binding", var2.gb().name());
       var1.set("death-mode", var2.gc().name());
@@ -660,7 +668,7 @@ public class N {
       var1.set("warm-up-ticks", null);
       var1.set("warm-up-seconds", var2.gf() / 20.0);
       a var3 = var2.getBotType();
-      if (var3 != a.NORMAL && var3 != a.DUMMY) {
+      if (!var3.isStandardCombat() && var3 != a.DUMMY) {
          var1.set("settings", null);
       } else {
          G var4 = var2.gg();
@@ -672,14 +680,14 @@ public class N {
          var1.set("settings.resistance", var4.isResistance());
          var1.set("settings.frozen", var3 == a.DUMMY && var4.isFrozen());
          var1.set("settings.shield-in-main-hand", var4.isShieldInMainHand());
-         if (var3 == a.NORMAL) {
+         if (var3.isStandardCombat()) {
             var1.set("settings.pvp-enabled", var4.isPvpEnabled());
          } else {
             var1.set("settings.pvp-enabled", null);
          }
       }
 
-      if (var3 == a.NORMAL) {
+      if (var3.isStandardCombat()) {
          H var6 = var2.gh();
          var1.set("combat.strafe", var6.gq());
          var1.set("combat.wtap", var6.gr());
@@ -712,7 +720,7 @@ public class N {
       this.a(var1, "chest", var7.gD());
       this.a(var1, "legs", var7.gE());
       this.a(var1, "boots", var7.gF());
-      if (var3 == a.CPVP) {
+      if (var3.isCrystal()) {
          I var5 = var2.gj();
          var1.set("cpvp.enabled", true);
          var1.set("cpvp.skill-level", var5.gB());

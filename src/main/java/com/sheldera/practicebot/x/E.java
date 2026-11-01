@@ -16,23 +16,18 @@ public final class E {
    private final H rI;
    private final K rJ;
    private final I rK;
+   private final String rL;
 
    public E(
-      String var1,
-      String var2,
-      String var3,
-      String var4,
-      a var5,
-      boolean var6,
-      M var7,
-      J var8,
-      L var9,
-      long var10,
-      long var12,
-      G var14,
-      H var15,
-      K var16,
-      I var17
+      String var1, String var2, String var3, String var4, a var5, boolean var6,
+      M var7, J var8, L var9, long var10, long var12, G var14, H var15, K var16, I var17
+   ) {
+      this(var1, var2, var3, var4, var5, var6, var7, var8, var9, var10, var12, var14, var15, var16, var17, var5 == null ? "sword" : var5.defaultWeaponProfile());
+   }
+
+   public E(
+      String var1, String var2, String var3, String var4, a var5, boolean var6,
+      M var7, J var8, L var9, long var10, long var12, G var14, H var15, K var16, I var17, String weaponProfile
    ) {
       this.rw = var1;
       this.rx = var2;
@@ -49,10 +44,11 @@ public final class E {
       this.rI = new H(var15);
       this.rJ = new K(var16);
       this.rK = new I(var17);
+      this.rL = weaponProfile == null || weaponProfile.isBlank() ? (var5 == null ? "sword" : var5.defaultWeaponProfile()) : weaponProfile.trim().toLowerCase(java.util.Locale.ROOT);
    }
 
    public E(E var1) {
-      this(var1.rw, var1.rx, var1.ry, var1.rz, var1.rA, var1.rB, var1.rC, var1.rD, var1.rE, var1.rF, var1.rG, var1.rH, var1.rI, var1.rJ, var1.rK);
+      this(var1.rw, var1.rx, var1.ry, var1.rz, var1.rA, var1.rB, var1.rC, var1.rD, var1.rE, var1.rF, var1.rG, var1.rH, var1.rI, var1.rJ, var1.rK, var1.rL);
    }
 
    public E fX() {
@@ -117,5 +113,9 @@ public final class E {
 
    public I gj() {
       return new I(this.rK);
+   }
+
+   public String getWeaponProfile() {
+      return this.rL;
    }
 }

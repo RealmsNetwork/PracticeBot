@@ -1,4 +1,4 @@
-config-version: 5
+config-version: 6
 # ==========================================================
 #  PracticeBot - Configuration
 #  Author: THEMPGUY
@@ -340,13 +340,19 @@ pvp:
 # ----------------------------------------------------------
 modern-weapons:
   mace:
-    # Native Minecraft smash damage is fall-distance based.
-    # The bot tries to create a safe launch window before dropping.
+    # Primary launch is a real down-fired Wind Charge projectile.
+    # The server applies the actual burst, particles and self-knockback.
     wind-charge-enabled: true
     wind-charge-launch-height: 7.0
-    assisted-jump-without-wind-charge: true
-    launch-min-distance: 2.8
-    launch-max-distance: 4.5
+    assisted-jump-without-wind-charge: false
+    launch-min-distance: 3.2
+    launch-max-distance: 10.0
+    # Aim and misses keep aerial smashes from being guaranteed hits.
+    miss-chance-percent: 10.0
+    miss-offset-degrees: 6.0
+    target-lead-seconds: 0.08
+    aim-max-degrees-per-tick: 32.0
+    aim-jitter-degrees: 0.15
 
   spear:
     # Java 1.21.11+ Spear supports Jab and a kinetic Charge.

@@ -10,15 +10,17 @@
 #    /pbadmin template spawn <template> [target] <world> <x> <y> <z> <yaw> <pitch>
 #
 #  Section rules:
-#    NORMAL templates use: general + settings + combat + inventory
-#    CPVP templates use:   general + inventory + cpvp
-#    DUMMY templates use:  general + settings + inventory
+#    NORMAL, CART, MACE, UHC and WATER use: general + settings + combat + inventory
+#    CRYSTAL (legacy CPVP alias) uses: general + inventory + cpvp
+#    DUMMY uses: general + settings + inventory
+#    weapon-profile is independent of bot-type and selects the actual kit/combat style.
 #
 #  General fields:
 #    name                    Internal readable name.
 #    display-name            NPC name shown above the bot.
 #    skin-name               Minecraft account skin name. Empty = default/editor skin.
-#    bot-type                NORMAL, CPVP, or DUMMY.
+#    bot-type                NORMAL, CRYSTAL, CART, MACE, UHC, WATER, or DUMMY (CPVP is a legacy alias).
+#    weapon-profile          SWORD, MACE, MACE_ELYTRA, SPEAR, SPEAR_ELYTRA, SPEAR_MACE, CART, CART_ELYTRA, UHC, or WATER.
 #    allow-gui               Compatibility flag. Runtime template bots keep normal GUI closed.
 #    target-binding          REQUIRED = target player needed, NONE = nearest player, BOT = nearest bot.
 #    death-mode              REMOVE = despawn after death, RESPAWN = respawn from this template.
@@ -37,7 +39,7 @@
 #    shield-in-main-hand     Put shield in main hand instead of offhand.
 #    pvp-enabled             NORMAL only. Enables melee PvP logic.
 #
-#  Combat fields for NORMAL:
+#  Combat fields for standard PvP bot types (NORMAL, CART, MACE, UHC, WATER):
 #    strafe                  Strafe while fighting.
 #    wtap                    Use W-tap knockback timing.
 #    stap                    Use S-tap spacing.
@@ -60,7 +62,7 @@
 #    main-hand.enchantments                     Enchantment keys and levels.
 #    trims.<piece>.pattern/material             Armor trim pattern/material. Empty = no trim.
 #
-#  CPVP fields for CPVP:
+#  CRYSTAL fields for CRYSTAL (legacy CPVP):
 #    enabled                                   Must be true for CPVP templates.
 #    skill-level                               EASY, MEDIUM, HARD, or PRO preset name.
 #    aggression-weight                         Higher = more aggressive crystal pressure.
@@ -159,7 +161,7 @@ templates:
     # General
     name: "Arena Crystal"
     display-name: "CrystalBot"
-    bot-type: CPVP
+    bot-type: CRYSTAL
     allow-gui: false
     target-binding: REQUIRED
     death-mode: RESPAWN
@@ -272,3 +274,225 @@ templates:
         boots:
           pattern: ""
           material: ""
+
+
+  # ------------------------------------------------------------------------
+  # New first-class bot types and weapon profiles
+  # ------------------------------------------------------------------------
+
+  arena_cart:
+    name: "Arena Cart"
+    display-name: "CartBot"
+    bot-type: CART
+    weapon-profile: CART
+    target-binding: REQUIRED
+    death-mode: RESPAWN
+    kill-mode: DESPAWN
+    respawn-delay-seconds: 3
+    settings:
+      look-at-target: true
+      pvp-enabled: true
+    combat:
+      strafe: true
+      wtap: false
+      stap: false
+      crits: true
+      shield-breaker: true
+      retreat: false
+      reach-mode: NORMAL
+      aggression: MEDIUM
+      crit-chance: 75
+      crit-speed: NORMAL
+    inventory:
+      helmet-material: netherite
+      chestplate-material: netherite
+      leggings-material: netherite
+      boots-material: netherite
+      offhand-type: totem
+      totem-count: 64
+
+  arena_mace:
+    name: "Arena Mace"
+    display-name: "MaceBot"
+    bot-type: MACE
+    weapon-profile: MACE
+    target-binding: REQUIRED
+    death-mode: RESPAWN
+    kill-mode: DESPAWN
+    respawn-delay-seconds: 3
+    settings:
+      look-at-target: true
+      pvp-enabled: true
+    combat:
+      strafe: true
+      wtap: false
+      stap: false
+      crits: false
+      shield-breaker: true
+      retreat: false
+      reach-mode: NORMAL
+      aggression: HIGH
+      crit-chance: 0
+      crit-speed: NORMAL
+    inventory:
+      helmet-material: netherite
+      chestplate-material: netherite
+      leggings-material: netherite
+      boots-material: netherite
+      offhand-type: totem
+      totem-count: 64
+
+  arena_uhc:
+    name: "Arena UHC"
+    display-name: "UHCBot"
+    bot-type: UHC
+    weapon-profile: UHC
+    target-binding: REQUIRED
+    death-mode: RESPAWN
+    kill-mode: DESPAWN
+    respawn-delay-seconds: 3
+    settings:
+      look-at-target: true
+      pvp-enabled: true
+    combat:
+      strafe: true
+      wtap: true
+      stap: true
+      crits: true
+      shield-breaker: true
+      retreat: false
+      reach-mode: NORMAL
+      aggression: MEDIUM
+      crit-chance: 75
+      crit-speed: NORMAL
+    inventory:
+      helmet-material: iron
+      chestplate-material: iron
+      leggings-material: iron
+      boots-material: iron
+      offhand-type: totem
+      totem-count: 8
+
+  arena_water:
+    name: "Arena Water"
+    display-name: "WaterBot"
+    bot-type: WATER
+    weapon-profile: WATER
+    target-binding: REQUIRED
+    death-mode: RESPAWN
+    kill-mode: DESPAWN
+    respawn-delay-seconds: 3
+    settings:
+      look-at-target: true
+      pvp-enabled: true
+    combat:
+      strafe: true
+      wtap: false
+      stap: false
+      crits: true
+      shield-breaker: false
+      retreat: false
+      reach-mode: NORMAL
+      aggression: MEDIUM
+      crit-chance: 50
+      crit-speed: NORMAL
+    inventory:
+      helmet-material: diamond
+      chestplate-material: diamond
+      leggings-material: diamond
+      boots-material: diamond
+      offhand-type: totem
+      totem-count: 8
+
+  arena_mace_elytra:
+    name: "Arena Mace Elytra"
+    display-name: "MaceElytraBot"
+    bot-type: MACE
+    weapon-profile: MACE_ELYTRA
+    target-binding: REQUIRED
+    death-mode: RESPAWN
+    kill-mode: DESPAWN
+    respawn-delay-seconds: 3
+    settings:
+      look-at-target: true
+      pvp-enabled: true
+    combat:
+      strafe: false
+      wtap: false
+      stap: false
+      crits: false
+      shield-breaker: true
+      retreat: false
+      reach-mode: NORMAL
+      aggression: HIGH
+      crit-chance: 0
+      crit-speed: FAST
+    inventory:
+      helmet-material: netherite
+      chestplate-material: netherite
+      leggings-material: netherite
+      boots-material: netherite
+      offhand-type: totem
+      totem-count: 64
+
+  arena_spear_elytra:
+    name: "Arena Spear Elytra"
+    display-name: "SpearElytraBot"
+    bot-type: MACE
+    weapon-profile: SPEAR_ELYTRA
+    target-binding: REQUIRED
+    death-mode: RESPAWN
+    kill-mode: DESPAWN
+    respawn-delay-seconds: 3
+    settings:
+      look-at-target: true
+      pvp-enabled: true
+    combat:
+      strafe: false
+      wtap: false
+      stap: false
+      crits: false
+      shield-breaker: true
+      retreat: false
+      reach-mode: NORMAL
+      aggression: HIGH
+      crit-chance: 0
+      crit-speed: FAST
+    inventory:
+      helmet-material: netherite
+      chestplate-material: netherite
+      leggings-material: netherite
+      boots-material: netherite
+      offhand-type: totem
+      totem-count: 64
+
+  arena_spear_mace:
+    name: "Arena Spear Mace"
+    display-name: "SpearMaceBot"
+    bot-type: MACE
+    weapon-profile: SPEAR_MACE
+    target-binding: REQUIRED
+    death-mode: RESPAWN
+    kill-mode: DESPAWN
+    respawn-delay-seconds: 3
+    settings:
+      look-at-target: true
+      pvp-enabled: true
+    combat:
+      strafe: true
+      wtap: false
+      stap: false
+      crits: true
+      shield-breaker: true
+      retreat: false
+      reach-mode: NORMAL
+      aggression: HIGH
+      crit-chance: 50
+      crit-speed: NORMAL
+    inventory:
+      helmet-material: netherite
+      chestplate-material: netherite
+      leggings-material: netherite
+      boots-material: netherite
+      offhand-type: totem
+      totem-count: 64

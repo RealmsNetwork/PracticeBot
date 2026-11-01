@@ -363,7 +363,7 @@ public class n1 implements Listener {
                               var19.c(var2.getUniqueId());
                            }
 
-                           if (var10.getBotType() == a.CPVP) {
+                           if (var10.getBotType().isCrystal()) {
                               this.oX.getCrystalPvpGui().a(var2, var9, var10);
                            } else {
                               this.oY.a(var2, var9, var10, true);

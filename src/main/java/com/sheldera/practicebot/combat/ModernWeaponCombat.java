@@ -3,6 +3,7 @@ package com.sheldera.practicebot.combat;
 import com.sheldera.practicebot.BotTrait;
 import com.sheldera.practicebot.PracticeBotPlugin;
 import org.bukkit.GameMode;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -12,6 +13,7 @@ import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.WindCharge;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -93,8 +95,19 @@ public final class ModernWeaponCombat {
         if (bot == null || target == null || trait == null ||
             bot.isDead() || target.isDead() ||
             !bot.getWorld().equals(target.getWorld())) {
+            if (bot != null && trait != null) restoreMaceWeapon(bot, trait);
             reset(trait);
             return;
+        }
+
+        restoreMaceWeaponIfDue(bot, trait, now);
+        if (trait.maceWindChargePending) {
+            tickMace(bot, target, trait, now);
+            return;
+        }
+
+        if ("spear_mace".equals(trait.getWeaponProfile())) {
+            selectHybridWeapon(bot, target, trait);
         }
 
         ItemStack item = bot.getInventory().getItemInMainHand();
@@ -170,129 +183,313 @@ public final class ModernWeaponCombat {
 
     private void tickMace(Player bot, Player target, BotTrait trait, long now) {
         if (maceTargetChanged(trait, target)) {
+            restoreMaceWeapon(bot, trait);
             trait.maceLaunchActive = false;
+            trait.maceWindChargePending = false;
+            trait.maceAttemptedThisFall = false;
+            trait.maceLaunchStartedAt = 0L;
+        }
+        trait.modernWeaponTarget = target.getUniqueId();
+
+        if (trait.maceWindChargePending) {
+            bot.setRotation(bot.getLocation().getYaw(), 90.0F);
+            boolean blastDetected = bot.getVelocity().getY() > 0.12D ||
+                bot.getLocation().getY() > trait.maceLaunchOriginY + 0.20D;
+            if (blastDetected) {
+                trait.maceWindChargePending = false;
+                trait.lastTactic = "mace-wind-charge-boosted";
+                return;
+            }
+            if (now - trait.maceLaunchStartedAt <= 1200L) {
+                return;
+            }
+            trait.maceWindChargePending = false;
+            restoreMaceWeapon(bot, trait);
+            if (plugin.getConfig().getBoolean(
+                "modern-weapons.mace.assisted-jump-without-wind-charge", false
+            )) {
+                Vector velocity = bot.getVelocity();
+                velocity.setY(Math.max(velocity.getY(), 0.52D));
+                bot.setVelocity(velocity);
+                trait.lastTactic = "mace-assisted-jump-fallback";
+            } else {
+                trait.maceLaunchActive = false;
+                trait.maceAttemptedThisFall = false;
+                trait.lastTactic = "mace-wind-charge-no-blast";
+            }
+            return;
+        }
+
+        if (!bot.isOnGround() || bot.isGliding()) {
+            if (trait.maceLaunchActive) {
+                trait.macePeakY = Math.max(trait.macePeakY, bot.getLocation().getY());
+                guideMaceFlight(bot, target, trait);
+                if (now - trait.maceLaunchStartedAt > 6500L) {
+                    trait.maceLaunchActive = false;
+                    trait.maceWindChargePending = false;
+                }
+            } else {
+                updateMaceAim(bot, target, trait);
+            }
+            return;
+        }
+
+        // Landing ends the previous aerial attempt. Never carry a miss/launch
+        // flag into the next jump.
+        if (trait.maceLaunchActive || trait.maceWindChargePending) {
+            trait.maceLaunchActive = false;
+            trait.maceWindChargePending = false;
+            trait.maceAttemptedThisFall = false;
+            trait.maceMissThisAttack = false;
             trait.maceLaunchStartedAt = 0L;
         }
 
-        trait.modernWeaponTarget = target.getUniqueId();
-
-        // Elytra launch/dive sequencing lives in PvpTacticsEngine.
-        // Ground Mace AI only creates the initial Wind Charge / jump impulse.
-        if (!bot.isOnGround() || bot.isGliding()) {
-            return;
-        }
-
         double distance = bot.getLocation().distance(target.getLocation());
+        double launchMin = plugin.getConfig().getDouble(
+            "modern-weapons.mace.launch-min-distance", 3.2D
+        );
         double launchMax = plugin.getConfig().getDouble(
-            "modern-weapons.mace.launch-max-distance", 4.5D
+            "modern-weapons.mace.launch-max-distance", 10.0D
         );
 
-        if (distance < 2.5D || distance > launchMax) {
-            return;
-        }
-
-        if (now < trait.modernWeaponCooldownUntil ||
+        if (distance < launchMin || distance > launchMax ||
+            now < trait.modernWeaponCooldownUntil ||
             now - trait.lastAttackTime < attackCooldownMs(bot) ||
             bot.hasPotionEffect(PotionEffectType.SLOW_FALLING)) {
             return;
         }
 
-        double launchMin = plugin.getConfig().getDouble(
-            "modern-weapons.mace.launch-min-distance", 2.8D
+        int windChargeSlot = findWindChargeSlot(bot);
+        boolean windChargeEnabled = plugin.getConfig().getBoolean(
+            "modern-weapons.mace.wind-charge-enabled", true
         );
+        boolean launchedWindCharge = false;
 
-        if (distance < launchMin) {
-            return;
+        if (windChargeEnabled && windChargeSlot >= 0) {
+            float yaw = bot.getLocation().getYaw();
+            // Look straight down and actually throw the Wind Charge at the
+            // ground beneath the bot. The server owns the burst particles and
+            // the resulting self-knockback.
+            bot.setRotation(yaw, 90.0F);
+            ItemStack heldWeapon = bot.getInventory().getItemInMainHand();
+            trait.maceRestoreWeapon = heldWeapon == null ? null : heldWeapon.clone();
+            trait.maceRestoreAt = now + 150L;
+            bot.getInventory().setItemInMainHand(new ItemStack(Material.WIND_CHARGE));
+            bot.swingMainHand();
+            try {
+                WindCharge projectile = bot.launchProjectile(
+                    WindCharge.class, new Vector(0.0D, -1.0D, 0.0D)
+                );
+                if (projectile != null && projectile.isValid()) {
+                    consumeWindCharge(bot, windChargeSlot);
+                    launchedWindCharge = true;
+                } else {
+                    restoreMaceWeapon(bot, trait);
+                }
+            } catch (Throwable ex) {
+                restoreMaceWeapon(bot, trait);
+                plugin.debugLog(() -> "Mace Wind Charge launch failed: " + ex.getMessage());
+            }
         }
 
-        Vector toTarget = target.getLocation().toVector()
-            .subtract(bot.getLocation().toVector());
-        toTarget.setY(0.0D);
-
-        if (toTarget.lengthSquared() < 1.0E-5D) {
-            return;
-        }
-
-        toTarget.normalize();
-
-        boolean windCharge = consumeWindCharge(bot);
-
-        double launchVelocity;
-        if (windCharge) {
-            launchVelocity = velocityForHeight(
-                plugin.getConfig().getDouble(
-                    "modern-weapons.mace.wind-charge-launch-height", 7.0D
-                )
-            );
-        } else {
+        if (!launchedWindCharge) {
             if (!plugin.getConfig().getBoolean(
-                "modern-weapons.mace.assisted-jump-without-wind-charge", true
+                "modern-weapons.mace.assisted-jump-without-wind-charge", false
             )) {
                 return;
             }
-
-            launchVelocity = 0.52D;
+            // Explicit fallback for servers where WindCharge projectiles cannot
+            // be launched. This is not used when the real projectile succeeds.
+            Vector velocity = bot.getVelocity();
+            velocity.setY(Math.max(velocity.getY(), 0.52D));
+            bot.setVelocity(velocity);
         }
 
-        Vector velocity = bot.getVelocity();
-        velocity.setX(velocity.getX() * 0.35D + toTarget.getX() * 0.15D);
-        velocity.setZ(velocity.getZ() * 0.35D + toTarget.getZ() * 0.15D);
-        velocity.setY(Math.max(velocity.getY(), launchVelocity));
-
-        bot.setVelocity(velocity);
-        bot.setSprinting(true);
-
+        if (!launchedWindCharge) restoreMaceWeapon(bot, trait);
         trait.maceLaunchActive = true;
+        trait.maceWindChargePending = launchedWindCharge;
+        trait.maceAttemptedThisFall = false;
+        trait.maceMissThisAttack = ThreadLocalRandom.current().nextDouble(100.0D) <
+            plugin.getConfig().getDouble("modern-weapons.mace.miss-chance-percent", 10.0D);
+        double missOffset = Math.max(0.0D, plugin.getConfig().getDouble(
+            "modern-weapons.mace.miss-offset-degrees", 6.0D
+        ));
+        trait.maceMissOffsetDegrees = trait.maceMissThisAttack
+            ? ThreadLocalRandom.current().nextDouble(-missOffset, missOffset) : 0.0D;
         trait.maceLaunchStartedAt = now;
-        trait.modernWeaponCooldownUntil = now + 220L;
-        trait.lastTactic = windCharge ? "mace-wind-launch" : "mace-jump-launch";
+        trait.maceLaunchOriginY = bot.getLocation().getY();
+        trait.macePeakY = bot.getLocation().getY();
+        trait.modernWeaponCooldownUntil = now + 700L;
+        trait.lastTactic = launchedWindCharge ? "mace-wind-charge-fired" : "mace-assisted-jump";
+        bot.setSprinting(true);
+    }
+
+    private void guideMaceFlight(Player bot, Player target, BotTrait trait) {
+        if (trait.maceWindChargePending) {
+            // Keep the thrower's view down until the projectile has detonated.
+            bot.setRotation(bot.getLocation().getYaw(), 90.0F);
+            return;
+        }
+
+        updateMaceAim(bot, target, trait);
+
+        Vector toward = target.getLocation().toVector()
+            .subtract(bot.getLocation().toVector());
+        toward.setY(0.0D);
+        if (toward.lengthSquared() < 1.0E-5D) return;
+        toward.normalize();
+
+        // Correct the horizontal line while preserving the server-calculated
+        // vertical blast velocity and normal gravity.
+        Vector velocity = bot.getVelocity();
+        velocity.setX(velocity.getX() * 0.78D + toward.getX() * 0.16D);
+        velocity.setZ(velocity.getZ() * 0.78D + toward.getZ() * 0.16D);
+        bot.setVelocity(velocity);
+    }
+
+    private void updateMaceAim(Player bot, Player target, BotTrait trait) {
+        double lead = plugin.getConfig().getDouble(
+            "modern-weapons.mace.target-lead-seconds", 0.08D
+        );
+        Vector predicted = target.getEyeLocation().toVector()
+            .add(target.getVelocity().clone().multiply(Math.max(0.0D, Math.min(0.25D, lead))));
+        Vector direction = predicted.subtract(bot.getEyeLocation().toVector());
+        if (direction.lengthSquared() < 1.0E-5D) return;
+        direction.normalize();
+
+        Location desired = bot.getLocation().clone();
+        desired.setDirection(direction);
+        float yawDelta = wrapDegrees(desired.getYaw() - bot.getLocation().getYaw());
+        float pitchDelta = desired.getPitch() - bot.getLocation().getPitch();
+        float maxTurn = (float) plugin.getConfig().getDouble(
+            "modern-weapons.mace.aim-max-degrees-per-tick", 32.0D
+        );
+        yawDelta = Math.max(-maxTurn, Math.min(maxTurn, yawDelta));
+        pitchDelta = Math.max(-maxTurn, Math.min(maxTurn, pitchDelta));
+        float yaw = bot.getLocation().getYaw() + yawDelta * 0.72F;
+        float pitch = bot.getLocation().getPitch() + pitchDelta * 0.72F;
+
+        if (trait.maceMissThisAttack && !trait.maceAttemptedThisFall) {
+            yaw += (float) trait.maceMissOffsetDegrees;
+        } else {
+            float jitter = (float) plugin.getConfig().getDouble(
+                "modern-weapons.mace.aim-jitter-degrees", 0.15D
+            );
+            yaw += (float) ThreadLocalRandom.current().nextDouble(-jitter, jitter);
+            pitch += (float) ThreadLocalRandom.current().nextDouble(-jitter, jitter);
+        }
+        bot.setRotation(yaw, Math.max(-90.0F, Math.min(90.0F, pitch)));
+    }
+
+    private void restoreMaceWeaponIfDue(Player bot, BotTrait trait, long now) {
+        if (trait.maceRestoreWeapon != null && now >= trait.maceRestoreAt) {
+            restoreMaceWeapon(bot, trait);
+        }
+    }
+
+    private void restoreMaceWeapon(Player bot, BotTrait trait) {
+        if (bot != null && trait != null && trait.maceRestoreWeapon != null) {
+            bot.getInventory().setItemInMainHand(trait.maceRestoreWeapon.clone());
+            trait.maceRestoreWeapon = null;
+            trait.maceRestoreAt = 0L;
+        }
+    }
+
+    private int findWindChargeSlot(Player bot) {
+        ItemStack[] contents = bot.getInventory().getStorageContents();
+        for (int slot = 0; slot < contents.length; slot++) {
+            ItemStack item = contents[slot];
+            if (item != null && item.getType() == Material.WIND_CHARGE && item.getAmount() > 0) {
+                return slot;
+            }
+        }
+        return -1;
+    }
+
+    private void consumeWindCharge(Player bot, int slot) {
+        ItemStack item = bot.getInventory().getItem(slot);
+        if (item == null || item.getType() != Material.WIND_CHARGE) return;
+        if (item.getAmount() <= 1) bot.getInventory().setItem(slot, null);
+        else item.setAmount(item.getAmount() - 1);
+    }
+
+    private void selectHybridWeapon(Player bot, Player target, BotTrait trait) {
+        double distance = bot.getLocation().distance(target.getLocation());
+        boolean useMace = trait.maceLaunchActive || !bot.isOnGround() ||
+            (distance >= 3.5D && distance <= plugin.getConfig().getDouble(
+                "modern-weapons.mace.launch-max-distance", 10.0D
+            ));
+        Material wanted = useMace ? Material.MACE : null;
+        int selected = -1;
+        for (int slot = 0; slot < 9; slot++) {
+            ItemStack stack = bot.getInventory().getItem(slot);
+            if (stack == null || stack.getType().isAir()) continue;
+            if (wanted != null && stack.getType() == wanted) { selected = slot; break; }
+            if (wanted == null && stack.getType().name().endsWith("_SPEAR")) { selected = slot; break; }
+        }
+        if (selected >= 0 && bot.getInventory().getHeldItemSlot() != selected) {
+            bot.getInventory().setHeldItemSlot(selected);
+        }
+    }
+
+    private boolean maceAimHitsTarget(Player bot, Player target) {
+        if (!bot.hasLineOfSight(target)) return false;
+        Vector direction = bot.getEyeLocation().getDirection().normalize();
+        return bot.getWorld().rayTraceEntities(
+            bot.getEyeLocation(), direction, MACE_MAX_REACH + SPEAR_HITBOX_MARGIN, 0.08D,
+            entity -> entity.getUniqueId().equals(target.getUniqueId())
+        ) != null;
+    }
+
+    private float wrapDegrees(float value) {
+        value %= 360.0F;
+        if (value >= 180.0F) value -= 360.0F;
+        if (value < -180.0F) value += 360.0F;
+        return value;
     }
 
     private boolean tryMace(Player bot, Player target, BotTrait trait, long now) {
         double distance = bot.getLocation().distance(target.getLocation());
-
-        if (distance > MACE_MAX_REACH + SPEAR_HITBOX_MARGIN) {
-            return true;
-        }
-
+        if (distance > MACE_MAX_REACH + SPEAR_HITBOX_MARGIN) return true;
         if (maceTargetChanged(trait, target)) {
             trait.maceLaunchActive = false;
             trait.maceLaunchStartedAt = 0L;
         }
-
         trait.modernWeaponTarget = target.getUniqueId();
 
-        boolean falling = !bot.isOnGround() &&
-            !bot.isGliding() &&
+        boolean falling = !bot.isOnGround() && !bot.isGliding() &&
             bot.getVelocity().getY() < -0.02D;
-
         double fallDistance = Math.max(0.0D, bot.getFallDistance());
 
-        if (falling &&
-            fallDistance > MACE_MIN_SMASH_FALL &&
+        if (falling && fallDistance > MACE_MIN_SMASH_FALL &&
             !bot.hasPotionEffect(PotionEffectType.SLOW_FALLING)) {
+            if (trait.maceAttemptedThisFall) return true;
+            trait.maceAttemptedThisFall = true;
+            if (!maceAimHitsTarget(bot, target)) {
+                bot.swingMainHand();
+                trait.lastAttackTime = now;
+                trait.modernWeaponCooldownUntil = now + 350L;
+                trait.lastTactic = "mace-missed";
+                applyHumanAttackDelay(trait, now);
+                return true;
+            }
             if (isShieldUp(target)) {
                 shieldBlock(target);
                 return true;
             }
-
             performMaceSmash(bot, target, trait, fallDistance, now);
             return true;
         }
 
-        if (!bot.isOnGround() ||
-            now < trait.modernWeaponCooldownUntil ||
-            now - trait.lastAttackTime < attackCooldownMs(bot)) {
-            return true;
-        }
-
+        if (!bot.isOnGround() || now < trait.modernWeaponCooldownUntil ||
+            now - trait.lastAttackTime < attackCooldownMs(bot)) return true;
+        if (!maceAimHitsTarget(bot, target)) return true;
         if (isShieldUp(target)) {
             shieldBlock(target);
             trait.lastAttackTime = now;
             trait.modernWeaponCooldownUntil = now + attackCooldownMs(bot);
             return true;
         }
-
         performMaceHit(bot, target, trait, now);
         return true;
     }
@@ -393,6 +590,18 @@ public final class ModernWeaponCombat {
             bot.setFallDistance(0.0F);
 
             trait.maceLaunchActive = true;
+            trait.maceWindChargePending = false;
+            trait.maceAttemptedThisFall = false;
+            trait.maceMissThisAttack = ThreadLocalRandom.current().nextDouble(100.0D) <
+                plugin.getConfig().getDouble("modern-weapons.mace.miss-chance-percent", 10.0D);
+            double missOffset = Math.max(0.0D, plugin.getConfig().getDouble(
+                "modern-weapons.mace.miss-offset-degrees", 6.0D
+            ));
+            trait.maceMissOffsetDegrees = trait.maceMissThisAttack && missOffset > 0.0D
+                ? ThreadLocalRandom.current().nextDouble(-missOffset, missOffset) : 0.0D;
+            trait.maceLaunchStartedAt = now;
+            trait.maceLaunchOriginY = bot.getLocation().getY();
+            trait.macePeakY = bot.getLocation().getY();
             trait.lastTactic = "mace-wind-burst";
         } else {
             trait.maceLaunchActive = false;
@@ -1144,35 +1353,6 @@ public final class ModernWeaponCombat {
         ));
     }
 
-    private boolean consumeWindCharge(Player bot) {
-        if (!plugin.getConfig().getBoolean(
-            "modern-weapons.mace.wind-charge-enabled", true
-        )) {
-            return false;
-        }
-
-        PlayerInventory inventory =
-            bot.getInventory();
-
-        for (int slot = 0; slot < inventory.getSize(); slot++) {
-            ItemStack item = inventory.getItem(slot);
-
-            if (item != null &&
-                item.getType() == Material.WIND_CHARGE &&
-                item.getAmount() > 0) {
-                item.setAmount(item.getAmount() - 1);
-
-                if (item.getAmount() <= 0) {
-                    inventory.setItem(slot, null);
-                }
-
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     private boolean isShieldUp(Player player) {
         if (!player.isHandRaised()) {
             return false;
@@ -1445,6 +1625,12 @@ public final class ModernWeaponCombat {
         trait.modernWeaponCooldownUntil = 0L;
         trait.maceLaunchStartedAt = 0L;
         trait.maceLaunchActive = false;
+        trait.maceWindChargePending = false;
+        trait.maceAttemptedThisFall = false;
+        trait.maceMissThisAttack = false;
+        trait.maceMissOffsetDegrees = 0.0D;
+        trait.maceLaunchOriginY = 0.0D;
+        trait.macePeakY = 0.0D;
         trait.spearChargeStartedAt = 0L;
         trait.spearLastHitAt = 0L;
         trait.modernWeaponTarget = null;

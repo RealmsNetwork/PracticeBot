@@ -1,5 +1,6 @@
 package com.sheldera.practicebot;
 
+import com.sheldera.practicebot.combat.UhcModeListener;
 import com.sheldera.practicebot.x.A;
 import com.sheldera.practicebot.x.N;
 import com.sheldera.practicebot.x.O;
@@ -230,6 +231,7 @@ public class PracticeBotPlugin extends JavaPlugin {
       Bukkit.getPluginManager().registerEvents(new A(this), this);
       Bukkit.getPluginManager().registerEvents(new y1(this), this);
       Bukkit.getPluginManager().registerEvents(new z1(this), this);
+      Bukkit.getPluginManager().registerEvents(new UhcModeListener(), this);
       Bukkit.getPluginManager().registerEvents(this.guiClickHandler, this);
       Bukkit.getPluginManager().registerEvents(this.templateEditorManager, this);
       this.debugLog("Event listeners registered.");

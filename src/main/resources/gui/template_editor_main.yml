@@ -46,6 +46,15 @@ items:
       - "&7Current: &f{target_binding}"
       - ""
       - "&eClick to cycle"
+  weapon_profile:
+    slot: 31
+    material: TRIDENT
+    name: "&b&lWeapon Profile"
+    lore:
+      - "&7Current: &f{weapon_profile}"
+      - "&7Choose the combat kit and aerial style"
+      - ""
+      - "&eClick to cycle"
   respawn_delay:
     slot: 24
     material: CLOCK

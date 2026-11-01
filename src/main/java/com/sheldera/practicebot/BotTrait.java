@@ -133,6 +133,14 @@ public class BotTrait extends Trait {
    public long modernWeaponCooldownUntil = 0L;
    public long maceLaunchStartedAt = 0L;
    public boolean maceLaunchActive = false;
+   public boolean maceWindChargePending = false;
+   public transient ItemStack maceRestoreWeapon = null;
+   public transient long maceRestoreAt = 0L;
+   public boolean maceAttemptedThisFall = false;
+   public boolean maceMissThisAttack = false;
+   public double maceMissOffsetDegrees = 0.0D;
+   public double maceLaunchOriginY = 0.0D;
+   public double macePeakY = 0.0D;
    public long spearChargeStartedAt = 0L;
    public long spearLastHitAt = 0L;
    public UUID modernWeaponTarget = null;
@@ -180,12 +188,12 @@ public class BotTrait extends Trait {
    }
 
    public void setBotType(a var1) {
-      this.botType = var1 == null ? a.NORMAL : var1;
+      this.botType = var1 == null ? a.NORMAL : (var1.isCrystal() ? a.CRYSTAL : var1);
       this.enforceCpvpLookLock();
    }
 
    private boolean isCpvpBotMode() {
-      return this.botType == a.CPVP || this.cpvpEnabled;
+      return this.botType.isCrystal() || this.cpvpEnabled;
    }
 
    private void enforceCpvpLookLock() {
@@ -650,6 +658,14 @@ public class BotTrait extends Trait {
       this.modernWeaponCooldownUntil = 0L;
       this.maceLaunchStartedAt = 0L;
       this.maceLaunchActive = false;
+      this.maceWindChargePending = false;
+      this.maceRestoreWeapon = null;
+      this.maceRestoreAt = 0L;
+      this.maceAttemptedThisFall = false;
+      this.maceMissThisAttack = false;
+      this.maceMissOffsetDegrees = 0.0D;
+      this.maceLaunchOriginY = 0.0D;
+      this.macePeakY = 0.0D;
       this.spearChargeStartedAt = 0L;
       this.spearLastHitAt = 0L;
       this.modernWeaponTarget = null;
@@ -662,7 +678,7 @@ public class BotTrait extends Trait {
 
       String normalized = profile.trim().toLowerCase(Locale.ROOT);
       return switch (normalized) {
-         case "mace", "mace_elytra", "spear", "spear_elytra", "cart", "cart_elytra", "sword" -> normalized;
+         case "mace", "mace_elytra", "spear", "spear_elytra", "spear_mace", "cart", "cart_elytra", "uhc", "water", "sword" -> normalized;
          default -> "sword";
       };
    }
@@ -1145,7 +1161,7 @@ public class BotTrait extends Trait {
       String var4 = var1.getString("botType", "NORMAL");
 
       try {
-         this.botType = a.valueOf(var4);
+         this.botType = a.fromName(var4);
       } catch (IllegalArgumentException var7) {
          this.botType = a.NORMAL;
       }

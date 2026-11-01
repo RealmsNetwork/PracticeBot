@@ -56,7 +56,7 @@ save-default-inventory: "&aDefault bot inventory saved."
 invalid-usage:
   practicebot: "&eUnknown command. Use &6/pb help &efor a list of commands."
   practicebot-admin: "&eUnknown command. Use &6/pbadmin help &efor a list of admin commands."
-  spawnbot: "&eUsage: &6/spawnbot [normal|crystal]"
+  spawnbot: "&eUsage: &6/spawnbot [normal|crystal|cart|mace|uhc|water|maceelytra|spearelytra|spearmace]"
   template: "&eUsage: &6/pbadmin template <create|edit|cancel|delete|spawn>"
   template-create: "&eUsage: &6/pbadmin template create <template>"
   template-edit: "&eUsage: &6/pbadmin template edit <template>"

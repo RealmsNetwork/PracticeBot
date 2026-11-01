@@ -65,7 +65,7 @@ public final class PvpTacticsEngine {
 
         String profile = trait.getWeaponProfile();
 
-        if (profile.startsWith("mace") || profile.startsWith("spear")) {
+        if (profile.startsWith("spear") && !profile.equals("spear_mace")) {
             if (tryWindChargeReset(bot, target, trait, now)) {
                 return;
             }
@@ -575,12 +575,20 @@ public final class PvpTacticsEngine {
                 bot.setVelocity(velocity);
 
                 if (profile.startsWith("mace")) {
-                    bot.setFallDistance(Math.max(
-                        bot.getFallDistance(),
-                        (float) plugin.getConfig().getDouble(
-                            "tactics.elytra.mace-min-smash-fall", 2.0D
-                        )
+                    bot.setFallDistance(0.0F);
+                    trait.maceLaunchActive = true;
+                    trait.maceWindChargePending = false;
+                    trait.maceAttemptedThisFall = false;
+                    trait.maceMissThisAttack = ThreadLocalRandom.current().nextDouble(100.0D) <
+                        plugin.getConfig().getDouble("modern-weapons.mace.miss-chance-percent", 10.0D);
+                    double missOffset = Math.max(0.0D, plugin.getConfig().getDouble(
+                        "modern-weapons.mace.miss-offset-degrees", 6.0D
                     ));
+                    trait.maceMissOffsetDegrees = trait.maceMissThisAttack
+                        ? ThreadLocalRandom.current().nextDouble(-missOffset, missOffset) : 0.0D;
+                    trait.maceLaunchStartedAt = now;
+                    trait.maceLaunchOriginY = bot.getLocation().getY();
+                    trait.macePeakY = bot.getLocation().getY();
                 } else if (profile.startsWith("spear")) {
                     trait.spearChargeStartedAt = now -
                         plugin.getConfig().getLong(

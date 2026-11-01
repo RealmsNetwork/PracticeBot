@@ -7,7 +7,6 @@ import com.sheldera.practicebot.PracticeBotPlugin;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
@@ -471,7 +470,7 @@ public final class ModernWeaponCombat {
                 shieldBlock(target);
                 return true;
             }
-            performMaceSmash(bot, target, trait, fallDistance, now);
+            performMaceSmash(bot, target, trait, now);
             return true;
         }
 
@@ -505,6 +504,8 @@ public final class ModernWeaponCombat {
             for (java.lang.reflect.Method method : botHandle.getClass().getMethods()) {
                 if (!"attack".equals(method.getName()) ||
                     method.getParameterCount() != 1 ||
+                    !"Entity".equals(method.getParameterTypes()[0].getSimpleName()) ||
+                    !method.getParameterTypes()[0].getName().startsWith("net.minecraft.world.entity.") ||
                     !method.getParameterTypes()[0].isInstance(targetHandle)) {
                     continue;
                 }
@@ -552,7 +553,6 @@ public final class ModernWeaponCombat {
         Player bot,
         Player target,
         BotTrait trait,
-        double fallDistance,
         long now
     ) {
         ItemStack mace = bot.getInventory().getItemInMainHand();

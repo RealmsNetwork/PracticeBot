@@ -471,8 +471,9 @@ public final class ModernWeaponCombat {
             bot.getVelocity().getY() < -0.02D;
         double fallDistance = Math.max(0.0D, bot.getFallDistance());
 
-        if (falling && fallDistance > MACE_MIN_SMASH_FALL &&
-            !bot.hasPotionEffect(PotionEffectType.SLOW_FALLING)) {
+        if (shouldPerformMaceSmash(
+            falling, fallDistance, bot.hasPotionEffect(PotionEffectType.SLOW_FALLING)
+        )) {
             if (trait.maceAttemptedThisFall) return true;
             trait.maceAttemptedThisFall = true;
             if (!maceAimHitsTarget(bot, target)) {
@@ -1041,6 +1042,13 @@ public final class ModernWeaponCombat {
     private double enchantBonus(ItemStack item, String key) {
         int level = enchantLevel(item, key);
         return level > 0 ? 0.5D + level * 0.5D : 0.0D;
+    }
+
+    static boolean shouldPerformMaceSmash(
+        boolean falling, double fallDistance, boolean slowFalling
+    ) {
+        return falling && Double.isFinite(fallDistance) &&
+            fallDistance >= MACE_MIN_SMASH_FALL && !slowFalling;
     }
 
     /** Reference formula retained for regression tests; live mace hits use NMS. */

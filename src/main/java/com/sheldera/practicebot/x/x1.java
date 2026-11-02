@@ -306,6 +306,18 @@ public final class x1 implements PracticeBotApi {
    }
 
    @Override
+   public void setTemplateCombatProfile(String templateKey, com.sheldera.practicebot.api.PracticeBotType botType,
+                                        com.sheldera.practicebot.api.PracticeBotWeaponProfile weaponProfile) {
+      this.fS();
+      this.fQ();
+      Objects.requireNonNull(botType, "botType");
+      Objects.requireNonNull(weaponProfile, "weaponProfile");
+      if (!this.rj.getBotTemplateManager().setCombatProfile(templateKey, botType.name(), weaponProfile.name())) {
+         throw new IllegalArgumentException("Could not configure PracticeBot template '" + templateKey + "'.");
+      }
+   }
+
+   @Override
    public boolean deleteTemplate(String templateKey) {
       this.fS();
       this.fQ();

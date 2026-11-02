@@ -12,7 +12,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 
 public interface PracticeBotApi {
-   String API_VERSION = "1.8.4";
+   String API_VERSION = "1.9.0";
 
    String getApiVersion();
 
@@ -34,6 +34,9 @@ public interface PracticeBotApi {
 
    /** Deletes a custom template. Bundled defaults cannot be deleted. */
    boolean deleteTemplate(String templateKey);
+
+   /** Sets the AI type and equipment/combat profile for a generated template. */
+   void setTemplateCombatProfile(String templateKey, PracticeBotType botType, PracticeBotWeaponProfile weaponProfile);
 
    /** Names of saved bot inventory layouts. */
    List<String> getInventoryProfiles();

@@ -178,6 +178,22 @@ public class N {
       return this.a(this.k1(key), null);
    }
 
+   public synchronized boolean setCombatProfile(String templateKey, String botType, String weaponProfile) {
+      if (!this.sX.isLicenseActive()) return false;
+      this.gJ();
+      String key = this.normalizeTemplateKey(templateKey);
+      if (!this.sZ.containsKey(key)) return false;
+      String type = botType == null ? "NORMAL" : botType.trim().toUpperCase(Locale.ROOT);
+      if (!Set.of("NORMAL", "CRYSTAL", "CART", "MACE", "UHC", "WATER", "DUMMY").contains(type)) return false;
+      String profile = weaponProfile == null ? "sword" : weaponProfile.trim().toLowerCase(Locale.ROOT);
+      if (!Set.of("sword", "mace", "mace_elytra", "spear", "spear_elytra", "spear_mace", "cart", "cart_elytra", "uhc", "water").contains(profile)) return false;
+      this.pe.set("templates." + key + ".bot-type", type);
+      this.pe.set("templates." + key + ".weapon-profile", profile);
+      if (!this.gK()) return false;
+      this.a();
+      return this.sZ.containsKey(key);
+   }
+
    public synchronized boolean cloneTemplate(String sourceKey, String newKey) {
       E source = this.i1(sourceKey);
       if (source == null || !this.k0(newKey) || this.j0(newKey)) {

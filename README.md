@@ -158,3 +158,41 @@ thresholds are not changed by the difficulty system.
 
 Templates without a valid tier in their key (including direct `/spawnbot`
 spawns) fall back to their existing combat aggression setting.
+
+## Native modern-weapon combat
+
+Mace hits/smashes are dispatched through the vanilla `ServerboundInteractPacket` handler. Spear Jab uses the dedicated `ServerboundPlayerActionPacket.Action.STAB` handler, which reaches `Player.stabAttack()`; it is intentionally not implemented as an ordinary entity attack. Spear Charge and release use the vanilla `ServerboundUseItemPacket` / `RELEASE_USE_ITEM` handlers, with the native `ServerPlayerGameMode.useItem` and `LivingEntity.releaseUsingItem` methods as an NPC-connection fallback. This leaves the server responsible for `kinetic_weapon`, piercing, reach, damage, knockback, dismount, Wind Burst and Lunge/Jab enchantment effects. No custom damage or particle fallback is applied if native spear actions cannot be invoked; PracticeBot logs the failure instead. The bridge is reflection-based and still needs runtime verification on each supported Paper/Purpur build.
+
+The optional attribute-swap tactic is represented as a temporary native attack-damage attribute modifier during the server attack, rather than adding synthetic damage after the hit. Hybrid `SPEAR_MACE` inventories retain both weapons in separate slots.
+
+## Public API additions (1.7.0)
+
+The public API now supports creating a default template, cloning an existing template, deleting templates, and saving reusable full inventory layouts. Layouts persist in `bot_inventories.yml` and include the 36 storage slots, armor slots, offhand item, and selected hotbar slot. Layouts can be saved from an active bot, any Bukkit `PlayerInventory`, or explicit item arrays; they can also be read back, applied directly to a bot, assigned to a template, and cleared/deleted. A template layout is applied whenever that template is spawned or applied to an existing bot.
+
+```java
+PracticeBotApi api = ...;
+
+// Create from PracticeBot's defaults, or clone an existing profile.
+api.createTemplate("sword_normal_generated");
+api.cloneTemplate("sword_normal_easy", "sword_normal_generated_hard");
+
+// Save a bot's inventory, or capture any player's layout directly.
+api.saveInventoryProfile("mace_spear_layout", botNpcUuid);
+api.saveInventoryProfile("kit_layout", player.getInventory());
+api.setTemplateInventoryProfile("mace_normal_generated", "mace_spear_layout");
+api.getTemplateInventoryProfile("mace_normal_generated");
+
+// Read/apply a saved layout and enumerate/remove resources.
+api.getInventoryProfile("kit_layout");
+api.applyInventoryProfile(botNpcUuid, "kit_layout");
+List<BotTemplateView> templates = api.getTemplates();
+List<String> layouts = api.getInventoryProfiles();
+api.deleteInventoryProfile("mace_spear_layout");
+api.deleteTemplate("sword_normal_generated_hard");
+
+// Bind a spawned bot into a combat match and apply its target behavior.
+PracticeBotHandle handle = api.getBotByNpcUuid(botNpcUuid).orElseThrow();
+handle.bindCombatTarget(player.getUniqueId());
+```
+
+All mutating API methods must be called on the server's main thread. The inventory profile API preserves multiple weapon items in separate slots; it does not itself grant combat logic to a weapon type. Weapon behavior remains controlled by the bot's weapon profile and server combat implementation.

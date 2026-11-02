@@ -22,7 +22,15 @@ import com.sheldera.practicebot.api.metadata.PracticeBotMetadataType;
 import com.sheldera.practicebot.api.metadata.PracticeBotMetadataValue;
 import com.sheldera.practicebot.api.spawn.BotSpawnRequest;
 import com.sheldera.practicebot.api.template.BotTemplateView;
+import com.sheldera.practicebot.api.inventory.BotInventoryProfile;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Locale;
+import java.io.File;
+import java.io.IOException;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -37,15 +45,19 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.ServicePriority;
 
 public final class x1 implements PracticeBotApi {
-   private static final String ri = "1.6.0";
+   private static final String ri = "1.7.0";
    private final PracticeBotPlugin rj;
    private volatile boolean rk = false;
+   private final File inventoryProfilesFile;
+   private YamlConfiguration inventoryProfiles;
    private final Map<UUID, ConcurrentHashMap<NamespacedKey, PracticeBotMetadataValue>> rl = new ConcurrentHashMap<>();
    private final Map<UUID, Boolean> rm = new ConcurrentHashMap<>();
    private final Map<UUID, PracticeBotTargetSnapshot> rn = new ConcurrentHashMap<>();
 
    public x1(PracticeBotPlugin var1) {
       this.rj = Objects.requireNonNull(var1, "plugin");
+      this.inventoryProfilesFile = new File(var1.getDataFolder(), "bot_inventories.yml");
+      this.inventoryProfiles = YamlConfiguration.loadConfiguration(this.inventoryProfilesFile);
    }
 
    PracticeBotPlugin fN() {
@@ -199,7 +211,7 @@ public final class x1 implements PracticeBotApi {
    @Override
    public String getApiVersion() {
       this.fQ();
-      return "1.6.0";
+      return "1.7.0";
    }
 
    @Override
@@ -245,6 +257,218 @@ public final class x1 implements PracticeBotApi {
       return this.fR().stream().map(w1::b).toList();
    }
 
+   void bindCombatTarget(UUID npcUuid, UUID targetUuid) {
+      this.fS();
+      this.fQ();
+      Objects.requireNonNull(targetUuid, "targetUuid");
+      NPC npc = this.m(npcUuid);
+      BotTrait trait = this.ae(npc);
+      trait.setBoundTarget(targetUuid);
+      trait.setFollowOwner(false);
+      trait.setRandomWalk(false);
+      trait.setFrozen(false);
+      // Crystal PvP has a separate controller and targeting behavior. Keep
+      // its existing flags; ordinary PvP bots use the standard combat tick.
+      if (!trait.isCpvpEnabled()) {
+         trait.setPvpEnabled(true);
+         trait.setLookAtOwner(true);
+      }
+      Player boundTarget = trait.getBoundTargetPlayer();
+      if (boundTarget == null || !boundTarget.getUniqueId().equals(targetUuid)) {
+         throw new IllegalStateException("PracticeBot could not bind the requested combat target.");
+      }
+      if (!trait.isCpvpEnabled() && !trait.isPvpEnabled()) {
+         throw new IllegalStateException("PracticeBot PvP combat mode did not activate.");
+      }
+   }
+
+   @Override
+   public BotTemplateView createTemplate(String templateKey) {
+      this.fS();
+      this.fQ();
+      Objects.requireNonNull(templateKey, "templateKey");
+      if (!this.rj.getBotTemplateManager().createTemplate(templateKey)) {
+         throw new IllegalArgumentException("Could not create template '" + templateKey + "'. Check that the key is valid and unused and that PracticeBot is licensed.");
+      }
+      return this.getTemplate(templateKey).orElseThrow(() -> new IllegalStateException("Created template was not visible after save."));
+   }
+
+   @Override
+   public BotTemplateView cloneTemplate(String sourceKey, String newKey) {
+      this.fS();
+      this.fQ();
+      Objects.requireNonNull(sourceKey, "sourceKey");
+      Objects.requireNonNull(newKey, "newKey");
+      if (!this.rj.getBotTemplateManager().cloneTemplate(sourceKey, newKey)) {
+         throw new IllegalArgumentException("Could not clone template '" + sourceKey + "' to '" + newKey + "'. Check that the source exists and the new key is valid and unused.");
+      }
+      return this.getTemplate(newKey).orElseThrow(() -> new IllegalStateException("Cloned template was not visible after save."));
+   }
+
+   @Override
+   public boolean deleteTemplate(String templateKey) {
+      this.fS();
+      this.fQ();
+      Objects.requireNonNull(templateKey, "templateKey");
+      return this.rj.getBotTemplateManager().l0(templateKey);
+   }
+
+   @Override
+   public void setTemplateInventoryProfile(String templateKey, String profileKey) {
+      this.fS();
+      this.fQ();
+      String template = normalizeProfileKey(templateKey);
+      String profile = normalizeProfileKey(profileKey);
+      if (this.g1(template) == null) throw new IllegalArgumentException("Unknown PracticeBot template: " + templateKey);
+      if (!this.inventoryProfiles.contains("profiles." + profile)) throw new IllegalArgumentException("Unknown inventory profile: " + profileKey);
+      this.inventoryProfiles.set("template-profiles." + template, profile);
+      saveInventoryProfiles();
+   }
+
+   @Override
+   public Optional<String> getTemplateInventoryProfile(String templateKey) {
+      this.fS();
+      this.fQ();
+      this.fU();
+      String profile = this.inventoryProfiles.getString("template-profiles." + normalizeProfileKey(templateKey));
+      return profile == null || profile.isBlank() ? Optional.empty() : Optional.of(profile);
+   }
+
+   @Override
+   public boolean clearTemplateInventoryProfile(String templateKey) {
+      this.fS();
+      this.fQ();
+      String template = normalizeProfileKey(templateKey);
+      String path = "template-profiles." + template;
+      if (!this.inventoryProfiles.contains(path)) return false;
+      this.inventoryProfiles.set(path, null);
+      saveInventoryProfiles();
+      return true;
+   }
+
+   private void applyTemplateInventoryProfile(UUID npcUuid, String templateKey) {
+      String profile = this.inventoryProfiles.getString("template-profiles." + normalizeProfileKey(templateKey));
+      if (profile != null && !profile.isBlank() && this.inventoryProfiles.contains("profiles." + profile)) {
+         applyInventoryProfile(npcUuid, profile);
+      }
+   }
+
+   @Override
+   public List<String> getInventoryProfiles() {
+      this.fS();
+      this.fQ();
+      org.bukkit.configuration.ConfigurationSection section = this.inventoryProfiles.getConfigurationSection("profiles");
+      return section == null ? List.of() : section.getKeys(false).stream().sorted(String.CASE_INSENSITIVE_ORDER).toList();
+   }
+
+   @Override
+   public void saveInventoryProfile(String profileKey, UUID botNpcUuid) {
+      this.fS();
+      this.fQ();
+      this.fU();
+      NPC npc = this.m(Objects.requireNonNull(botNpcUuid, "botNpcUuid"));
+      Player player = npc.isSpawned() && npc.getEntity() instanceof Player p ? p : null;
+      if (player == null || player.isDead()) throw new IllegalStateException("Bot must be spawned and alive to save its inventory.");
+      saveInventoryProfile(profileKey, player.getInventory());
+   }
+
+   @Override
+   public void saveInventoryProfile(String profileKey, PlayerInventory inventory) {
+      Objects.requireNonNull(inventory, "inventory");
+      saveInventoryProfile(profileKey, inventory.getStorageContents(), inventory.getArmorContents(),
+          inventory.getItemInOffHand(), inventory.getHeldItemSlot());
+   }
+
+   @Override
+   public void saveInventoryProfile(String profileKey, ItemStack[] storage, ItemStack[] armor, ItemStack offhand, int heldSlot) {
+      this.fS();
+      this.fQ();
+      this.fU();
+      String key = normalizeProfileKey(profileKey);
+      if (!key.matches("[a-z0-9_-]+")) throw new IllegalArgumentException("Invalid inventory profile key: " + profileKey);
+      BotInventoryProfile profile = new BotInventoryProfile(storage, armor, offhand, heldSlot);
+      this.inventoryProfiles.set("profiles." + key + ".storage", java.util.Arrays.asList(profile.getStorage()));
+      this.inventoryProfiles.set("profiles." + key + ".armor", java.util.Arrays.asList(profile.getArmor()));
+      this.inventoryProfiles.set("profiles." + key + ".offhand", profile.getOffhand());
+      this.inventoryProfiles.set("profiles." + key + ".held-slot", profile.getHeldSlot());
+      saveInventoryProfiles();
+   }
+
+   @Override
+   public Optional<BotInventoryProfile> getInventoryProfile(String profileKey) {
+      this.fS();
+      this.fQ();
+      this.fU();
+      String key = normalizeProfileKey(profileKey);
+      if (!this.inventoryProfiles.contains("profiles." + key)) return Optional.empty();
+      ItemStack offhand = this.inventoryProfiles.getItemStack("profiles." + key + ".offhand");
+      return Optional.of(new BotInventoryProfile(
+          readItems("profiles." + key + ".storage", 36),
+          readItems("profiles." + key + ".armor", 4),
+          offhand,
+          this.inventoryProfiles.getInt("profiles." + key + ".held-slot", 0)
+      ));
+   }
+
+   @Override
+   public void applyInventoryProfile(UUID npcUuid, String profileKey) {
+      this.fS();
+      this.fQ();
+      this.fU();
+      String key = normalizeProfileKey(profileKey);
+      if (!this.inventoryProfiles.contains("profiles." + key)) throw new IllegalArgumentException("Unknown inventory profile: " + profileKey);
+      NPC npc = this.m(npcUuid);
+      if (!npc.isSpawned() || !(npc.getEntity() instanceof Player player) || player.isDead()) {
+         throw new IllegalStateException("Bot must be spawned and alive to apply an inventory profile.");
+      }
+      PlayerInventory inv = player.getInventory();
+      inv.setStorageContents(readItems("profiles." + key + ".storage", 36));
+      inv.setArmorContents(readItems("profiles." + key + ".armor", 4));
+      ItemStack offhand = this.inventoryProfiles.getItemStack("profiles." + key + ".offhand");
+      inv.setItemInOffHand(offhand == null ? null : offhand.clone());
+      inv.setHeldItemSlot(Math.max(0, Math.min(8, this.inventoryProfiles.getInt("profiles." + key + ".held-slot", 0))));
+      player.updateInventory();
+   }
+
+   @Override
+   public boolean deleteInventoryProfile(String profileKey) {
+      this.fS();
+      this.fQ();
+      String key = normalizeProfileKey(profileKey);
+      if (!this.inventoryProfiles.contains("profiles." + key)) return false;
+      this.inventoryProfiles.set("profiles." + key, null);
+      org.bukkit.configuration.ConfigurationSection mappings = this.inventoryProfiles.getConfigurationSection("template-profiles");
+      if (mappings != null) {
+         for (String template : mappings.getKeys(false)) {
+            if (key.equalsIgnoreCase(mappings.getString(template))) this.inventoryProfiles.set("template-profiles." + template, null);
+         }
+      }
+      saveInventoryProfiles();
+      return true;
+   }
+
+   private ItemStack[] readItems(String path, int size) {
+      List<?> raw = this.inventoryProfiles.getList(path, List.of());
+      ItemStack[] items = new ItemStack[size];
+      for (int i = 0; i < Math.min(size, raw.size()); i++) {
+         Object item = raw.get(i);
+         if (item instanceof ItemStack stack) items[i] = stack.clone();
+      }
+      return items;
+   }
+
+   private void saveInventoryProfiles() {
+      try {
+         this.inventoryProfiles.save(this.inventoryProfilesFile);
+      } catch (IOException exception) {
+         throw new IllegalStateException("Could not save bot inventory profiles.", exception);
+      }
+   }
+
+   private static String normalizeProfileKey(String key) {
+      return key == null ? "" : key.trim().toLowerCase(Locale.ROOT);
+   }
+
    @Override
    public PracticeBotHandle spawnBot(BotSpawnRequest var1) {
       this.fS();
@@ -258,6 +482,7 @@ public final class x1 implements PracticeBotApi {
       if (var4 == null) {
          throw new IllegalStateException("PracticeBot failed to spawn the requested template bot.");
       } else {
+         this.applyTemplateInventoryProfile(var4.getUniqueId(), var1.templateKey());
          return this.ab(var4);
       }
    }
@@ -285,6 +510,7 @@ public final class x1 implements PracticeBotApi {
       if (!var7) {
          throw new IllegalStateException("PracticeBot could not apply the requested template to that bot.");
       } else {
+         this.applyTemplateInventoryProfile(var4.getUniqueId(), var2);
          return this.ad(var4);
       }
    }
@@ -311,6 +537,11 @@ public final class x1 implements PracticeBotApi {
 
          return this.ad(var3);
       }
+   }
+
+   Player player(UUID npcUuid) {
+      NPC npc = this.m(npcUuid);
+      return npc.isSpawned() && npc.getEntity() instanceof Player player && !player.isDead() ? player : null;
    }
 
    PracticeBotHandle ab(NPC var1) {

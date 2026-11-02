@@ -105,6 +105,24 @@ final class w0 implements PracticeBotHandle {
    }
 
    @Override
+   public void bindCombatTarget(UUID targetUuid) {
+      this.rc.bindCombatTarget(this.rd, targetUuid);
+   }
+
+   @Override
+   public void applyInventoryProfile(String profileKey) {
+      this.rc.fS();
+      this.rc.fQ();
+      this.rc.applyInventoryProfile(this.rd, profileKey);
+   }
+
+   @Override
+   public Optional<org.bukkit.entity.Player> getPlayer() {
+      this.rc.fQ();
+      return Optional.ofNullable(this.rc.player(this.rd));
+   }
+
+   @Override
    public PracticeBotHandle updateCpvpSettings(CpvpSettingsUpdateRequest var1) {
       this.rc.fQ();
       return this.rc.updateCpvpSettings(this.rd, var1);

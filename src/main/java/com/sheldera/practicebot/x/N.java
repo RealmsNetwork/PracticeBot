@@ -170,6 +170,25 @@ public class N {
       );
    }
 
+   public synchronized boolean createTemplate(String templateKey) {
+      String key = this.normalizeTemplateKey(templateKey);
+      if (!this.k0(key) || this.j0(key)) {
+         return false;
+      }
+      return this.a(this.k1(key), null);
+   }
+
+   public synchronized boolean cloneTemplate(String sourceKey, String newKey) {
+      E source = this.i1(sourceKey);
+      if (source == null || !this.k0(newKey) || this.j0(newKey)) {
+         return false;
+      }
+      E copy = new E(newKey.trim().toLowerCase(Locale.ROOT), source.fh(), source.fY(), source.fZ(),
+         source.getBotType(), source.ga(), source.gb(), source.gc(), source.gd(), source.ge(), source.gf(),
+         source.gg(), source.gh(), source.gi(), source.gj(), source.getWeaponProfile());
+      return this.a(copy, null);
+   }
+
    public synchronized boolean a(E var1, String var2) {
       if (!this.sX.isLicenseActive()) {
          return false;

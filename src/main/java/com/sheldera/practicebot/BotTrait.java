@@ -145,6 +145,7 @@ public class BotTrait extends Trait {
    public double macePeakY = 0.0D;
    public long spearChargeStartedAt = 0L;
    public long spearLastHitAt = 0L;
+   public org.bukkit.attribute.AttributeModifier attributeSwapModifier = null;
    public UUID modernWeaponTarget = null;
    public int simulatedPingMs = 0;
    public long tacticNextDecisionAt = 0L;

@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 1.8.4
+
+- Exposed the public template creation/deletion API and reusable inventory profiles for integrations.
+- Added persisted inventory profiles covering storage slots, armor, offhand, and held hotbar slot.
+- Added the native NMS combat bridge for spear jab/charge actions while preserving server-native mace attacks.
+- Added Spear combat integration and regression coverage for API compatibility and template/inventory behavior.
+
 ## 1.8.3
 
 - Routed Mace normal hits and falling smashes through Minecraft's native server attack pipeline so vanilla controls smash particles, sounds, damage, knockback, enchantments, and Wind Burst; removed the fake critical-particle/damage fallback.

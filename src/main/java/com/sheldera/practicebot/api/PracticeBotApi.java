@@ -12,6 +12,8 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 
 public interface PracticeBotApi {
+   String API_VERSION = "1.8.4";
+
    String getApiVersion();
 
    Optional<PracticeBotHandle> getBotByNpcUuid(UUID var1);

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.8.5
+
+- Corrected the public API version reported by `getApiVersion()` to `1.8.4`, matching the template clone/delete and inventory-profile API introduced in 1.8.4.
+- Bumped the plugin release to 1.8.5; no gameplay behavior changes.
+
 ## Unreleased
 
 ## 1.8.4

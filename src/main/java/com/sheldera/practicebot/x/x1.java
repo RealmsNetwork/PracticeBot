@@ -211,7 +211,7 @@ public final class x1 implements PracticeBotApi {
    @Override
    public String getApiVersion() {
       this.fQ();
-      return "1.7.0";
+      return PracticeBotApi.API_VERSION;
    }
 
    @Override

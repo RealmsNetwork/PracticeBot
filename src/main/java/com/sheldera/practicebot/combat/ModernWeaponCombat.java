@@ -7,9 +7,13 @@ import com.sheldera.practicebot.PracticeBotPlugin;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
+import org.bukkit.attribute.AttributeModifier;
+import org.bukkit.NamespacedKey;
+import org.bukkit.inventory.EquipmentSlotGroup;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
@@ -25,12 +29,14 @@ import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
 public final class ModernWeaponCombat {
+    private static volatile String lastNativeFailureLogged;
     private static final double MACE_MIN_SMASH_FALL = 1.5D;
     private static final double MACE_MAX_REACH = 3.0D;
+    private static final double MACE_HITBOX_MARGIN = 0.125D;
 
     private static final double SPEAR_MIN_REACH = 2.0D;
     private static final double SPEAR_MAX_REACH = 4.5D;
-    private static final double SPEAR_HITBOX_MARGIN = 0.25D;
+    private static final double SPEAR_HITBOX_MARGIN = 0.125D;
 
     // 1.21.11 Netherite Spear kinetic_weapon values.
     private static final long SPEAR_DELAY_TICKS = 8L;
@@ -76,7 +82,7 @@ public final class ModernWeaponCombat {
                 PaperItemDataBridge.attackRange(item);
 
             return range == null
-                ? MACE_MAX_REACH + SPEAR_HITBOX_MARGIN
+                ? MACE_MAX_REACH + MACE_HITBOX_MARGIN
                 : range.maxReach() + range.hitboxMargin();
         }
 
@@ -96,13 +102,19 @@ public final class ModernWeaponCombat {
         if (bot == null || target == null || trait == null ||
             bot.isDead() || target.isDead() ||
             !bot.getWorld().equals(target.getWorld())) {
-            if (bot != null && trait != null) restoreMaceWeapon(bot, trait);
+            if (bot != null && trait != null) {
+                restoreMaceWeapon(bot, trait);
+                NmsCombatBridge.stopUsingItem(bot);
+                removeAttributeSwapModifier(bot, trait);
+            }
             reset(trait);
             return;
         }
 
         restoreMaceWeaponIfDue(bot, trait, now);
         if (trait.maceWindChargePending) {
+            NmsCombatBridge.stopUsingItem(bot);
+            removeAttributeSwapModifier(bot, trait);
             tickMace(bot, target, trait, now);
             return;
         }
@@ -114,15 +126,22 @@ public final class ModernWeaponCombat {
         ItemStack item = bot.getInventory().getItemInMainHand();
 
         if (item == null || item.getType().isAir()) {
+            NmsCombatBridge.stopUsingItem(bot);
+            removeAttributeSwapModifier(bot, trait);
             reset(trait);
             return;
         }
 
         if (item.getType() == Material.MACE) {
+            NmsCombatBridge.stopUsingItem(bot);
+            removeAttributeSwapModifier(bot, trait);
+            trait.spearChargeStartedAt = 0L;
             tickMace(bot, target, trait, now);
         } else if (isSpear(item)) {
             tickSpear(bot, target, trait, now);
         } else {
+            NmsCombatBridge.stopUsingItem(bot);
+            removeAttributeSwapModifier(bot, trait);
             reset(trait);
         }
     }
@@ -144,10 +163,8 @@ public final class ModernWeaponCombat {
             return true;
         }
 
-        if (isSpear(item) &&
-            trait.spearChargeStartedAt > 0L &&
-            now - trait.spearChargeStartedAt >= spearDelayMs(item)) {
-            return now >= trait.modernWeaponCooldownUntil;
+        if (isSpear(item) && NmsCombatBridge.isUsingItem(bot)) {
+            return false;
         }
 
         return now >= trait.modernWeaponCooldownUntil &&
@@ -429,7 +446,7 @@ public final class ModernWeaponCombat {
         if (!bot.hasLineOfSight(target)) return false;
         Vector direction = bot.getEyeLocation().getDirection().normalize();
         return bot.getWorld().rayTraceEntities(
-            bot.getEyeLocation(), direction, MACE_MAX_REACH + SPEAR_HITBOX_MARGIN, 0.08D,
+            bot.getEyeLocation(), direction, MACE_MAX_REACH + MACE_HITBOX_MARGIN, 0.08D,
             entity -> entity.getUniqueId().equals(target.getUniqueId())
         ) != null;
     }
@@ -441,18 +458,9 @@ public final class ModernWeaponCombat {
         return value;
     }
 
-    static boolean shouldPerformMaceSmash(
-        boolean falling, double fallDistance, boolean slowFalling
-    ) {
-        return falling &&
-            Double.isFinite(fallDistance) &&
-            fallDistance >= MACE_MIN_SMASH_FALL &&
-            !slowFalling;
-    }
-
     private boolean tryMace(Player bot, Player target, BotTrait trait, long now) {
         double distance = bot.getLocation().distance(target.getLocation());
-        if (distance > MACE_MAX_REACH + SPEAR_HITBOX_MARGIN) return true;
+        if (distance > MACE_MAX_REACH + MACE_HITBOX_MARGIN) return true;
         if (maceTargetChanged(trait, target)) {
             trait.maceLaunchActive = false;
             trait.maceLaunchStartedAt = 0L;
@@ -463,9 +471,8 @@ public final class ModernWeaponCombat {
             bot.getVelocity().getY() < -0.02D;
         double fallDistance = Math.max(0.0D, bot.getFallDistance());
 
-        if (shouldPerformMaceSmash(
-            falling, fallDistance, bot.hasPotionEffect(PotionEffectType.SLOW_FALLING)
-        )) {
+        if (falling && fallDistance > MACE_MIN_SMASH_FALL &&
+            !bot.hasPotionEffect(PotionEffectType.SLOW_FALLING)) {
             if (trait.maceAttemptedThisFall) return true;
             trait.maceAttemptedThisFall = true;
             if (!maceAimHitsTarget(bot, target)) {
@@ -476,133 +483,57 @@ public final class ModernWeaponCombat {
                 applyHumanAttackDelay(trait, now);
                 return true;
             }
-            if (isShieldUp(target)) {
-                shieldBlock(target);
-                return true;
-            }
-            performMaceSmash(bot, target, trait, now);
+            performMaceSmash(bot, target, trait, fallDistance, now);
             return true;
         }
 
         if (!bot.isOnGround() || now < trait.modernWeaponCooldownUntil ||
             now - trait.lastAttackTime < attackCooldownMs(bot)) return true;
         if (!maceAimHitsTarget(bot, target)) return true;
-        if (isShieldUp(target)) {
-            shieldBlock(target);
-            trait.lastAttackTime = now;
-            trait.modernWeaponCooldownUntil = now + attackCooldownMs(bot);
-            return true;
-        }
         performMaceHit(bot, target, trait, now);
         return true;
-    }
-
-    /**
-     * Ask the actual server-side player entity to attack. This is important for
-     * Mace combat: vanilla's attack pipeline owns smash damage, impact particles,
-     * sounds, knockback, enchantments, durability, and Wind Burst behavior.
-     *
-     * The project compiles against the older public Paper API, so resolve the
-     * CraftBukkit handle and its native attack(Entity) method reflectively.
-     */
-    private boolean invokeNativeMeleeAttack(Player bot, LivingEntity target) {
-        try {
-            Object botHandle = bot.getClass().getMethod("getHandle").invoke(bot);
-            Object targetHandle = target.getClass().getMethod("getHandle").invoke(target);
-            java.lang.reflect.Method attack = null;
-
-            for (java.lang.reflect.Method method : botHandle.getClass().getMethods()) {
-                if (!"attack".equals(method.getName()) ||
-                    method.getParameterCount() != 1 ||
-                    !"Entity".equals(method.getParameterTypes()[0].getSimpleName()) ||
-                    !method.getParameterTypes()[0].getName().startsWith("net.minecraft.world.entity.") ||
-                    !method.getParameterTypes()[0].isInstance(targetHandle)) {
-                    continue;
-                }
-                attack = method;
-                break;
-            }
-
-            if (attack == null) {
-                plugin.debugLog(() -> "Native Mace attack unavailable: no compatible server attack(Entity) method");
-                return false;
-            }
-
-            // Send the visible swing animation, then let vanilla decide whether
-            // this is a normal hit or a full falling Mace smash.
-            bot.swingMainHand();
-            attack.invoke(botHandle, targetHandle);
-            return true;
-        } catch (ReflectiveOperationException | RuntimeException ex) {
-            plugin.debugLog(() -> "Native Mace attack failed: " + ex.getClass().getSimpleName() +
-                ": " + ex.getMessage());
-            return false;
-        }
     }
 
     private void performMaceHit(
         Player bot, Player target, BotTrait trait, long now
     ) {
-        if (!invokeNativeMeleeAttack(bot, target)) {
-            // Do not fake a Mace hit if vanilla's attack pipeline is unavailable.
-            // A simulated damage call would lose the actual weapon mechanics again.
-            trait.lastAttackTime = now;
-            trait.modernWeaponCooldownUntil = now + 350L;
-            trait.lastTactic = "mace-native-attack-unavailable";
-            applyHumanAttackDelay(trait, now);
+        bot.swingMainHand();
+        if (!performNativeAttackWithAttributeSwap(bot, target, trait)) {
+            logNativeFailure("mace attack");
             return;
         }
-
         plugin.addCombatTag(target);
         trait.lastAttackTime = now;
         trait.modernWeaponCooldownUntil = now + attackCooldownMs(bot);
         applyHumanAttackDelay(trait, now);
+        trait.lastTactic = "mace-native-hit";
     }
 
     private void performMaceSmash(
         Player bot,
         Player target,
         BotTrait trait,
+        double fallDistance,
         long now
     ) {
-        ItemStack mace = bot.getInventory().getItemInMainHand();
-        int windBurst = enchantLevel(mace, "wind_burst");
-
-        if (!invokeNativeMeleeAttack(bot, target)) {
-            // Never substitute custom damage/particles for a vanilla Mace smash.
-            trait.lastAttackTime = now;
-            trait.modernWeaponCooldownUntil = now + 350L;
-            trait.lastTactic = "mace-native-smash-unavailable";
-            trait.maceLaunchActive = false;
-            applyHumanAttackDelay(trait, now);
+        bot.swingMainHand();
+        if (!performNativeAttackWithAttributeSwap(bot, target, trait)) {
+            logNativeFailure("mace smash");
+            trait.maceAttemptedThisFall = false;
             return;
         }
 
+        // The server now owns smash damage, fall-distance reset, area knockback,
+        // particles, Wind Burst and all mace enchantment effects.
         plugin.addCombatTag(target);
-
-        // Vanilla owns smash damage, impact particles/sounds, area knockback,
-        // fall-distance reset, enchantments, and the Wind Burst launch.
-        if (windBurst > 0) {
-            trait.maceLaunchActive = true;
-            trait.maceWindChargePending = false;
-            trait.maceAttemptedThisFall = false;
-            trait.maceMissThisAttack = ThreadLocalRandom.current().nextDouble(100.0D) <
-                MaceDifficultyTuning.getDouble(plugin, trait, "miss-chance-percent", 10.0D);
-            double missOffset = Math.max(0.0D,
-                MaceDifficultyTuning.getDouble(plugin, trait, "miss-offset-degrees", 6.0D));
-            trait.maceMissOffsetDegrees = trait.maceMissThisAttack && missOffset > 0.0D
-                ? ThreadLocalRandom.current().nextDouble(-missOffset, missOffset) : 0.0D;
-            trait.maceLaunchStartedAt = now;
-            trait.maceLaunchOriginY = bot.getLocation().getY();
-            trait.macePeakY = bot.getLocation().getY();
-            trait.lastTactic = "mace-wind-burst";
-        } else {
-            trait.maceLaunchActive = false;
-        }
-
-        trait.lastAttackTime = now;
-        trait.modernWeaponCooldownUntil = now + 300L;
+        int windBurst = enchantLevel(bot.getInventory().getItemInMainHand(), "wind_burst");
+        trait.maceLaunchActive = windBurst > 0 && bot.getVelocity().getY() > 0.05D;
+        trait.maceWindChargePending = false;
+        trait.maceAttemptedThisFall = true;
         trait.maceLaunchStartedAt = now;
+        trait.lastAttackTime = now;
+        trait.modernWeaponCooldownUntil = now + attackCooldownMs(bot);
+        trait.lastTactic = trait.maceLaunchActive ? "mace-native-wind-burst" : "mace-native-smash";
         applyHumanAttackDelay(trait, now);
     }
 
@@ -610,71 +541,59 @@ public final class ModernWeaponCombat {
         Player bot, Player target, BotTrait trait, long now
     ) {
         if (spearTargetChanged(trait, target)) {
+            NmsCombatBridge.stopUsingItem(bot);
+            removeAttributeSwapModifier(bot, trait);
             trait.spearChargeStartedAt = 0L;
             trait.spearLastHitAt = 0L;
         }
 
         trait.modernWeaponTarget = target.getUniqueId();
-
+        ItemStack spear = bot.getInventory().getItemInMainHand();
+        PaperItemDataBridge.AttackRangeData range = PaperItemDataBridge.attackRange(spear);
+        double minReach = range == null ? SPEAR_MIN_REACH : range.minReach();
+        double maxReach = range == null ? SPEAR_MAX_REACH : range.maxReach();
         double distance = bot.getLocation().distance(target.getLocation());
 
-        ItemStack spear = bot.getInventory().getItemInMainHand();
-        PaperItemDataBridge.AttackRangeData range =
-            PaperItemDataBridge.attackRange(spear);
-
-        double minReach = range == null
-            ? SPEAR_MIN_REACH
-            : range.minReach();
-        double maxReach = range == null
-            ? SPEAR_MAX_REACH
-            : range.maxReach();
-
-        if (distance < minReach + 0.05D) {
-            if (!bot.isGliding()) {
-                Vector away = bot.getLocation().toVector()
-                    .subtract(target.getLocation().toVector());
+        // Jab is the close-range attack. Let the server handle its piercing,
+        // cooldown, enchantments and Lunge effects when trySpear invokes attack().
+        if (distance <= 3.15D || distance < minReach + 0.05D || distance > maxReach) {
+            NmsCombatBridge.stopUsingItem(bot);
+            removeAttributeSwapModifier(bot, trait);
+            trait.spearChargeStartedAt = 0L;
+            if (distance < minReach + 0.05D && !bot.isGliding()) {
+                Vector away = bot.getLocation().toVector().subtract(target.getLocation().toVector());
                 away.setY(0.0D);
-
                 if (away.lengthSquared() > 1.0E-5D) {
                     away.normalize();
-
                     Vector velocity = bot.getVelocity();
                     velocity.setX(velocity.getX() * 0.55D + away.getX() * 0.12D);
                     velocity.setZ(velocity.getZ() * 0.55D + away.getZ() * 0.12D);
                     bot.setVelocity(velocity);
                 }
             }
+            return;
+        }
 
+        if (!plugin.getConfig().getBoolean("modern-weapons.spear.charge-enabled", true) ||
+            (!bot.isOnGround() && !bot.isGliding())) {
+            NmsCombatBridge.stopUsingItem(bot);
+            removeAttributeSwapModifier(bot, trait);
             trait.spearChargeStartedAt = 0L;
             return;
         }
 
-        boolean elytraProfile = isElytraProfile(trait);
-
-        if (!plugin.getConfig().getBoolean(
-            "modern-weapons.spear.charge-enabled", true
-        )) {
-            return;
+        if (!NmsCombatBridge.isUsingItem(bot)) {
+            applyAttributeSwapModifier(bot, trait);
+            if (NmsCombatBridge.startUsingMainHand(bot)) {
+                trait.spearChargeStartedAt = now;
+                trait.lastTactic = isElytraProfile(trait) && bot.isGliding()
+                    ? "elytra-spear-charge" : "spear-charge";
+            } else {
+                removeAttributeSwapModifier(bot, trait);
+                trait.spearChargeStartedAt = 0L;
+                logNativeFailure("spear charge");
+            }
         }
-
-        if (distance < minReach + 0.1D ||
-            distance > maxReach) {
-            return;
-        }
-
-        // Ground charge starts normally; Elytra Spear charges are initiated
-        // by the aerial tactic engine when it commits to the dive.
-        if (!bot.isOnGround() && !bot.isGliding()) {
-            return;
-        }
-
-        if (trait.spearChargeStartedAt == 0L) {
-            trait.spearChargeStartedAt = now;
-            trait.lastTactic = elytraProfile && bot.isGliding()
-                ? "elytra-spear-charge"
-                : "spear-charge";
-        }
-
         bot.setSprinting(!bot.isGliding());
     }
 
@@ -682,241 +601,70 @@ public final class ModernWeaponCombat {
         Player bot, Player target, BotTrait trait, long now
     ) {
         double distance = bot.getLocation().distance(target.getLocation());
-
         ItemStack spear = bot.getInventory().getItemInMainHand();
-        PaperItemDataBridge.AttackRangeData range =
-            PaperItemDataBridge.attackRange(spear);
+        PaperItemDataBridge.AttackRangeData range = PaperItemDataBridge.attackRange(spear);
+        double minReach = range == null ? SPEAR_MIN_REACH : range.minReach();
+        double maxReach = range == null ? SPEAR_MAX_REACH : range.maxReach();
+        double margin = range == null ? SPEAR_HITBOX_MARGIN : range.hitboxMargin();
 
-        double minReach = range == null
-            ? SPEAR_MIN_REACH
-            : range.minReach();
-
-        double maxReach = range == null
-            ? SPEAR_MAX_REACH
-            : range.maxReach();
-
-        double margin = range == null
-            ? SPEAR_HITBOX_MARGIN
-            : range.hitboxMargin();
-
-        if (distance < minReach - margin ||
-            distance > maxReach + margin) {
-            return true;
-        }
-
+        if (distance < minReach - margin || distance > maxReach + margin) return true;
         if (spearTargetChanged(trait, target)) {
+            NmsCombatBridge.stopUsingItem(bot);
             trait.spearChargeStartedAt = 0L;
             trait.spearLastHitAt = 0L;
         }
-
         trait.modernWeaponTarget = target.getUniqueId();
 
-        boolean hasCharge = trait.spearChargeStartedAt > 0L;
-        long elapsedMs = hasCharge ? now - trait.spearChargeStartedAt : 0L;
+        // While the spear is in its native use state, the server's
+        // kinetic_weapon component owns charge timing, contact cooldown,
+        // relative-speed damage, knockback and dismount checks.
+        if (NmsCombatBridge.isUsingItem(bot)) return true;
+        trait.spearChargeStartedAt = 0L;
 
-        if (hasCharge && elapsedMs >= spearDelayMs(spear)) {
-            long elapsedTicks = elapsedMs / 50L;
-            double relativeSpeed = relativeSpeedAlongView(bot, target);
+        if (distance > 3.15D || !bot.isOnGround() ||
+            now < trait.modernWeaponCooldownUntil ||
+            now - trait.lastAttackTime < attackCooldownMs(bot)) return true;
 
-            long damageMaxDuration = kineticDamageMaxDuration(spear);
-            double damageMinSpeed = kineticDamageMinRelativeSpeed(spear);
-
-            if (elapsedTicks <= damageMaxDuration &&
-                relativeSpeed >= damageMinSpeed &&
-                now >= trait.modernWeaponCooldownUntil &&
-                !isShieldUp(target)) {
-                performSpearCharge(
-                    bot, target, trait, now, relativeSpeed, elapsedTicks
-                );
-                return true;
-            }
-
-            if (distance > 3.15D) {
-                return true;
-            }
-
-            trait.spearChargeStartedAt = 0L;
-        }
-
-        if (bot.isOnGround() &&
-            now >= trait.modernWeaponCooldownUntil &&
-            now - trait.lastAttackTime >= attackCooldownMs(bot)) {
-            if (isShieldUp(target)) {
-                shieldBlock(target);
-                trait.lastAttackTime = now;
-                trait.modernWeaponCooldownUntil = now + attackCooldownMs(bot);
-                applyHumanAttackDelay(trait, now);
-            } else {
-                performSpearJab(bot, target, trait, now);
-            }
-        }
-
+        performSpearJab(bot, target, trait, now);
         return true;
     }
 
     private void performSpearJab(
         Player bot, Player target, BotTrait trait, long now
     ) {
-        bot.setSprinting(false);
+        NmsCombatBridge.stopUsingItem(bot);
+        if (!spearAimHitsTarget(bot, target)) return;
         bot.swingMainHand();
-
-        double damage = attributeDamageBonus(bot)
-            + enchantBonus(bot.getInventory().getItemInMainHand(), "sharpness")
-            + attributeSwapBonus(bot, trait);
-
-        if (damage <= 0.0D) {
-            damage = spearBaseDamage(bot);
+        applyAttributeSwapModifier(bot, trait);
+        boolean jabSucceeded;
+        try {
+            jabSucceeded = NmsCombatBridge.stabAttack(bot);
+        } finally {
+            removeAttributeSwapModifier(bot, trait);
         }
-
-        target.damage(damage, bot);
-        applyKnockback(target, bot, 0.45D, 0.28D);
-
-        // Lunge is a Jab-only movement enchantment.
-        if (!bot.isGliding()) {
-            applyLunge(bot);
+        if (!jabSucceeded) {
+            logNativeFailure("spear jab");
+            return;
         }
-
         plugin.addCombatTag(target);
-
         trait.lastAttackTime = now;
-        trait.modernWeaponCooldownUntil = now + spearJabCooldownMs(bot);
+        trait.modernWeaponCooldownUntil = now + attackCooldownMs(bot);
         trait.spearChargeStartedAt = 0L;
         applyHumanAttackDelay(trait, now);
-
-        bot.getWorld().playSound(
-            target.getLocation(),
-            Sound.ENTITY_PLAYER_ATTACK_STRONG,
-            0.85F,
-            1.2F
-        );
+        trait.lastTactic = "spear-native-jab";
     }
 
-    private void performSpearCharge(
-        Player bot,
-        Player target,
-        BotTrait trait,
-        long now,
-        double relativeSpeed,
-        long elapsedTicks
-    ) {
-        bot.swingMainHand();
-
+    private boolean spearAimHitsTarget(Player bot, Player target) {
+        if (!bot.hasLineOfSight(target)) return false;
         ItemStack spear = bot.getInventory().getItemInMainHand();
-
-        PaperItemDataBridge.KineticData kinetic =
-            PaperItemDataBridge.kineticWeapon(spear);
-
-        double multiplier = kinetic == null
-            ? plugin.getConfig().getDouble(
-                "modern-weapons.spear.charge-velocity-multiplier",
-                SPEAR_DAMAGE_MULTIPLIER
-            )
-            : kinetic.damageMultiplier();
-
-        // relativeSpeed is already projected onto the attacker's view axis.
-        // Do not apply a second view-angle multiplier here.
-        double kineticDamage = Math.floor(
-            Math.max(0.0D, relativeSpeed) * multiplier
-        );
-
-        // Java's kinetic_weapon calculation adds attribute/enchantment damage
-        // after the floor(relative_speed * velocity_multiplier) term.
-        double damage = kineticDamage
-            + attributeDamageBonus(bot)
-            + enchantBonus(spear, "sharpness")
-            + attributeSwapBonus(bot, trait);
-
-        if (damage <= 0.0D) {
-            damage = spearBaseDamage(bot);
-        }
-
-        target.damage(damage, bot);
-
-        long knockbackMaxDuration =
-            kineticKnockbackMaxDuration(spear);
-
-        double knockbackMinSpeed =
-            kineticKnockbackMinSpeed(spear);
-
-        long dismountMaxDuration =
-            kineticDismountMaxDuration(spear);
-
-        double dismountMinSpeed =
-            kineticDismountMinSpeed(spear);
-
-        boolean withinKnockbackWindow =
-            elapsedTicks <= knockbackMaxDuration &&
-            relativeSpeed >= knockbackMinSpeed;
-
-        boolean withinDismountWindow =
-            elapsedTicks <= dismountMaxDuration &&
-            relativeSpeed >= dismountMinSpeed;
-
-        if (withinKnockbackWindow) {
-            applyKnockback(
-                target,
-                bot,
-                Math.min(0.9D, 0.38D + relativeSpeed * 0.045D),
-                0.28D
-            );
-        }
-
-        if (withinDismountWindow) {
-            try {
-                target.leaveVehicle();
-            } catch (Throwable ignored) {
-            }
-        }
-
-        plugin.addCombatTag(target);
-
-        trait.spearLastHitAt = now;
-        trait.lastAttackTime = now;
-
-        long contactCooldown = spearContactCooldownMs(spear);
-
-        trait.modernWeaponCooldownUntil =
-            Math.max(now + contactCooldown, now + 500L);
-
-        applyHumanAttackDelay(trait, now);
-
-        bot.getWorld().playSound(
-            target.getLocation(),
-            Sound.ENTITY_PLAYER_ATTACK_STRONG,
-            0.9F,
-            1.0F
-        );
-
-        if (withinKnockbackWindow) {
-            trait.lastTactic = "spear-kinetic-charge";
-        } else {
-            trait.lastTactic = "spear-kinetic-tired";
-        }
-    }
-
-    private long spearJabCooldownMs(Player bot) {
-        String name = bot.getInventory().getItemInMainHand().getType().name();
-
-        long ticks;
-        // These timings mirror the published Mojang spear component data model.
-        // The server version remains the source of truth for the actual item.
-        if (name.startsWith("WOODEN_")) {
-            ticks = 15L;
-        } else if (name.startsWith("STONE_")) {
-            ticks = 14L;
-        } else if (name.startsWith("COPPER_")) {
-            ticks = 13L;
-        } else if (name.startsWith("IRON_")) {
-            ticks = 12L;
-        } else if (name.startsWith("GOLDEN_")) {
-            ticks = 14L;
-        } else if (name.startsWith("DIAMOND_")) {
-            ticks = 10L;
-        } else {
-            ticks = 8L;
-        }
-
-        return Math.max(50L, ticks * 50L);
+        PaperItemDataBridge.AttackRangeData range = PaperItemDataBridge.attackRange(spear);
+        double reach = range == null ? SPEAR_MAX_REACH + SPEAR_HITBOX_MARGIN
+            : range.maxReach() + range.hitboxMargin();
+        Vector direction = bot.getEyeLocation().getDirection().normalize();
+        return bot.getWorld().rayTraceEntities(
+            bot.getEyeLocation(), direction, reach, 0.08D,
+            entity -> entity.getUniqueId().equals(target.getUniqueId())
+        ) != null;
     }
 
     private long spearDelayMs(ItemStack spear) {
@@ -1072,6 +820,52 @@ public final class ModernWeaponCombat {
         return Math.max(0.0D, attribute.getValue() - attribute.getBaseValue());
     }
 
+    private void logNativeFailure(String action) {
+        String failure = NmsCombatBridge.lastFailure();
+        if (failure == null || failure.equals(lastNativeFailureLogged)) return;
+        lastNativeFailureLogged = failure;
+        plugin.getLogger().warning("Native vanilla " + action + " could not be invoked: " + failure + ". The bot will not substitute simulated damage.");
+    }
+
+    private boolean performNativeAttackWithAttributeSwap(Player bot, Player target, BotTrait trait) {
+        applyAttributeSwapModifier(bot, trait);
+        try {
+            return NmsCombatBridge.attack(bot, target);
+        } finally {
+            removeAttributeSwapModifier(bot, trait);
+        }
+    }
+
+    private void applyAttributeSwapModifier(Player bot, BotTrait trait) {
+        if (trait.attributeSwapModifier != null) return;
+        double bonus = attributeSwapBonus(bot, trait);
+        if (bonus <= 0.0D) return;
+        AttributeInstance attribute = bot.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE);
+        if (attribute == null) return;
+        NamespacedKey key = new NamespacedKey(plugin, "attribute-swap-" + java.util.UUID.randomUUID().toString().replace("-", ""));
+        AttributeModifier modifier = new AttributeModifier(
+            key, bonus, AttributeModifier.Operation.ADD_NUMBER, EquipmentSlotGroup.ANY
+        );
+        try {
+            attribute.addTransientModifier(modifier);
+            trait.attributeSwapModifier = modifier;
+        } catch (Throwable throwable) {
+            plugin.debugLog(() -> "Could not apply native attribute-swap modifier: " + throwable.getMessage());
+        }
+    }
+
+    private void removeAttributeSwapModifier(Player bot, BotTrait trait) {
+        if (trait == null || trait.attributeSwapModifier == null) return;
+        AttributeInstance attribute = bot == null ? null : bot.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE);
+        if (attribute != null) {
+            try {
+                attribute.removeModifier(trait.attributeSwapModifier);
+            } catch (Throwable ignored) {
+            }
+        }
+        trait.attributeSwapModifier = null;
+    }
+
     private double attributeSwapBonus(Player bot, BotTrait trait) {
         if (!environment.isAttributeSwapAvailable() ||
             !plugin.getConfig().getBoolean(
@@ -1133,7 +927,10 @@ public final class ModernWeaponCombat {
             String name = candidate.getType().name();
 
             if ((name.endsWith("_SWORD") ||
-                name.endsWith("_AXE")) &&
+                name.endsWith("_AXE") ||
+                name.equals("MACE") ||
+                name.endsWith("_MACE") ||
+                name.endsWith("_SPEAR")) &&
                 (current == null ||
                  candidate.getType() != current.getType())) {
                 return candidate;
@@ -1205,141 +1002,6 @@ public final class ModernWeaponCombat {
             now + Math.max(0L, Math.round(reaction + ping * fraction));
     }
 
-    private double relativeSpeedAlongView(
-        Player attacker, Player target
-    ) {
-        Vector look =
-            attacker.getEyeLocation().getDirection().normalize();
-
-        Vector relative =
-            attacker.getVelocity().clone().subtract(target.getVelocity());
-
-        return Math.max(
-            0.0D,
-            relative.dot(look) * 20.0D
-        );
-    }
-
-    private void applyLunge(Player bot) {
-        int lunge = enchantLevel(
-            bot.getInventory().getItemInMainHand(), "lunge"
-        );
-
-        if (lunge <= 0 ||
-            !bot.isOnGround() ||
-            bot.isInWater() ||
-            bot.getFoodLevel() < 6) {
-            return;
-        }
-
-        Vector direction =
-            bot.getLocation().getDirection().clone();
-
-        direction.setY(0.0D);
-
-        if (direction.lengthSquared() < 1.0E-5D) {
-            return;
-        }
-
-        direction.normalize();
-
-        double strength =
-            0.42D + Math.min(0.36D, lunge * 0.12D);
-
-        Vector velocity = bot.getVelocity();
-
-        velocity.setX(direction.getX() * strength);
-        velocity.setZ(direction.getZ() * strength);
-
-        bot.setVelocity(velocity);
-        bot.setFoodLevel(
-            Math.max(0, bot.getFoodLevel() - lunge)
-        );
-    }
-
-    private void applyMaceAreaKnockback(
-        Player target, Player attacker, double fallDistance
-    ) {
-        double strength =
-            fallDistance > 5.0D ? 1.0D : 0.55D;
-
-        for (Entity entity :
-            target.getWorld().getNearbyEntities(
-                target.getLocation(),
-                3.5D,
-                2.0D,
-                3.5D
-            )) {
-            if (!(entity instanceof LivingEntity living) ||
-                entity.equals(target) ||
-                entity.equals(attacker) ||
-                living.isDead()) {
-                continue;
-            }
-
-            Vector direction =
-                living.getLocation().toVector()
-                    .subtract(target.getLocation().toVector());
-
-            direction.setY(0.0D);
-
-            if (direction.lengthSquared() < 1.0E-5D) {
-                continue;
-            }
-
-            direction.normalize();
-
-            Vector current = living.getVelocity();
-
-            living.setVelocity(new Vector(
-                current.getX() * 0.5D +
-                    direction.getX() * strength * 0.75D,
-                Math.max(current.getY(), 0.22D),
-                current.getZ() * 0.5D +
-                    direction.getZ() * strength * 0.75D
-            ));
-        }
-    }
-
-    private void applyKnockback(
-        LivingEntity target,
-        Player attacker,
-        double horizontal,
-        double vertical
-    ) {
-        Vector direction =
-            target.getLocation().toVector()
-                .subtract(attacker.getLocation().toVector());
-
-        direction.setY(0.0D);
-
-        if (direction.lengthSquared() < 1.0E-5D) {
-            direction =
-                attacker.getLocation().getDirection().clone();
-
-            direction.setY(0.0D);
-        }
-
-        if (direction.lengthSquared() < 1.0E-5D) {
-            return;
-        }
-
-        direction.normalize();
-
-        Vector current = target.getVelocity();
-
-        target.setVelocity(new Vector(
-            current.getX() * 0.5D +
-                direction.getX() * horizontal,
-            Math.max(
-                current.getY() * 0.5D,
-                vertical
-            ),
-            current.getZ() * 0.5D +
-                direction.getZ() * horizontal
-        ));
-    }
-
     private boolean isShieldUp(Player player) {
         if (!player.isHandRaised()) {
             return false;
@@ -1350,15 +1012,6 @@ public final class ModernWeaponCombat {
         return active != null &&
             active.getType() == Material.SHIELD &&
             player.getCooldown(Material.SHIELD) == 0;
-    }
-
-    private void shieldBlock(Player target) {
-        target.getWorld().playSound(
-            target.getLocation(),
-            Sound.ITEM_SHIELD_BLOCK,
-            0.8F,
-            1.0F
-        );
     }
 
     private int enchantLevel(ItemStack item, String key) {
@@ -1390,6 +1043,7 @@ public final class ModernWeaponCombat {
         return level > 0 ? 0.5D + level * 0.5D : 0.0D;
     }
 
+    /** Reference formula retained for regression tests; live mace hits use NMS. */
     static double maceSmashBonus(double fallDistance) {
         if (fallDistance <= MACE_MIN_SMASH_FALL) {
             return 0.0D;
@@ -1414,6 +1068,7 @@ public final class ModernWeaponCombat {
         );
     }
 
+    /** Reference formula retained for regression tests; live spear charges use NMS. */
     static double spearChargeDamage(
         double baseDamage,
         double relativeSpeed,

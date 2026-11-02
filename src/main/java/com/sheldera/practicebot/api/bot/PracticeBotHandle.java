@@ -28,6 +28,15 @@ public interface PracticeBotHandle {
 
    void clearTarget();
 
+   /** Binds this bot to a player for combat and disables idle/follow movement. */
+   void bindCombatTarget(UUID targetUuid);
+
+   /** Applies a saved storage/armor/offhand layout to this bot. */
+   void applyInventoryProfile(String profileKey);
+
+   /** Returns the live Bukkit player entity when the NPC is spawned. */
+   Optional<org.bukkit.entity.Player> getPlayer();
+
    PracticeBotHandle updateCpvpSettings(CpvpSettingsUpdateRequest var1);
 
    void setMetadata(NamespacedKey var1, PracticeBotMetadataType var2, Object var3);

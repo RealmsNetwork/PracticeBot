@@ -110,7 +110,7 @@ Bot types describe the game mode; weapon profiles describe the equipment/combat 
 
 `CPVP` remains accepted as a legacy alias for `CRYSTAL`. `DUMMY` remains available for older template/editor workflows.
 
-Supported weapon profiles include `SWORD`, `MACE`, `MACE_ELYTRA`, `SPEAR`, `SPEAR_ELYTRA`, `SPEAR_MACE`, `CART`, `CART_ELYTRA`, `UHC`, and `WATER`.
+Supported weapon profiles include `SWORD`, `MACE`, `MACE_ELYTRA`, `SPEAR`, `SPEAR_ELYTRA`, `SPEAR_MACE`, `SPEAR_MACE_ELYTRA`, `CART`, `CART_ELYTRA`, `UHC`, and `WATER`.
 
 Example template:
 
@@ -163,7 +163,7 @@ spawns) fall back to their existing combat aggression setting.
 
 Mace hits/smashes are dispatched through the vanilla `ServerboundInteractPacket` handler. Spear Jab uses the dedicated `ServerboundPlayerActionPacket.Action.STAB` handler, which reaches `Player.stabAttack()`; it is intentionally not implemented as an ordinary entity attack. Spear Charge and release use the vanilla `ServerboundUseItemPacket` / `RELEASE_USE_ITEM` handlers, with the native `ServerPlayerGameMode.useItem` and `LivingEntity.releaseUsingItem` methods as an NPC-connection fallback. This leaves the server responsible for `kinetic_weapon`, piercing, reach, damage, knockback, dismount, Wind Burst and Lunge/Jab enchantment effects. No custom damage or particle fallback is applied if native spear actions cannot be invoked; PracticeBot logs the failure instead. The bridge is reflection-based and still needs runtime verification on each supported Paper/Purpur build.
 
-The optional attribute-swap tactic is represented as a temporary native attack-damage attribute modifier during the server attack, rather than adding synthetic damage after the hit. Hybrid `SPEAR_MACE` inventories retain both weapons in separate slots.
+The optional attribute-swap tactic is represented as a temporary native attack-damage attribute modifier during the server attack, rather than adding synthetic damage after the hit. Hybrid `SPEAR_MACE` and `SPEAR_MACE_ELYTRA` inventories retain both weapons in separate slots. The Elytra variant enables Elytra-aware spear charge tactics while preserving hybrid weapon selection.
 
 ## Public API additions (1.7.0)
 

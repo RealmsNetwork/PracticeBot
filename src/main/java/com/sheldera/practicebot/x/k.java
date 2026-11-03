@@ -94,11 +94,11 @@ public class k {
       }
 
       String profile = weaponProfile == null ? "sword" : weaponProfile.trim().toLowerCase(Locale.ROOT);
-      if (!java.util.Set.of("sword", "mace", "mace_elytra", "spear", "spear_elytra", "spear_mace", "cart", "cart_elytra", "uhc", "water").contains(profile)) {
+      if (!java.util.Set.of("sword", "mace", "mace_elytra", "spear", "spear_elytra", "spear_mace", "spear_mace_elytra", "cart", "cart_elytra", "uhc", "water").contains(profile)) {
          profile = "sword";
       }
 
-      if ((profile.equals("spear") || profile.equals("spear_elytra") || profile.equals("spear_mace")) &&
+      if ((profile.equals("spear") || profile.equals("spear_elytra") || profile.equals("spear_mace") || profile.equals("spear_mace_elytra")) &&
           Material.matchMaterial("NETHERITE_SPEAR") == null) {
          player.sendMessage("§cSpear support requires Minecraft Java 1.21.11 or newer.");
          return true;
@@ -106,7 +106,7 @@ public class k {
 
       a requestedType = switch (profile) {
          case "cart", "cart_elytra" -> a.CART;
-         case "mace", "mace_elytra", "spear", "spear_elytra", "spear_mace" -> a.MACE;
+         case "mace", "mace_elytra", "spear", "spear_elytra", "spear_mace", "spear_mace_elytra" -> a.MACE;
          case "uhc" -> a.UHC;
          case "water" -> a.WATER;
          default -> a.NORMAL;

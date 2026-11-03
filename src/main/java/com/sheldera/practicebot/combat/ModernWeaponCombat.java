@@ -119,7 +119,8 @@ public final class ModernWeaponCombat {
             return;
         }
 
-        if ("spear_mace".equals(trait.getWeaponProfile())) {
+        if ("spear_mace".equals(trait.getWeaponProfile()) ||
+            "spear_mace_elytra".equals(trait.getWeaponProfile())) {
             selectHybridWeapon(bot, target, trait);
         }
 

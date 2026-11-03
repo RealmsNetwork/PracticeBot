@@ -10,6 +10,7 @@ public enum PracticeBotWeaponProfile {
    SPEAR,
    SPEAR_ELYTRA,
    SPEAR_MACE,
+   SPEAR_MACE_ELYTRA,
    CART,
    CART_ELYTRA,
    UHC,

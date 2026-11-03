@@ -426,10 +426,24 @@ public final class ModernWeaponCombat {
 
     private void selectHybridWeapon(Player bot, Player target, BotTrait trait) {
         double distance = bot.getLocation().distance(target.getLocation());
+        ItemStack targetWeapon = target.getInventory().getItemInMainHand();
+        boolean targetIsThreateningWithMace = targetWeapon != null &&
+            targetWeapon.getType() == Material.MACE;
+        double spearReach = SPEAR_MAX_REACH + SPEAR_HITBOX_MARGIN;
+        double maceLaunchMax = plugin.getConfig().getDouble(
+            "modern-weapons.mace.launch-max-distance", 10.0D
+        );
+
+        // Keep the spear selected throughout its actual kinetic charge window.
+        // The previous 3.5-block cutoff selected the mace inside spear reach,
+        // leaving only a tiny fraction of the spear's 2.0-4.5 block range usable.
+        // Switch to mace outside spear reach for the wind-charge launch, and keep
+        // it during the aerial smash. Also answer an opponent who is actively
+        // holding a mace instead of waiting to be hit/knocked airborne first.
         boolean useMace = trait.maceLaunchActive || !bot.isOnGround() ||
-            (distance >= 3.5D && distance <= plugin.getConfig().getDouble(
-                "modern-weapons.mace.launch-max-distance", 10.0D
-            ));
+            targetIsThreateningWithMace ||
+            (distance > spearReach && distance <= maceLaunchMax);
+
         Material wanted = useMace ? Material.MACE : null;
         int selected = -1;
         for (int slot = 0; slot < 9; slot++) {

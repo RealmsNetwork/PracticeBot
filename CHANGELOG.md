@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.8.8
+
+- Added runtime-only PracticeBot templates for integrations; temporary match templates stay in memory and never write to `bot_templates.yml`.
+- Added direct kit inventory application so integrations no longer need temporary persisted inventory profiles.
+- Synchronized PracticeBot's totem reserve with the exact totem count in the applied kit, moving the first totem into the offhand and consuming the remaining storage stack as the bot resurrects.
+- Added unrestricted registered Bukkit/Paper enchantments to armor configuration, including namespaced plugin enchantments and unsafe levels above vanilla caps.
+- Updated the public API to 1.10.0 with temporary-template and direct-kit-inventory methods.
+- Added regression tests for totem stack accounting and enchantment map serialization.
+
+
 ## 1.8.5
 
 - Corrected the public API version reported by `getApiVersion()` to `1.8.4`, matching the template clone/delete and inventory-profile API introduced in 1.8.4.

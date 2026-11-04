@@ -1,6 +1,7 @@
 package com.sheldera.practicebot.x;
 
 import com.sheldera.practicebot.BotTrait;
+import com.sheldera.practicebot.api.inventory.TotemInventory;
 import com.sheldera.practicebot.PracticeBotPlugin;
 import com.sheldera.practicebot.api.PracticeBotApi;
 import com.sheldera.practicebot.api.bot.PracticeBotHandle;
@@ -294,6 +295,37 @@ public final class x1 implements PracticeBotApi {
    }
 
    @Override
+   public BotTemplateView createTemporaryTemplate(String templateKey) {
+      this.fS();
+      this.fQ();
+      Objects.requireNonNull(templateKey, "templateKey");
+      if (!this.rj.getBotTemplateManager().createTemporaryTemplate(templateKey)) {
+         throw new IllegalArgumentException("Could not create temporary template '" + templateKey + "'. Check that the key is valid and unused and that PracticeBot is licensed.");
+      }
+      return this.getTemplate(templateKey).orElseThrow(() -> new IllegalStateException("Temporary template was not registered."));
+   }
+
+   @Override
+   public void setTemporaryTemplateCombatProfile(String templateKey, com.sheldera.practicebot.api.PracticeBotType botType,
+                                                  com.sheldera.practicebot.api.PracticeBotWeaponProfile weaponProfile) {
+      this.fS();
+      this.fQ();
+      Objects.requireNonNull(botType, "botType");
+      Objects.requireNonNull(weaponProfile, "weaponProfile");
+      if (!this.rj.getBotTemplateManager().setTemporaryCombatProfile(templateKey, botType.name(), weaponProfile.name())) {
+         throw new IllegalArgumentException("Could not configure temporary PracticeBot template '" + templateKey + "'.");
+      }
+   }
+
+   @Override
+   public boolean deleteTemporaryTemplate(String templateKey) {
+      this.fS();
+      this.fQ();
+      Objects.requireNonNull(templateKey, "templateKey");
+      return this.rj.getBotTemplateManager().deleteTemporaryTemplate(templateKey);
+   }
+
+   @Override
    public BotTemplateView cloneTemplate(String sourceKey, String newKey) {
       this.fS();
       this.fQ();
@@ -433,13 +465,75 @@ public final class x1 implements PracticeBotApi {
       if (!npc.isSpawned() || !(npc.getEntity() instanceof Player player) || player.isDead()) {
          throw new IllegalStateException("Bot must be spawned and alive to apply an inventory profile.");
       }
-      PlayerInventory inv = player.getInventory();
-      inv.setStorageContents(readItems("profiles." + key + ".storage", 36));
-      inv.setArmorContents(readItems("profiles." + key + ".armor", 4));
-      ItemStack offhand = this.inventoryProfiles.getItemStack("profiles." + key + ".offhand");
-      inv.setItemInOffHand(offhand == null ? null : offhand.clone());
-      inv.setHeldItemSlot(Math.max(0, Math.min(8, this.inventoryProfiles.getInt("profiles." + key + ".held-slot", 0))));
+      applyKitInventory(npcUuid, readItems("profiles." + key + ".storage", 36),
+          readItems("profiles." + key + ".armor", 4),
+          this.inventoryProfiles.getItemStack("profiles." + key + ".offhand"),
+          this.inventoryProfiles.getInt("profiles." + key + ".held-slot", 0));
+   }
+
+   @Override
+   public void applyKitInventory(UUID npcUuid, ItemStack[] storage, ItemStack[] armor, ItemStack offhand, int heldSlot) {
+      this.fS();
+      this.fQ();
+      this.fU();
+      NPC npc = this.m(Objects.requireNonNull(npcUuid, "npcUuid"));
+      if (!npc.isSpawned() || !(npc.getEntity() instanceof Player player) || player.isDead()) {
+         throw new IllegalStateException("Bot must be spawned and alive to apply a kit inventory.");
+      }
+      BotInventoryProfile profile = new BotInventoryProfile(storage, armor, offhand, heldSlot);
+      ItemStack[] storageCopy = profile.getStorage();
+      ItemStack[] armorCopy = profile.getArmor();
+      ItemStack offhandCopy = profile.getOffhand();
+      int totemCount = TotemInventory.count(storageCopy, armorCopy, offhandCopy);
+      if (totemCount > 0 && (offhandCopy == null || offhandCopy.getType() != org.bukkit.Material.TOTEM_OF_UNDYING)) {
+         offhandCopy = TotemInventory.moveOneToOffhand(storageCopy, offhandCopy);
+      }
+      PlayerInventory inventory = player.getInventory();
+      inventory.clear();
+      inventory.setStorageContents(storageCopy);
+      inventory.setArmorContents(armorCopy);
+      inventory.setItemInOffHand(offhandCopy);
+      inventory.setHeldItemSlot(profile.getHeldSlot());
+      BotTrait trait = this.ae(npc);
+      trait.setTotemCount(totemCount);
+      trait.setOffhandType(totemCount > 0 ? "totem" : offhandCopy != null && offhandCopy.getType() == org.bukkit.Material.SHIELD ? "shield" : "none");
+      if (trait.hasStoredInventory()) {
+         BotInventoryProfile stored = new BotInventoryProfile(storageCopy, armorCopy, offhandCopy, profile.getHeldSlot());
+         trait.setStoredInventory(stored.getStorage());
+         trait.setStoredArmor(stored.getArmor());
+         trait.setStoredOffhand(stored.getOffhand());
+      }
       player.updateInventory();
+   }
+
+   @Override
+   public void activateBotCombatProfile(UUID npcUuid, com.sheldera.practicebot.api.PracticeBotType botType,
+                                        com.sheldera.practicebot.api.PracticeBotWeaponProfile weaponProfile) {
+      this.fS();
+      this.fQ();
+      this.fU();
+      Objects.requireNonNull(botType, "botType");
+      Objects.requireNonNull(weaponProfile, "weaponProfile");
+      NPC npc = this.m(Objects.requireNonNull(npcUuid, "npcUuid"));
+      if (!npc.isSpawned() || !(npc.getEntity() instanceof Player player) || player.isDead()) {
+         throw new IllegalStateException("Bot must be spawned and alive before its combat profile can be activated.");
+      }
+      BotTrait trait = this.ae(npc);
+      com.sheldera.practicebot.x.a runtimeType = com.sheldera.practicebot.x.a.valueOf(botType.name());
+      trait.setBotType(runtimeType);
+      trait.setWeaponProfile(weaponProfile.name().toLowerCase(Locale.ROOT));
+      if (runtimeType.isCrystal()) {
+         BotInventoryProfile snapshot = new BotInventoryProfile(player.getInventory().getStorageContents(),
+            player.getInventory().getArmorContents(), player.getInventory().getItemInOffHand(),
+            player.getInventory().getHeldItemSlot());
+         trait.setStoredInventory(snapshot.getStorage());
+         trait.setStoredArmor(snapshot.getArmor());
+         trait.setStoredOffhand(snapshot.getOffhand());
+         trait.setCpvpEnabled(true);
+      } else {
+         trait.setCpvpEnabled(false);
+         trait.setPvpEnabled(true);
+      }
    }
 
    @Override

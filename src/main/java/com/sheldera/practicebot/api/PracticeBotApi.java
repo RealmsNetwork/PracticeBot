@@ -12,7 +12,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 
 public interface PracticeBotApi {
-   String API_VERSION = "1.9.0";
+   String API_VERSION = "1.10.0";
 
    String getApiVersion();
 
@@ -28,6 +28,15 @@ public interface PracticeBotApi {
 
    /** Creates a new template using PracticeBot defaults. */
    BotTemplateView createTemplate(String templateKey);
+
+   /** Creates a runtime-only template that is never written to bot_templates.yml. */
+   BotTemplateView createTemporaryTemplate(String templateKey);
+
+   /** Updates the combat profile of a runtime-only template. */
+   void setTemporaryTemplateCombatProfile(String templateKey, PracticeBotType botType, PracticeBotWeaponProfile weaponProfile);
+
+   /** Removes a runtime-only template without touching persistent templates. */
+   boolean deleteTemporaryTemplate(String templateKey);
 
    /** Creates an independently editable copy of an existing template. */
    BotTemplateView cloneTemplate(String sourceKey, String newKey);
@@ -55,6 +64,12 @@ public interface PracticeBotApi {
 
    /** Applies a saved layout directly to a spawned bot. */
    void applyInventoryProfile(UUID botNpcUuid, String profileKey);
+
+   /** Applies a kit inventory directly without saving it to bot_inventories.yml. */
+   void applyKitInventory(UUID npcUuid, ItemStack[] storage, ItemStack[] armor, ItemStack offhand, int heldSlot);
+
+   /** Activates the requested combat controller after an integration has applied the bot's final kit. */
+   void activateBotCombatProfile(UUID npcUuid, PracticeBotType botType, PracticeBotWeaponProfile weaponProfile);
 
    /** Returns the layout key assigned to a template, if any. */
    Optional<String> getTemplateInventoryProfile(String templateKey);

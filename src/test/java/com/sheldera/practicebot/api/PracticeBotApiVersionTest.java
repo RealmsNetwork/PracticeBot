@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 
 class PracticeBotApiVersionTest {
     @Test
-    void exposesTheVersionRequiredForGeneratedTemplateCombatProfiles() {
-        assertEquals("1.9.0", PracticeBotApi.API_VERSION);
+    void exposesTheVersionRequiredForTemporaryTemplateAndDirectInventoryApi() {
+        assertEquals("1.10.0", PracticeBotApi.API_VERSION);
     }
 }

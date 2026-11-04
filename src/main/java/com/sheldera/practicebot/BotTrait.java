@@ -1,9 +1,11 @@
 package com.sheldera.practicebot;
 
+import com.sheldera.practicebot.EnchantmentResolver;
 import com.sheldera.practicebot.x.a;
 import com.sheldera.practicebot.x.ae;
 import com.sheldera.practicebot.x.af;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Locale;
 import java.util.UUID;
 import net.citizensnpcs.api.CitizensAPI;
@@ -58,6 +60,10 @@ public class BotTrait extends Trait {
    private String chestplateEnchant = "protection";
    private String leggingsEnchant = "protection";
    private String bootsEnchant = "protection";
+   private Map<String, Integer> helmetEnchantments = Map.of();
+   private Map<String, Integer> chestplateEnchantments = Map.of();
+   private Map<String, Integer> leggingsEnchantments = Map.of();
+   private Map<String, Integer> bootsEnchantments = Map.of();
    private String leggingsMaterial = "netherite";
    private String swordType = "sharp_kb";
    private String weaponProfile = "sword";
@@ -654,6 +660,15 @@ public class BotTrait extends Trait {
    public void setBootsEnchant(String var1) {
       this.bootsEnchant = var1;
    }
+
+   public Map<String, Integer> getHelmetEnchantments() { return EnchantmentResolver.copyLevels(this.helmetEnchantments); }
+   public void setHelmetEnchantments(Map<String, Integer> values) { this.helmetEnchantments = EnchantmentResolver.copyLevels(values); }
+   public Map<String, Integer> getChestplateEnchantments() { return EnchantmentResolver.copyLevels(this.chestplateEnchantments); }
+   public void setChestplateEnchantments(Map<String, Integer> values) { this.chestplateEnchantments = EnchantmentResolver.copyLevels(values); }
+   public Map<String, Integer> getLeggingsEnchantments() { return EnchantmentResolver.copyLevels(this.leggingsEnchantments); }
+   public void setLeggingsEnchantments(Map<String, Integer> values) { this.leggingsEnchantments = EnchantmentResolver.copyLevels(values); }
+   public Map<String, Integer> getBootsEnchantments() { return EnchantmentResolver.copyLevels(this.bootsEnchantments); }
+   public void setBootsEnchantments(Map<String, Integer> values) { this.bootsEnchantments = EnchantmentResolver.copyLevels(values); }
 
    public String getLeggingsMaterial() {
       return this.leggingsMaterial;
@@ -1265,6 +1280,10 @@ public class BotTrait extends Trait {
       this.chestplateEnchant = var1.getString("chestplateEnchant", "protection");
       this.leggingsEnchant = var1.getString("leggingsEnchant", "protection");
       this.bootsEnchant = var1.getString("bootsEnchant", "protection");
+      this.setHelmetEnchantments(EnchantmentResolver.deserializeLevels(var1.getString("helmetEnchantments", "")));
+      this.setChestplateEnchantments(EnchantmentResolver.deserializeLevels(var1.getString("chestplateEnchantments", "")));
+      this.setLeggingsEnchantments(EnchantmentResolver.deserializeLevels(var1.getString("leggingsEnchantments", "")));
+      this.setBootsEnchantments(EnchantmentResolver.deserializeLevels(var1.getString("bootsEnchantments", "")));
       this.leggingsMaterial = var1.getString("leggingsMaterial", this.leggingsMaterial);
       this.refreshArmorTypeSnapshot();
       this.swordType = var1.getString("swordType", this.swordType);
@@ -1402,6 +1421,10 @@ public class BotTrait extends Trait {
       var1.setString("chestplateEnchant", this.chestplateEnchant);
       var1.setString("leggingsEnchant", this.leggingsEnchant);
       var1.setString("bootsEnchant", this.bootsEnchant);
+      var1.setString("helmetEnchantments", EnchantmentResolver.serializeLevels(this.helmetEnchantments));
+      var1.setString("chestplateEnchantments", EnchantmentResolver.serializeLevels(this.chestplateEnchantments));
+      var1.setString("leggingsEnchantments", EnchantmentResolver.serializeLevels(this.leggingsEnchantments));
+      var1.setString("bootsEnchantments", EnchantmentResolver.serializeLevels(this.bootsEnchantments));
       var1.setString("leggingsMaterial", this.leggingsMaterial);
       var1.setString("swordType", this.swordType);
       var1.setString("weaponProfile", this.weaponProfile);

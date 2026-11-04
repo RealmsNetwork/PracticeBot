@@ -1,6 +1,7 @@
 package com.sheldera.practicebot.x;
 
 import com.sheldera.practicebot.BotTrait;
+import com.sheldera.practicebot.EnchantmentResolver;
 import com.sheldera.practicebot.PracticeBotPlugin;
 import java.util.HashMap;
 import java.util.Map;
@@ -422,22 +423,14 @@ public final class bs {
       if (var5 instanceof ArmorMeta var6) {
          var6.setUnbreakable(true);
          var6.addItemFlags(new ItemFlag[]{ItemFlag.HIDE_UNBREAKABLE, ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ARMOR_TRIM});
-         Enchantment var7 = this.bh(var2);
-         if (var7 != null) {
-            var6.addEnchant(var7, 4, true);
-         }
-
          String var8 = this.n(var1);
+         this.applyArmorEnchantments(var6, var3, var8, var2, false);
          this.a(var6, var3, var8);
          var4.setItemMeta(var6);
       } else if (var5 != null) {
          var5.setUnbreakable(true);
          var5.addItemFlags(new ItemFlag[]{ItemFlag.HIDE_UNBREAKABLE, ItemFlag.HIDE_ENCHANTS});
-         Enchantment var9 = this.bh(var2);
-         if (var9 != null) {
-            var5.addEnchant(var9, 4, true);
-         }
-
+         this.applyArmorEnchantments(var5, var3, this.n(var1), var2, false);
          var4.setItemMeta(var5);
       }
 
@@ -450,41 +443,42 @@ public final class bs {
       if (var5 instanceof ArmorMeta var6) {
          var6.setUnbreakable(true);
          var6.addItemFlags(new ItemFlag[]{ItemFlag.HIDE_UNBREAKABLE, ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ARMOR_TRIM});
-         Enchantment var7 = this.bh(var2);
-         if (var7 != null) {
-            var6.addEnchant(var7, 4, true);
-         }
-
-         var6.addEnchant(Enchantment.FEATHER_FALLING, 4, true);
+         this.applyArmorEnchantments(var6, var3, "boots", var2, true);
          this.a(var6, var3, "boots");
          var4.setItemMeta(var6);
       } else if (var5 != null) {
          var5.setUnbreakable(true);
          var5.addItemFlags(new ItemFlag[]{ItemFlag.HIDE_UNBREAKABLE, ItemFlag.HIDE_ENCHANTS});
-         Enchantment var8 = this.bh(var2);
-         if (var8 != null) {
-            var5.addEnchant(var8, 4, true);
-         }
-
-         var5.addEnchant(Enchantment.FEATHER_FALLING, 4, true);
+         this.applyArmorEnchantments(var5, var3, "boots", var2, true);
          var4.setItemMeta(var5);
       }
 
       return var4;
    }
 
-   private Enchantment bh(String var1) {
-      if (var1 == null) {
-         return Enchantment.PROTECTION;
-      } else {
-         return switch (var1) {
-            case "none" -> null;
-            case "blast_protection" -> Enchantment.BLAST_PROTECTION;
-            case "fire_protection" -> Enchantment.FIRE_PROTECTION;
-            case "projectile_protection" -> Enchantment.PROJECTILE_PROTECTION;
-            default -> Enchantment.PROTECTION;
-         };
+   private void applyArmorEnchantments(ItemMeta meta, BotTrait trait, String piece, String legacy, boolean boots) {
+      Map<String, Integer> configured = switch (piece == null ? "" : piece.toLowerCase(java.util.Locale.ROOT)) {
+         case "helmet" -> trait.getHelmetEnchantments();
+         case "chestplate" -> trait.getChestplateEnchantments();
+         case "leggings" -> trait.getLeggingsEnchantments();
+         case "boots" -> trait.getBootsEnchantments();
+         default -> Map.of();
+      };
+      if (!configured.isEmpty()) {
+         configured.forEach((key, level) -> {
+            Enchantment enchantment = EnchantmentResolver.resolve(key);
+            if (enchantment != null && level != null && level > 0) meta.addEnchant(enchantment, level, true);
+            else this.gU.getLogger().warning("Ignoring unknown armor enchantment '" + key + "' for " + piece + ".");
+         });
+         return;
       }
+      Enchantment legacyEnchantment = "none".equalsIgnoreCase(legacy) ? null : EnchantmentResolver.resolve(legacy == null ? "protection" : legacy);
+      if (legacyEnchantment != null) meta.addEnchant(legacyEnchantment, 4, true);
+      if (boots) meta.addEnchant(Enchantment.FEATHER_FALLING, 4, true);
+   }
+
+   private Enchantment bh(String var1) {
+      return "none".equalsIgnoreCase(var1) ? null : EnchantmentResolver.resolve(var1 == null ? "protection" : var1);
    }
 
    private ItemStack dx() {

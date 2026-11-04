@@ -24,7 +24,6 @@ public final class NmsCombatBridge {
         if (attacker == null || target == null || attacker.isDead() || target.isDead()) return false;
         Object playerHandle = null;
         Object targetHandle = null;
-        Throwable packetFailure = null;
         try {
             playerHandle = handle(attacker);
             targetHandle = handle(target);
@@ -37,8 +36,8 @@ public final class NmsCombatBridge {
             invokeCompatible(connection, "handleInteract", packet);
             lastFailure = null;
             return true;
-        } catch (Throwable throwable) {
-            packetFailure = throwable;
+        } catch (Throwable ignoredPacketFailure) {
+            // Fall through to the native ServerPlayer.attack fallback below.
         }
 
         // Citizens NPC connections can be packetless on some server forks.
@@ -53,7 +52,7 @@ public final class NmsCombatBridge {
             lastFailure = null;
             return true;
         } catch (Throwable fallbackFailure) {
-            lastFailure = rootMessage(fallbackFailure == null ? packetFailure : fallbackFailure);
+            lastFailure = rootMessage(fallbackFailure);
             return false;
         }
     }
@@ -82,7 +81,7 @@ public final class NmsCombatBridge {
         if (player == null || player.isDead()) return false;
         try {
             Object handle = handle(player);
-            if (isUsingItem(handle)) return true;
+            if (isHandleUsingItem(handle)) return true;
             Object connection = connection(handle);
             ClassLoader loader = handle.getClass().getClassLoader();
             Class<?> handType = Class.forName("net.minecraft.world.InteractionHand", true, loader);
@@ -95,8 +94,8 @@ public final class NmsCombatBridge {
             // A few NPC connection implementations do not forward packets to
             // their listener. Fall back to the same ServerPlayerGameMode method
             // that the vanilla handler calls, not a custom spear simulation.
-            if (!isUsingItem(handle)) startUsingViaGameMode(handle, mainHand);
-            if (!isUsingItem(handle)) throw new IllegalStateException("Native item-use handler did not enter the using-item state.");
+            if (!isHandleUsingItem(handle)) startUsingViaGameMode(handle, mainHand);
+            if (!isHandleUsingItem(handle)) throw new IllegalStateException("Native item-use handler did not enter the using-item state.");
             lastFailure = null;
             return true;
         } catch (Throwable throwable) {
@@ -110,18 +109,18 @@ public final class NmsCombatBridge {
         if (player == null) return false;
         try {
             Object handle = handle(player);
-            if (!isUsingItem(handle)) return true;
+            if (!isHandleUsingItem(handle)) return true;
             try {
                 dispatchPlayerAction(connection(handle), handle.getClass().getClassLoader(), "RELEASE_USE_ITEM");
             } catch (Throwable ignored) {
             }
-            if (isUsingItem(handle)) {
+            if (isHandleUsingItem(handle)) {
                 Method release = findNoArgsMethod(handle.getClass(), "releaseUsingItem");
                 if (release == null) throw new NoSuchMethodException("LivingEntity.releaseUsingItem()");
                 release.invoke(handle);
             }
             lastFailure = null;
-            return !isUsingItem(handle);
+            return !isHandleUsingItem(handle);
         } catch (Throwable throwable) {
             lastFailure = rootMessage(throwable);
             return false;
@@ -131,7 +130,7 @@ public final class NmsCombatBridge {
     public static boolean isUsingItem(Player player) {
         if (player == null) return false;
         try {
-            return isUsingItem(handle(player));
+            return isHandleUsingItem(handle(player));
         } catch (Throwable ignored) {
             return false;
         }
@@ -302,7 +301,7 @@ public final class NmsCombatBridge {
         return method.invoke(target, argument);
     }
 
-    private static boolean isUsingItem(Object handle) throws ReflectiveOperationException {
+    private static boolean isHandleUsingItem(Object handle) throws ReflectiveOperationException {
         Object value = invokeNoArgs(handle, "isUsingItem");
         return Boolean.TRUE.equals(value);
     }

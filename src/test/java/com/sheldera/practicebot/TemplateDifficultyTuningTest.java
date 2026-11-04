@@ -169,10 +169,11 @@ class TemplateDifficultyTuningTest {
     void spearDefaultInventoryIncludesWindChargesForNonElytraApproach() throws Exception {
         try (InputStream stream = getClass().getClassLoader().getResourceAsStream("default_inv.yml")) {
             assertNotNull(stream);
-            YamlConfiguration inventory = YamlConfiguration.loadConfiguration(
-                new InputStreamReader(stream, StandardCharsets.UTF_8));
-            assertEquals(4, inventory.getInt("inventory-config-version"));
-            assertEquals(12, inventory.getInt("weapon.spear.wind-charges"));
+            try (InputStreamReader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
+                YamlConfiguration inventory = YamlConfiguration.loadConfiguration(reader);
+                assertEquals(4, inventory.getInt("inventory-config-version"));
+                assertEquals(12, inventory.getInt("weapon.spear.wind-charges"));
+            }
         }
     }
 

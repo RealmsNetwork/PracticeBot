@@ -501,7 +501,7 @@ public final class ModernWeaponCombat {
                 applyHumanAttackDelay(trait, now);
                 return true;
             }
-            performMaceSmash(bot, target, trait, fallDistance, now);
+            performMaceSmash(bot, target, trait, now);
             return true;
         }
 
@@ -531,10 +531,9 @@ public final class ModernWeaponCombat {
         Player bot,
         Player target,
         BotTrait trait,
-        double fallDistance,
         long now
     ) {
-        if (attemptStunSlam(bot, target, trait, fallDistance)) return;
+        if (attemptStunSlam(bot, target, trait)) return;
         performMaceSmashNow(bot, target, trait, now);
     }
 
@@ -561,9 +560,7 @@ public final class ModernWeaponCombat {
         return true;
     }
 
-    private boolean attemptStunSlam(
-        Player bot, Player target, BotTrait trait, double fallDistance
-    ) {
+    private boolean attemptStunSlam(Player bot, Player target, BotTrait trait) {
         boolean enabled = plugin.getConfig().getBoolean("modern-weapons.mace.stun-slam.enabled", false);
         boolean requireShield = plugin.getConfig().getBoolean("modern-weapons.mace.stun-slam.require-shield", true);
         int axeSlot = -1;

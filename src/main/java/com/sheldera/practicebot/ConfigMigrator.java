@@ -33,12 +33,12 @@ public final class ConfigMigrator {
             return false;
         }
 
-        if (current < 9) {
-            migrateCartCombatDefaults(config);
-            // Attribute swapping was previously opt-in. The new spear/mace
-            // approach uses it when the Paper runtime explicitly supports it.
-            replaceIfOldDefault(config, "tactics.attribute-swap.enabled", false, true);
-        }
+        // The version guard above guarantees current < CURRENT_VERSION, so
+        // apply the v9 migration without a redundant always-true comparison.
+        migrateCartCombatDefaults(config);
+        // Attribute swapping was previously opt-in. The new spear/mace
+        // approach uses it when the Paper runtime explicitly supports it.
+        replaceIfOldDefault(config, "tactics.attribute-swap.enabled", false, true);
 
         backup(plugin, file);
 

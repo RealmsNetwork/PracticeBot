@@ -4,6 +4,7 @@ import com.sheldera.practicebot.BotTrait;
 import com.sheldera.practicebot.TemplateDifficultyTuning;
 import com.sheldera.practicebot.MaceDifficultyTuning;
 import com.sheldera.practicebot.PracticeBotPlugin;
+import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -442,7 +443,8 @@ public final class ModernWeaponCombat {
         // holding a mace instead of waiting to be hit/knocked airborne first.
         boolean useMace = trait.maceLaunchActive || !bot.isOnGround() ||
             targetIsThreateningWithMace ||
-            (distance > spearReach && distance <= maceLaunchMax);
+            (distance > spearReach && distance <= maceLaunchMax &&
+                !plugin.getConfig().getBoolean("modern-weapons.spear.wind-charge-approach.enabled", true));
 
         Material wanted = useMace ? Material.MACE : null;
         int selected = -1;
@@ -532,11 +534,16 @@ public final class ModernWeaponCombat {
         double fallDistance,
         long now
     ) {
+        if (attemptStunSlam(bot, target, trait, fallDistance)) return;
+        performMaceSmashNow(bot, target, trait, now);
+    }
+
+    private boolean performMaceSmashNow(Player bot, Player target, BotTrait trait, long now) {
         bot.swingMainHand();
         if (!performNativeAttackWithAttributeSwap(bot, target, trait)) {
             logNativeFailure("mace smash");
             trait.maceAttemptedThisFall = false;
-            return;
+            return false;
         }
 
         // The server now owns smash damage, fall-distance reset, area knockback,
@@ -551,6 +558,84 @@ public final class ModernWeaponCombat {
         trait.modernWeaponCooldownUntil = now + attackCooldownMs(bot);
         trait.lastTactic = trait.maceLaunchActive ? "mace-native-wind-burst" : "mace-native-smash";
         applyHumanAttackDelay(trait, now);
+        return true;
+    }
+
+    private boolean attemptStunSlam(
+        Player bot, Player target, BotTrait trait, double fallDistance
+    ) {
+        boolean enabled = plugin.getConfig().getBoolean("modern-weapons.mace.stun-slam.enabled", false);
+        boolean requireShield = plugin.getConfig().getBoolean("modern-weapons.mace.stun-slam.require-shield", true);
+        int axeSlot = -1;
+        for (int slot = 0; slot < 9; slot++) {
+            ItemStack item = bot.getInventory().getItem(slot);
+            if (item != null && item.getType().name().endsWith("_AXE")) {
+                axeSlot = slot;
+                break;
+            }
+        }
+        if (!shouldAttemptStunSlam(enabled, requireShield, target.isBlocking(), axeSlot >= 0)) return false;
+
+        int maceSlot = bot.getInventory().getHeldItemSlot();
+        boolean axeActionSucceeded = false;
+        try {
+            bot.getInventory().setHeldItemSlot(axeSlot);
+            bot.swingMainHand();
+            axeActionSucceeded = NmsCombatBridge.attack(bot, target);
+        } catch (Throwable ex) {
+            plugin.debugLog(() -> "Optional stun-slam axe step failed: " + ex.getMessage());
+        } finally {
+            bot.getInventory().setHeldItemSlot(maceSlot);
+        }
+
+        boolean shieldDisabled = target.getCooldown(Material.SHIELD) > 0 || !target.isBlocking();
+        if (!axeActionSucceeded || (requireShield && !shieldDisabled)) return false;
+
+        int delayTicks = stunSlamDelayTicks(
+            plugin.getConfig().getInt("modern-weapons.mace.stun-slam.followup-delay-ticks", 2),
+            plugin.getConfig().getInt("modern-weapons.mace.stun-slam.window-ticks", 5)
+        );
+        trait.maceAttemptedThisFall = true;
+        trait.lastTactic = "mace-stun-slam-axe-stun";
+
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (!bot.isValid() || bot.isDead() || !target.isValid() || target.isDead() ||
+                !bot.getWorld().equals(target.getWorld()) ||
+                !maceAimHitsTarget(bot, target)) {
+                trait.maceAttemptedThisFall = false;
+                return;
+            }
+
+            int currentMaceSlot = findHotbarSlot(bot, Material.MACE);
+            if (currentMaceSlot >= 0) bot.getInventory().setHeldItemSlot(currentMaceSlot);
+            if (bot.getInventory().getItemInMainHand() == null ||
+                bot.getInventory().getItemInMainHand().getType() != Material.MACE) {
+                trait.maceAttemptedThisFall = false;
+                return;
+            }
+
+            // The axe's shield stun is real; clear only the target's short
+            // invulnerability window immediately before the native mace hit.
+            target.setNoDamageTicks(0);
+            long followupNow = System.currentTimeMillis();
+            if (performMaceSmashNow(bot, target, trait, followupNow)) {
+                trait.lastTactic = "mace-stun-slam";
+            }
+        }, delayTicks);
+        return true;
+    }
+
+    private int findHotbarSlot(Player player, Material material) {
+        for (int slot = 0; slot < 9; slot++) {
+            ItemStack item = player.getInventory().getItem(slot);
+            if (item != null && item.getType() == material) return slot;
+        }
+        return -1;
+    }
+
+    static int stunSlamDelayTicks(int requestedDelay, int windowTicks) {
+        int safeWindow = Math.max(1, Math.min(5, windowTicks));
+        return Math.max(1, Math.min(safeWindow, requestedDelay));
     }
 
     private void tickSpear(
@@ -572,7 +657,9 @@ public final class ModernWeaponCombat {
 
         // Jab is the close-range attack. Let the server handle its piercing,
         // cooldown, enchantments and Lunge effects when trySpear invokes attack().
-        if (distance <= 3.15D || distance < minReach + 0.05D || distance > maxReach) {
+        boolean lungeApproach = shouldUseLungeJab(distance, maxReach,
+            enchantLevel(spear, "lunge"), bot.isGliding(), bot.isInWater());
+        if (distance <= 3.15D || lungeApproach || distance < minReach + 0.05D || distance > maxReach) {
             NmsCombatBridge.stopUsingItem(bot);
             removeAttributeSwapModifier(bot, trait);
             trait.spearChargeStartedAt = 0L;
@@ -637,7 +724,10 @@ public final class ModernWeaponCombat {
         if (NmsCombatBridge.isUsingItem(bot)) return true;
         trait.spearChargeStartedAt = 0L;
 
-        if (distance > 3.15D || !bot.isOnGround() ||
+        boolean lungeApproach = shouldUseLungeJab(distance, maxReach,
+            enchantLevel(spear, "lunge"), bot.isGliding(), bot.isInWater());
+        if ((distance > 3.15D && !lungeApproach) ||
+            (!bot.isOnGround() && !lungeApproach) ||
             now < trait.modernWeaponCooldownUntil ||
             now - trait.lastAttackTime < attackCooldownMs(bot)) return true;
 
@@ -1057,6 +1147,19 @@ public final class ModernWeaponCombat {
     private double enchantBonus(ItemStack item, String key) {
         int level = enchantLevel(item, key);
         return level > 0 ? 0.5D + level * 0.5D : 0.0D;
+    }
+
+    static boolean shouldUseLungeJab(
+        double distance, double maxReach, int lungeLevel, boolean gliding, boolean inWater
+    ) {
+        return lungeLevel > 0 && Double.isFinite(distance) && distance > 3.15D &&
+            distance <= maxReach && !gliding && !inWater;
+    }
+
+    static boolean shouldAttemptStunSlam(
+        boolean enabled, boolean requireShield, boolean targetBlocking, boolean hasAxe
+    ) {
+        return enabled && hasAxe && (!requireShield || targetBlocking);
     }
 
     static boolean shouldPerformMaceSmash(

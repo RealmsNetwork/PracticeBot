@@ -11,8 +11,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public final class ConfigMigrator {
-    private static final int CURRENT_VERSION = 8;
-    private static final int CURRENT_INVENTORY_VERSION = 3;
+    private static final int CURRENT_VERSION = 9;
+    private static final int CURRENT_INVENTORY_VERSION = 4;
 
     private ConfigMigrator() {
     }
@@ -31,6 +31,13 @@ public final class ConfigMigrator {
 
         if (current >= CURRENT_VERSION) {
             return false;
+        }
+
+        if (current < 9) {
+            migrateCartCombatDefaults(config);
+            // Attribute swapping was previously opt-in. The new spear/mace
+            // approach uses it when the Paper runtime explicitly supports it.
+            replaceIfOldDefault(config, "tactics.attribute-swap.enabled", false, true);
         }
 
         backup(plugin, file);
@@ -157,7 +164,6 @@ public final class ConfigMigrator {
             "cart-cooldown-ms",
             "cart-min-distance",
             "cart-max-distance",
-            "cart-launch-speed",
             "cart-fuse-ticks",
             "cart-rail-search-radius",
             "cart-followup-delay-ms",
@@ -170,13 +176,13 @@ public final class ConfigMigrator {
             "elytra-cart-dive-y"
         };
         Object[][] cartDifficultyDefaults = {
-            {6500L, 6.5D, 14L, 0.45D, 55L, 2L, 1100L, 12L, 22L, 0.42D, 2800L, 950L, 3.6D, -0.7D},
-            {5500L, 6L, 15L, 0.55D, 52L, 3L, 950L, 11L, 24L, 0.46D, 3100L, 850L, 3.8D, -0.76D},
-            {4500L, 5.5D, 16L, 0.62D, 50L, 4L, 850L, 10L, 25L, 0.5D, 3400L, 780L, 4L, -0.8D},
-            {3800L, 5L, 17L, 0.7D, 48L, 5L, 750L, 9.5D, 26L, 0.54D, 3700L, 720L, 4.2D, -0.84D},
-            {3200L, 5L, 18L, 0.76D, 46L, 6L, 700L, 9L, 27L, 0.57D, 3900L, 680L, 4.3D, -0.88D},
-            {2800L, 4.5D, 20L, 0.82D, 44L, 6L, 650L, 8.5D, 28L, 0.6D, 4100L, 640L, 4.4D, -0.92D},
-            {2400L, 4L, 22L, 0.88D, 42L, 8L, 600L, 8L, 30L, 0.63D, 4300L, 600L, 4.5D, -0.96D}
+            {7500L, 3.5D, 5.0D, 40L, 1L, 1300L, 12L, 22L, 0.42D, 2800L, 950L, 3.6D, -0.7D},
+            {6500L, 3.0D, 5.5D, 38L, 1L, 1150L, 11L, 24L, 0.46D, 3100L, 850L, 3.8D, -0.76D},
+            {5500L, 2.8D, 6.0D, 36L, 2L, 1000L, 10L, 25L, 0.5D, 3400L, 780L, 4L, -0.8D},
+            {4800L, 2.5D, 6.5D, 35L, 2L, 900L, 9.5D, 26L, 0.54D, 3700L, 720L, 4.2D, -0.84D},
+            {4200L, 2.5D, 7.0D, 34L, 2L, 850L, 9L, 27L, 0.57D, 3900L, 680L, 4.3D, -0.88D},
+            {3800L, 2.5D, 7.5D, 32L, 2L, 800L, 8.5D, 28L, 0.6D, 4100L, 640L, 4.4D, -0.92D},
+            {3500L, 2.5D, 8.0D, 30L, 3L, 750L, 8L, 30L, 0.63D, 4300L, 600L, 4.5D, -0.96D}
         };
 
         for (int tierIndex = 0; tierIndex < templateDifficultyLevels.length; tierIndex++) {
@@ -190,6 +196,14 @@ public final class ConfigMigrator {
             }
         }
 
+        defaults.put("modern-weapons.mace.stun-slam.enabled", false);
+        defaults.put("modern-weapons.mace.stun-slam.require-shield", true);
+        defaults.put("modern-weapons.mace.stun-slam.followup-delay-ticks", 2);
+        defaults.put("modern-weapons.mace.stun-slam.window-ticks", 5);
+        defaults.put("modern-weapons.spear.wind-charge-approach.enabled", true);
+        defaults.put("modern-weapons.spear.wind-charge-approach.min-distance", 5.0D);
+        defaults.put("modern-weapons.spear.wind-charge-approach.max-distance", 10.0D);
+        defaults.put("modern-weapons.spear.wind-charge-approach.cooldown-ms", 1800L);
         defaults.put("modern-weapons.mace.wind-charge-enabled", true);
         defaults.put("modern-weapons.mace.wind-charge-launch-height", 7.0D);
         defaults.put("modern-weapons.mace.assisted-jump-without-wind-charge", false);
@@ -294,7 +308,7 @@ public final class ConfigMigrator {
         defaults.put("tactics.pearl.cooldown-ms", 7000L);
         defaults.put("tactics.pearl.chance-percent", 45.0D);
 
-        defaults.put("tactics.attribute-swap.enabled", false);
+        defaults.put("tactics.attribute-swap.enabled", true);
         defaults.put("tactics.attribute-swap.chance-percent", 10.0D);
 
         defaults.put("tactics.fast-crystals.mode", "auto");
@@ -302,12 +316,13 @@ public final class ConfigMigrator {
         defaults.put("tactics.fast-crystals.timing-scale", 0.80D);
 
         defaults.put("tactics.cart-pvp.enabled", true);
-        defaults.put("tactics.cart-pvp.cooldown-ms", 3500L);
-        defaults.put("tactics.cart-pvp.min-distance", 5.0D);
-        defaults.put("tactics.cart-pvp.max-distance", 18.0D);
-        defaults.put("tactics.cart-pvp.launch-speed", 0.8D);
-        defaults.put("tactics.cart-pvp.fuse-ticks", 45);
-        defaults.put("tactics.cart-pvp.rail-search-radius", 6);
+        defaults.put("tactics.cart-pvp.cooldown-ms", 4500L);
+        defaults.put("tactics.cart-pvp.min-distance", 2.5D);
+        defaults.put("tactics.cart-pvp.max-distance", 7.5D);
+        defaults.put("tactics.cart-pvp.fuse-ticks", 35);
+        defaults.put("tactics.cart-pvp.rail-search-radius", 2);
+        defaults.put("tactics.cart-pvp.flame-bow-chance-percent", 35.0D);
+        defaults.put("tactics.cart-pvp.cart-followup-delay-ms", 900L);
 
         defaults.put("weapon.type", "sword");
         defaults.put("weapon.mobility.firework-rockets", 24);
@@ -316,6 +331,7 @@ public final class ConfigMigrator {
         defaults.put("weapon.mace.wind-burst", 3);
         defaults.put("weapon.mace.wind-charges", 16);
         defaults.put("weapon.spear.material", "netherite");
+        defaults.put("weapon.spear.wind-charges", 12);
         defaults.put("weapon.spear.sharpness", 5);
         defaults.put("weapon.spear.lunge", 3);
         defaults.put("weapon.cart.tnt-minecarts", 16);
@@ -395,6 +411,7 @@ public final class ConfigMigrator {
         defaults.put("weapon.spear.material", "netherite");
         defaults.put("weapon.spear.sharpness", 5);
         defaults.put("weapon.spear.lunge", 3);
+        defaults.put("weapon.spear.wind-charges", 12);
         defaults.put("weapon.cart.tnt-minecarts", 16);
         defaults.put("weapon.cart.powered-rails", 16);
         defaults.put("weapon.cart.rails", 32);
@@ -434,6 +451,51 @@ public final class ConfigMigrator {
         );
 
         return true;
+    }
+
+    static void migrateCartCombatDefaults(FileConfiguration config) {
+        replaceIfOldDefault(config, "tactics.cart-pvp.cooldown-ms", 3500L, 4500L);
+        replaceIfOldDefault(config, "tactics.cart-pvp.min-distance", 5.0D, 2.5D);
+        replaceIfOldDefault(config, "tactics.cart-pvp.max-distance", 18.0D, 7.5D);
+        replaceIfOldDefault(config, "tactics.cart-pvp.fuse-ticks", 45, 35);
+        replaceIfOldDefault(config, "tactics.cart-pvp.rail-search-radius", 6, 2);
+
+        String[] tiers = {"EASY", "NORMAL", "HARD", "EXPERT", "HACKER", "MASTER", "NIGHTMARE"};
+        double[] oldMin = {6.5D, 6.0D, 5.5D, 5.0D, 5.0D, 4.5D, 4.0D};
+        double[] oldMax = {14.0D, 15.0D, 16.0D, 17.0D, 18.0D, 20.0D, 22.0D};
+        double[] newMin = {3.5D, 3.0D, 2.8D, 2.5D, 2.5D, 2.5D, 2.5D};
+        double[] newMax = {5.0D, 5.5D, 6.0D, 6.5D, 7.0D, 7.5D, 8.0D};
+        long[] oldCooldown = {6500L, 5500L, 4500L, 3800L, 3200L, 2800L, 2400L};
+        long[] newCooldown = {7500L, 6500L, 5500L, 4800L, 4200L, 3800L, 3500L};
+        long[] oldFuse = {55L, 52L, 50L, 48L, 46L, 44L, 42L};
+        long[] newFuse = {40L, 38L, 36L, 35L, 34L, 32L, 30L};
+        long[] oldRadius = {2L, 3L, 4L, 5L, 6L, 6L, 8L};
+        long[] newRadius = {1L, 1L, 2L, 2L, 2L, 2L, 3L};
+        long[] oldFollowup = {1100L, 950L, 850L, 750L, 700L, 650L, 600L};
+        long[] newFollowup = {1300L, 1150L, 1000L, 900L, 850L, 800L, 750L};
+        for (int i = 0; i < tiers.length; i++) {
+            String base = "template-difficulty.profiles.CART." + tiers[i] + ".";
+            replaceIfOldDefault(config, base + "cart-min-distance", oldMin[i], newMin[i]);
+            replaceIfOldDefault(config, base + "cart-max-distance", oldMax[i], newMax[i]);
+            replaceIfOldDefault(config, base + "cart-cooldown-ms", oldCooldown[i], newCooldown[i]);
+            replaceIfOldDefault(config, base + "cart-fuse-ticks", oldFuse[i], newFuse[i]);
+            replaceIfOldDefault(config, base + "cart-rail-search-radius", oldRadius[i], newRadius[i]);
+            replaceIfOldDefault(config, base + "cart-followup-delay-ms", oldFollowup[i], newFollowup[i]);
+        }
+    }
+
+    private static void replaceIfOldDefault(
+        FileConfiguration config, String path, Object oldDefault, Object newDefault
+    ) {
+        if (!config.contains(path)) return;
+        Object current = config.get(path);
+        boolean matches;
+        if (current instanceof Number currentNumber && oldDefault instanceof Number oldNumber) {
+            matches = Double.compare(currentNumber.doubleValue(), oldNumber.doubleValue()) == 0;
+        } else {
+            matches = java.util.Objects.equals(current, oldDefault);
+        }
+        if (matches) config.set(path, newDefault);
     }
 
     private static void backup(PracticeBotPlugin plugin, File file) {

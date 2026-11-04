@@ -67,10 +67,12 @@ public final class PvpTacticsEngine {
 
         String profile = trait.getWeaponProfile();
 
-        if (profile.startsWith("spear") && !profile.equals("spear_mace")) {
-            if (tryWindChargeReset(bot, target, trait, now)) {
-                return;
-            }
+        if (profile.startsWith("spear")) {
+            // A Spear-only bot may use the fall-reset tactic. Hybrid Spear/Mace
+            // must preserve its fall so it can convert the launch into a smash.
+            if (!profile.equals("spear_mace") &&
+                tryWindChargeReset(bot, target, trait, now)) return;
+            if (trySpearWindChargeApproach(bot, target, trait, now)) return;
         }
 
         if (profile.endsWith("_elytra") &&
@@ -349,6 +351,61 @@ public final class PvpTacticsEngine {
         current.setX(current.getX() + tangent.getX() * amount);
         current.setZ(current.getZ() + tangent.getZ() * amount);
         bot.setVelocity(current);
+    }
+
+    private boolean trySpearWindChargeApproach(
+        Player bot, Player target, BotTrait trait, long now
+    ) {
+        if (!plugin.getConfig().getBoolean(
+            "modern-weapons.spear.wind-charge-approach.enabled", true
+        ) || !bot.isOnGround() || bot.isGliding() ||
+            now < trait.windChargeResetCooldownUntil) return false;
+
+        ItemStack held = bot.getInventory().getItemInMainHand();
+        if (held == null || !held.getType().name().endsWith("_SPEAR")) return false;
+
+        double distance = bot.getLocation().distance(target.getLocation());
+        double minimum = plugin.getConfig().getDouble(
+            "modern-weapons.spear.wind-charge-approach.min-distance", 5.0D);
+        double maximum = plugin.getConfig().getDouble(
+            "modern-weapons.spear.wind-charge-approach.max-distance", 10.0D);
+        if (distance < minimum || distance > maximum) return false;
+
+        ItemStack charges = find(bot, Material.WIND_CHARGE);
+        if (charges == null || charges.getAmount() <= 0) return false;
+
+        Vector toward = target.getLocation().toVector()
+            .subtract(bot.getLocation().toVector());
+        toward.setY(0.0D);
+        if (toward.lengthSquared() < 1.0E-5D) return false;
+        toward.normalize();
+
+        // Put the blast behind the bot so vanilla wind knockback carries it
+        // forward into spear charge/Jab range.
+        Vector launch = toward.clone().multiply(-0.32D)
+            .add(new Vector(0.0D, -1.0D, 0.0D)).normalize();
+        Location original = bot.getLocation().clone();
+        try {
+            bot.setRotation(original.getYaw(), 78.0F);
+            bot.launchProjectile(WindCharge.class, launch);
+            charges.setAmount(charges.getAmount() - 1);
+        } catch (Throwable ex) {
+            bot.setRotation(original.getYaw(), original.getPitch());
+            plugin.debugLog(() -> "Spear wind-charge approach failed: " + ex.getMessage());
+            return false;
+        }
+
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (bot.isValid() && !bot.isDead()) {
+                bot.setRotation(original.getYaw(), original.getPitch());
+            }
+        }, 1L);
+        trait.windChargeResetCooldownUntil = now + plugin.getConfig().getLong(
+            "modern-weapons.spear.wind-charge-approach.cooldown-ms", 1800L);
+        trait.tacticCooldownUntil = now + 250L;
+        trait.lastTactic = "spear-wind-charge-approach";
+        bot.setSprinting(true);
+        return true;
     }
 
     private boolean tryWindChargeReset(

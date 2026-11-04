@@ -20,7 +20,10 @@ This fork keeps the existing Citizens player-NPC architecture and adds a dedicat
 - Wind Charge-assisted Mace launches
 - Spear Jab and kinetic Charge behavior
 - Spear minimum reach and extended reach
-- Spear Lunge
+- Spear Lunge Jab gap closing and Wind Charge approach movement
+- Hybrid Spear/Mace approach: spear closes distance, mace is selected for airborne smash windows
+- Optional axe-to-mace stun slam (disabled by default)
+- Close-range Cart PvP with real rail/minecart placement, Flint-and-Steel fire lanes, crossbow carting and Flame-bow carting
 - Shield-aware attack decisions
 - Knockback, sprinting and movement state carried through Citizens traits
 - Per-bot weapon profile persistence
@@ -44,7 +47,9 @@ Default weapon kits are in `plugins/PracticeBot/default_inv.yml`.
 
 Modern AI tuning is in `plugins/PracticeBot/config.yml` under `modern-weapons`.
 
-The default Mace kit uses Density V, Wind Burst III and 16 Wind Charges. The default Spear kit uses a Netherite Spear with Sharpness V and Lunge III.
+The default Mace kit uses Density V, Wind Burst III and 16 Wind Charges. The default Spear kit uses a Netherite Spear with Sharpness V, Lunge III and 12 Wind Charges for non-Elytra approach movement. Elytra is optional: the base Mace/Spear profiles use Wind Charges and native weapon mechanics; `_ELYTRA` profiles add the aerial Elytra route. Stun slam is opt-in with `modern-weapons.mace.stun-slam.enabled: true` and is disabled by default. When enabled, the bot axe-stuns a blocking shield, then follows with the native mace smash inside a configurable maximum five-tick window (default two ticks). Attribute-swap tactics are enabled in PracticeBot but only activate when Paper reports `unsupported-settings.update-equipment-on-player-actions: false`.
+
+Cart bots only attempt cart setups within the configured close-range window. They prefer crossbow carting (Flint-and-Steel fire lane, rail, TNT minecart, burning arrow) and sometimes use the Flame-bow route. If the arena has no safe supported rail/fire placement, they skip the cart attempt rather than dropping items or forcing blocks into the map.
 
 The Spear charge velocity multiplier is configurable because the public release notes document the kinetic calculation model but do not expose every per-material item-component constant in Bukkit's older 1.21.1 compile API. The bot therefore uses the documented kinetic formula while keeping that multiplier server-configurable.
 

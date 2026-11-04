@@ -1,4 +1,4 @@
-inventory-config-version: 3
+inventory-config-version: 4
 # ==========================================================
 #  PracticeBot - Default Bot Inventory Configuration
 #
@@ -75,6 +75,7 @@ weapon:
     material: netherite
     sharpness: 5
     lunge: 3
+    wind-charges: 12
 
   mobility:
     firework-rockets: 24

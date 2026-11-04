@@ -72,22 +72,22 @@ public final class CartPvpController {
         RailPlacement placement = findOrPlaceRail(bot, desiredRail, towardTarget, trait);
         if (placement == null) return false;
         Block railBlock = placement.block();
+        if (!railBlock.getRelative(0, 1, 0).isPassable()) {
+            rollbackRail(bot, placement);
+            return false;
+        }
 
         Location spawn = railBlock.getLocation().add(0.5D, 0.12D, 0.5D);
         ExplosiveMinecart cart;
         try {
             if (!(bot.getWorld().spawnEntity(spawn, EntityType.TNT_MINECART)
                 instanceof ExplosiveMinecart spawned)) {
-                if (placement.placed() && railBlock.getType() == Material.RAIL) {
-                    railBlock.setType(Material.AIR, false);
-                }
+                rollbackRail(bot, placement);
                 return false;
             }
             cart = spawned;
         } catch (Throwable ex) {
-            if (placement.placed() && railBlock.getType() == Material.RAIL) {
-                railBlock.setType(Material.AIR, false);
-            }
+            rollbackRail(bot, placement);
             plugin.debugLog(() -> "CartPvP minecart placement failed: " + ex.getMessage());
             return false;
         }
@@ -95,6 +95,11 @@ public final class CartPvpController {
         // Keep the cart on its rail. The burning arrow's own velocity drives
         // the TNT minecart explosion strength when it collides with the cart.
         cart.setVelocity(new Vector(0.0D, 0.0D, 0.0D));
+        if (!bot.hasLineOfSight(cart)) {
+            cart.remove();
+            rollbackRail(bot, placement);
+            return false;
+        }
         consume(carts);
         Block fireBlock = ignite(bot, cart, spawn, trait);
 
@@ -266,6 +271,15 @@ public final class CartPvpController {
             }
         }
         return false;
+    }
+
+    private void rollbackRail(Player bot, RailPlacement placement) {
+        if (placement == null || !placement.placed()) return;
+        Block rail = placement.block();
+        if (rail.getType() == Material.RAIL) {
+            rail.setType(Material.AIR, false);
+            bot.getInventory().addItem(new ItemStack(Material.RAIL, 1));
+        }
     }
 
     private void damageFlintAndSteel(ItemStack item) {

@@ -1,6 +1,8 @@
 package com.sheldera.practicebot.x;
 
 import com.sheldera.practicebot.BotTrait;
+import com.sheldera.practicebot.api.inventory.TotemInventory;
+import com.sheldera.practicebot.api.inventory.BotInventoryProfile;
 import com.sheldera.practicebot.PracticeBotPlugin;
 import net.citizensnpcs.api.CitizensAPI;
 import net.citizensnpcs.api.npc.NPC;
@@ -69,13 +71,17 @@ public class z1 implements Listener {
                         } else if (var2.getEntity() instanceof Player var4) {
                            var3.decrementTotemCount();
                            int var6 = var3.getTotemCount();
-                           if (var6 > 0) {
-                              Bukkit.getScheduler().runTaskLater(this.rr, () -> {
-                                 if (var4.isValid() && var2.isSpawned()) {
-                                    var4.getInventory().setItemInOffHand(new ItemStack(Material.TOTEM_OF_UNDYING));
+                           Bukkit.getScheduler().runTaskLater(this.rr, () -> {
+                              if (var4.isValid() && var2.isSpawned()) {
+                                 if (var6 > 0) {
+                                    ItemStack nextTotem = TotemInventory.takeNext(var4.getInventory());
+                                    var4.getInventory().setItemInOffHand(nextTotem != null ? nextTotem : new ItemStack(Material.TOTEM_OF_UNDYING));
+                                 } else {
+                                    var4.getInventory().setItemInOffHand(new ItemStack(Material.AIR));
                                  }
-                              }, 1L);
-                           }
+                                 this.updateStoredInventory(var3, var4);
+                              }
+                           }, 1L);
                         }
                      }
                   }
@@ -83,5 +89,15 @@ public class z1 implements Listener {
             }
          }
       }
+   }
+
+   private void updateStoredInventory(BotTrait trait, Player player) {
+      if (!trait.hasStoredInventory()) return;
+      BotInventoryProfile snapshot = new BotInventoryProfile(player.getInventory().getStorageContents(),
+         player.getInventory().getArmorContents(), player.getInventory().getItemInOffHand(),
+         player.getInventory().getHeldItemSlot());
+      trait.setStoredInventory(snapshot.getStorage());
+      trait.setStoredArmor(snapshot.getArmor());
+      trait.setStoredOffhand(snapshot.getOffhand());
    }
 }

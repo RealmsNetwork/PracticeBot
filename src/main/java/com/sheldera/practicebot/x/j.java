@@ -1,9 +1,11 @@
 package com.sheldera.practicebot.x;
 
 import com.sheldera.practicebot.BotTrait;
+import com.sheldera.practicebot.EnchantmentResolver;
 import com.sheldera.practicebot.PracticeBotPlugin;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Locale;
 import net.citizensnpcs.api.npc.NPC;
 import org.bukkit.Material;
@@ -40,10 +42,10 @@ public class j {
             TrimMaterial var10 = this.b(var14, var2.getLegsTrimMaterial(), "legs-trim-material");
             TrimPattern var11 = this.a(var14, var2.getBootsTrimPattern(), "boots-trim-pattern");
             TrimMaterial var12 = this.b(var14, var2.getBootsTrimMaterial(), "boots-trim-material");
-            var3.getInventory().setHelmet(this.a(var2.getHelmetMaterial(), var2.getHelmetEnchant(), var5, var6));
-            var3.getInventory().setChestplate(this.b(var2.getChestplateMaterial(), var2.getChestplateEnchant(), var7, var8));
-            var3.getInventory().setLeggings(this.c(var2.getLeggingsMaterial(), var2.getLeggingsEnchant(), var9, var10));
-            var3.getInventory().setBoots(this.d(var2.getBootsMaterial(), var2.getBootsEnchant(), var11, var12));
+            var3.getInventory().setHelmet(this.createArmor(var2.getHelmetMaterial(), "HELMET", var2.getHelmetEnchant(), var2.getHelmetEnchantments(), var5, var6));
+            var3.getInventory().setChestplate(this.createArmor(var2.getChestplateMaterial(), "CHESTPLATE", var2.getChestplateEnchant(), var2.getChestplateEnchantments(), var7, var8));
+            var3.getInventory().setLeggings(this.createArmor(var2.getLeggingsMaterial(), "LEGGINGS", var2.getLeggingsEnchant(), var2.getLeggingsEnchantments(), var9, var10));
+            var3.getInventory().setBoots(this.createArmor(var2.getBootsMaterial(), "BOOTS", var2.getBootsEnchant(), var2.getBootsEnchantments(), var11, var12));
             if (var2.getCustomMainHand() != null) {
                var3.getInventory().setItemInMainHand(var2.getCustomMainHand().clone());
             } else {
@@ -67,6 +69,27 @@ public class j {
             }
          }
       }
+   }
+
+   private ItemStack createArmor(String materialName, String slot, String legacyEnchant, Map<String, Integer> enchantments, TrimPattern pattern, TrimMaterial trimMaterial) {
+      Material material = this.a(materialName, slot, this.ak(slot));
+      ItemStack item = new ItemStack(material);
+      Map<String, Integer> configured = EnchantmentResolver.copyLevels(enchantments);
+      if (!configured.isEmpty()) {
+         configured.forEach((key, level) -> this.b(item, key, level));
+      } else if (legacyEnchant != null && !legacyEnchant.equalsIgnoreCase("none")) {
+         this.b(item, legacyEnchant, 4);
+      }
+      ItemMeta meta = item.getItemMeta();
+      if (meta != null) {
+         meta.setUnbreakable(true);
+         meta.addItemFlags(new ItemFlag[]{ItemFlag.HIDE_UNBREAKABLE, ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_ENCHANTS});
+         if (pattern != null && trimMaterial != null && meta instanceof ArmorMeta armorMeta) {
+            armorMeta.setTrim(new ArmorTrim(trimMaterial, pattern));
+         }
+         item.setItemMeta(meta);
+      }
+      return item;
    }
 
    public ItemStack a(String var1, String var2, TrimPattern var3, TrimMaterial var4) {
@@ -479,53 +502,14 @@ public class j {
          : new ItemStack(Material.AIR);
    }
 
-   public void b(ItemStack var1, String var2, int var3) {
-      if (var1 != null) {
-         try {
-            Enchantment var4 = (Enchantment)Registry.ENCHANTMENT.get(NamespacedKey.minecraft(var2));
-            if (var4 != null) {
-               var1.addUnsafeEnchantment(var4, var3);
-               return;
-            }
-         } catch (Exception var8) {
-            this.ax.getLogger().warning("Registry method failed for " + var2 + ": " + var8.getMessage());
-         }
-
-         try {
-            String var10 = switch (var2) {
-               case "protection" -> "PROTECTION_ENVIRONMENTAL";
-               case "blast_protection" -> "PROTECTION_EXPLOSIONS";
-               case "fire_protection" -> "PROTECTION_FIRE";
-               case "projectile_protection" -> "PROTECTION_PROJECTILE";
-               case "sharpness" -> "DAMAGE_ALL";
-               case "knockback" -> "KNOCKBACK";
-               case "fire_aspect" -> "FIRE_ASPECT";
-               case "unbreaking" -> "DURABILITY";
-               default -> var2.toUpperCase();
-            };
-            Enchantment var5 = Enchantment.getByName(var10);
-            if (var5 != null) {
-               var1.addUnsafeEnchantment(var5, var3);
-               return;
-            }
-         } catch (Exception var7) {
-            this.ax.getLogger().warning("Legacy method failed for " + var2 + ": " + var7.getMessage());
-         }
-
-         try {
-            for (Enchantment var12 : Registry.ENCHANTMENT) {
-               NamespacedKey var13 = Registry.ENCHANTMENT.getKey(var12);
-               if (var13 != null && var13.getKey().equalsIgnoreCase(var2)) {
-                  var1.addUnsafeEnchantment(var12, var3);
-                  return;
-               }
-            }
-         } catch (Exception var9) {
-            this.ax.getLogger().warning("Iteration method failed for " + var2 + ": " + var9.getMessage());
-         }
-
-         this.ax.getLogger().severe("FAILED to apply enchantment: " + var2 + " - All methods exhausted!");
+   public void b(ItemStack item, String key, int level) {
+      if (item == null || key == null || key.isBlank() || level <= 0) return;
+      Enchantment enchantment = EnchantmentResolver.resolve(key);
+      if (enchantment == null) {
+         this.ax.getLogger().warning("Unknown enchantment '" + key + "'; it is not registered by Bukkit/Paper.");
+         return;
       }
+      item.addUnsafeEnchantment(enchantment, level);
    }
 
    public TrimPattern a(FileConfiguration var1, String var2) {

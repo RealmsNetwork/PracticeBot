@@ -1,6 +1,7 @@
 package com.sheldera.practicebot.x;
 
 import com.sheldera.practicebot.PracticeBotPlugin;
+import com.sheldera.practicebot.EnchantmentResolver;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -29,6 +30,7 @@ public class N {
    private File sY;
    private FileConfiguration pe;
    private final Map<String, E> sZ = new LinkedHashMap<>();
+   private final Map<String, E> transientTemplates = new LinkedHashMap<>();
 
    public N(PracticeBotPlugin var1) {
       this.sX = var1;
@@ -64,17 +66,23 @@ public class N {
       if (var1 == null) {
          return null;
       } else {
-         E var2 = this.sZ.get(var1.toLowerCase(Locale.ROOT));
+         String key = var1.toLowerCase(Locale.ROOT);
+         E var2 = this.transientTemplates.get(key);
+         if (var2 == null) var2 = this.sZ.get(key);
          return var2 != null ? var2.fX() : null;
       }
    }
 
    public Set<String> gG() {
-      return Collections.unmodifiableSet(this.sZ.keySet());
+      Set<String> keys = new java.util.LinkedHashSet<>(this.sZ.keySet());
+      keys.addAll(this.transientTemplates.keySet());
+      return Collections.unmodifiableSet(keys);
    }
 
    public boolean j0(String var1) {
-      return var1 != null && this.sZ.containsKey(var1.toLowerCase(Locale.ROOT));
+      if (var1 == null) return false;
+      String key = var1.toLowerCase(Locale.ROOT);
+      return this.sZ.containsKey(key) || this.transientTemplates.containsKey(key);
    }
 
    public String normalizeTemplateKey(String var1) {
@@ -137,7 +145,11 @@ public class N {
             new F(var4.getString("helmet-trim-pattern", ""), var4.getString("helmet-trim-material", "")),
             new F(var4.getString("chest-trim-pattern", ""), var4.getString("chest-trim-material", "")),
             new F(var4.getString("legs-trim-pattern", ""), var4.getString("legs-trim-material", "")),
-            new F(var4.getString("boots-trim-pattern", ""), var4.getString("boots-trim-material", ""))
+            new F(var4.getString("boots-trim-pattern", ""), var4.getString("boots-trim-material", "")),
+            EnchantmentResolver.readLevels(var4.getConfigurationSection("armor-enchantments.helmet")),
+            EnchantmentResolver.readLevels(var4.getConfigurationSection("armor-enchantments.chestplate")),
+            EnchantmentResolver.readLevels(var4.getConfigurationSection("armor-enchantments.leggings")),
+            EnchantmentResolver.readLevels(var4.getConfigurationSection("armor-enchantments.boots"))
          ),
          new I(
             false,
@@ -178,6 +190,44 @@ public class N {
       return this.a(this.k1(key), null);
    }
 
+   public synchronized boolean createTemporaryTemplate(String templateKey) {
+      if (!this.sX.isLicenseActive()) return false;
+      String key = this.normalizeTemplateKey(templateKey);
+      if (!this.k0(key) || this.j0(key)) return false;
+      E defaults = this.k1(key);
+      E oneShot = new E(defaults.fe(), defaults.fh(), defaults.fY(), defaults.fZ(), defaults.getBotType(),
+         defaults.ga(), defaults.gb(), J.REMOVE, L.DESPAWN, 0L, defaults.gf(), defaults.gg(),
+         defaults.gh(), defaults.gi(), defaults.gj(), defaults.getWeaponProfile());
+      this.transientTemplates.put(key, oneShot);
+      return true;
+   }
+
+   public synchronized boolean setTemporaryCombatProfile(String templateKey, String botType, String weaponProfile) {
+      if (!this.sX.isLicenseActive()) return false;
+      String key = this.normalizeTemplateKey(templateKey);
+      E source = this.transientTemplates.get(key);
+      if (source == null) return false;
+      String type = botType == null ? "NORMAL" : botType.trim().toUpperCase(Locale.ROOT);
+      if (!Set.of("NORMAL", "CRYSTAL", "CART", "MACE", "UHC", "WATER", "DUMMY").contains(type)) return false;
+      String profile = weaponProfile == null ? "sword" : weaponProfile.trim().toLowerCase(Locale.ROOT);
+      if (!Set.of("sword", "mace", "mace_elytra", "spear", "spear_elytra", "spear_mace", "spear_mace_elytra", "cart", "cart_elytra", "uhc", "water").contains(profile)) return false;
+      G sourceSettings = source.gg();
+      G pausedSettings = new G(sourceSettings.go(), sourceSettings.gp(), sourceSettings.isRandomWalk(),
+         sourceSettings.isHoldShield(), sourceSettings.isUseShield(), sourceSettings.isResistance(),
+         sourceSettings.isFrozen(), sourceSettings.isShieldInMainHand(), false);
+      a runtimeType = "CRYSTAL".equals(type) ? a.NORMAL : this.m0(type);
+      E updated = new E(source.fe(), source.fh(), source.fY(), source.fZ(), runtimeType, source.ga(),
+         source.gb(), source.gc(), source.gd(), source.ge(), source.gf(), pausedSettings, source.gh(),
+         source.gi(), source.gj(), profile);
+      this.transientTemplates.put(key, updated);
+      return true;
+   }
+
+   public synchronized boolean deleteTemporaryTemplate(String templateKey) {
+      String key = this.normalizeTemplateKey(templateKey);
+      return this.transientTemplates.remove(key) != null;
+   }
+
    public synchronized boolean setCombatProfile(String templateKey, String botType, String weaponProfile) {
       if (!this.sX.isLicenseActive()) return false;
       this.gJ();
@@ -186,7 +236,7 @@ public class N {
       String type = botType == null ? "NORMAL" : botType.trim().toUpperCase(Locale.ROOT);
       if (!Set.of("NORMAL", "CRYSTAL", "CART", "MACE", "UHC", "WATER", "DUMMY").contains(type)) return false;
       String profile = weaponProfile == null ? "sword" : weaponProfile.trim().toLowerCase(Locale.ROOT);
-      if (!Set.of("sword", "mace", "mace_elytra", "spear", "spear_elytra", "spear_mace", "cart", "cart_elytra", "uhc", "water").contains(profile)) return false;
+      if (!Set.of("sword", "mace", "mace_elytra", "spear", "spear_elytra", "spear_mace", "spear_mace_elytra", "cart", "cart_elytra", "uhc", "water").contains(profile)) return false;
       this.pe.set("templates." + key + ".bot-type", type);
       this.pe.set("templates." + key + ".weapon-profile", profile);
       if (!this.gK()) return false;
@@ -270,7 +320,7 @@ public class N {
          String weaponProfile = var2.getString("weapon-profile", var6.defaultWeaponProfile());
          if (weaponProfile == null) weaponProfile = var6.defaultWeaponProfile();
          weaponProfile = weaponProfile.trim().toLowerCase(Locale.ROOT);
-         if (!java.util.Set.of("sword", "mace", "mace_elytra", "spear", "spear_elytra", "spear_mace", "cart", "cart_elytra", "uhc", "water").contains(weaponProfile)) {
+         if (!java.util.Set.of("sword", "mace", "mace_elytra", "spear", "spear_elytra", "spear_mace", "spear_mace_elytra", "cart", "cart_elytra", "uhc", "water").contains(weaponProfile)) {
             this.sX.getLogger().warning("Unknown weapon-profile '" + weaponProfile + "' in bot_templates.yml, using " + var6.defaultWeaponProfile() + ".");
             weaponProfile = var6.defaultWeaponProfile();
          }
@@ -325,7 +375,11 @@ public class N {
             this.a(var28, "helmet", var4, "helmet-trim-pattern", "helmet-trim-material"),
             this.a(var28, "chest", var4, "chest-trim-pattern", "chest-trim-material"),
             this.a(var28, "legs", var4, "legs-trim-pattern", "legs-trim-material"),
-            this.a(var28, "boots", var4, "boots-trim-pattern", "boots-trim-material")
+            this.a(var28, "boots", var4, "boots-trim-pattern", "boots-trim-material"),
+            this.armorEnchantments(var28, "helmet", var4),
+            this.armorEnchantments(var28, "chestplate", var4),
+            this.armorEnchantments(var28, "leggings", var4),
+            this.armorEnchantments(var28, "boots", var4)
          );
          ConfigurationSection var31 = var2.getConfigurationSection("cpvp");
          String var32 = this.a(var31, "skill-level", var5 != null ? var5.skillLevel : "MEDIUM").toUpperCase(Locale.ROOT);
@@ -370,6 +424,12 @@ public class N {
          this.sX.getLogger().warning("Failed to load bot template '" + var1 + "': " + var46.getMessage());
          return null;
       }
+   }
+
+   private Map<String, Integer> armorEnchantments(ConfigurationSection inventory, String piece, FileConfiguration defaults) {
+      ConfigurationSection section = inventory == null ? null : inventory.getConfigurationSection("armor-enchantments." + piece);
+      if (section == null) section = defaults.getConfigurationSection("armor-enchantments." + piece);
+      return EnchantmentResolver.readLevels(section);
    }
 
    private F a(ConfigurationSection var1, String var2, FileConfiguration var3, String var4, String var5) {
@@ -429,25 +489,7 @@ public class N {
    }
 
    private Enchantment l1(String var1) {
-      if (var1 != null && !var1.isBlank()) {
-         Enchantment var2 = (Enchantment)Registry.ENCHANTMENT.get(NamespacedKey.minecraft(var1.toLowerCase(Locale.ROOT)));
-         if (var2 != null) {
-            return var2;
-         } else {
-            String var4 = var1.toLowerCase(Locale.ROOT);
-
-            String var3 = switch (var4) {
-               case "sharpness" -> "DAMAGE_ALL";
-               case "knockback" -> "KNOCKBACK";
-               case "fire_aspect" -> "FIRE_ASPECT";
-               case "unbreaking" -> "DURABILITY";
-               default -> var1.toUpperCase(Locale.ROOT);
-            };
-            return Enchantment.getByName(var3);
-         }
-      } else {
-         return null;
-      }
+      return EnchantmentResolver.resolve(var1);
    }
 
    private a m0(String var1) {
@@ -748,6 +790,10 @@ public class N {
       var1.set("inventory.chestplate-enchant", var7.getChestplateEnchant());
       var1.set("inventory.leggings-enchant", var7.getLeggingsEnchant());
       var1.set("inventory.boots-enchant", var7.getBootsEnchant());
+      var1.set("inventory.armor-enchantments.helmet", var7.getHelmetEnchantments());
+      var1.set("inventory.armor-enchantments.chestplate", var7.getChestplateEnchantments());
+      var1.set("inventory.armor-enchantments.leggings", var7.getLeggingsEnchantments());
+      var1.set("inventory.armor-enchantments.boots", var7.getBootsEnchantments());
       var1.set("inventory.offhand-type", var7.getOffhandType());
       var1.set("inventory.totem-count", var7.getTotemCount());
       this.a(var1, var7.getCustomMainHand());

@@ -1,5 +1,7 @@
 package com.sheldera.practicebot.x;
 
+import java.util.Map;
+import com.sheldera.practicebot.EnchantmentResolver;
 import org.bukkit.inventory.ItemStack;
 
 public final class K {
@@ -18,6 +20,10 @@ public final class K {
    private final F sS;
    private final F sT;
    private final F sU;
+   private final Map<String, Integer> helmetEnchantments;
+   private final Map<String, Integer> chestplateEnchantments;
+   private final Map<String, Integer> leggingsEnchantments;
+   private final Map<String, Integer> bootsEnchantments;
 
    public K(
       String var1,
@@ -36,6 +42,16 @@ public final class K {
       F var14,
       F var15
    ) {
+      this(var1, var2, var3, var4, var5, var6, var7, var8, var9, var10, var11, var12, var13, var14, var15,
+         Map.of(), Map.of(), Map.of(), Map.of());
+   }
+
+   public K(
+      String var1, String var2, String var3, String var4, String var5, String var6, String var7, String var8,
+      String var9, int var10, ItemStack var11, F var12, F var13, F var14, F var15,
+      Map<String, Integer> helmetEnchantments, Map<String, Integer> chestplateEnchantments,
+      Map<String, Integer> leggingsEnchantments, Map<String, Integer> bootsEnchantments
+   ) {
       this.sG = var1;
       this.sH = var2;
       this.sI = var3;
@@ -51,10 +67,15 @@ public final class K {
       this.sS = var13 != null ? new F(var13) : F.gk();
       this.sT = var14 != null ? new F(var14) : F.gk();
       this.sU = var15 != null ? new F(var15) : F.gk();
+      this.helmetEnchantments = EnchantmentResolver.copyLevels(helmetEnchantments);
+      this.chestplateEnchantments = EnchantmentResolver.copyLevels(chestplateEnchantments);
+      this.leggingsEnchantments = EnchantmentResolver.copyLevels(leggingsEnchantments);
+      this.bootsEnchantments = EnchantmentResolver.copyLevels(bootsEnchantments);
    }
 
    public K(K var1) {
-      this(var1.sG, var1.sH, var1.sI, var1.sJ, var1.sK, var1.sL, var1.sM, var1.sN, var1.sO, var1.sP, var1.sQ, var1.sR, var1.sS, var1.sT, var1.sU);
+      this(var1.sG, var1.sH, var1.sI, var1.sJ, var1.sK, var1.sL, var1.sM, var1.sN, var1.sO, var1.sP, var1.sQ, var1.sR, var1.sS, var1.sT, var1.sU,
+         var1.helmetEnchantments, var1.chestplateEnchantments, var1.leggingsEnchantments, var1.bootsEnchantments);
    }
 
    public String getArmorType() {
@@ -120,4 +141,9 @@ public final class K {
    public F gF() {
       return new F(this.sU);
    }
+
+   public Map<String, Integer> getHelmetEnchantments() { return EnchantmentResolver.copyLevels(this.helmetEnchantments); }
+   public Map<String, Integer> getChestplateEnchantments() { return EnchantmentResolver.copyLevels(this.chestplateEnchantments); }
+   public Map<String, Integer> getLeggingsEnchantments() { return EnchantmentResolver.copyLevels(this.leggingsEnchantments); }
+   public Map<String, Integer> getBootsEnchantments() { return EnchantmentResolver.copyLevels(this.bootsEnchantments); }
 }

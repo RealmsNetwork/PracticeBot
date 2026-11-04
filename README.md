@@ -196,3 +196,40 @@ handle.bindCombatTarget(player.getUniqueId());
 ```
 
 All mutating API methods must be called on the server's main thread. The inventory profile API preserves multiple weapon items in separate slots; it does not itself grant combat logic to a weapon type. Weapon behavior remains controlled by the bot's weapon profile and server combat implementation.
+
+
+## Temporary templates and exact kit inventories (API 1.10.0)
+
+Integrations that create one bot template per match should use the temporary-template API. Temporary templates live only in memory, use one-shot remove/despawn lifecycle behavior, and are removed without touching `bot_templates.yml`. StrikePractice owns the match lifecycle and creates the next round bot itself. Apply the actual kit inventory directly with `applyKitInventory`; it does not create entries in `bot_inventories.yml`. The method copies storage, armor, offhand and selected slot, derives the exact totem reserve from the supplied kit, equips the first totem in the offhand, and consumes the remaining kit stack as the bot resurrects.
+
+```java
+PracticeBotApi api = ...;
+api.createTemporaryTemplate("match_tmp_123_0");
+api.setTemporaryTemplateCombatProfile("match_tmp_123_0", PracticeBotType.NORMAL, PracticeBotWeaponProfile.SWORD);
+PracticeBotHandle bot = api.spawnBot(request);
+api.applyKitInventory(bot.getNpcUuid(), kitStorage, kitArmor, null, 0);
+api.activateBotCombatProfile(bot.getNpcUuid(), PracticeBotType.NORMAL, PracticeBotWeaponProfile.SWORD);
+// When the match ends:
+api.deleteTemporaryTemplate("match_tmp_123_0");
+```
+
+Reusable layouts are still available through `saveInventoryProfile` and `setTemplateInventoryProfile`; those intentionally persist. Use the direct method for per-match kit snapshots that must never be saved.
+
+## Unrestricted armor enchantments
+
+`default_inv.yml` and each `bot_templates.yml` inventory section accept an `armor-enchantments` map per armor piece. Any enchantment registered in Bukkit/Paper can be used, including plugin namespaces. Levels are applied unsafely, so vanilla maximum levels are not enforced. A non-empty map overrides the legacy single `*-enchant` value for that armor piece.
+
+```yaml
+armor-enchantments:
+  helmet:
+    "minecraft:protection": 5
+    "minecraft:thorns": 3
+  chestplate:
+    "minecraft:blast_protection": 6
+  leggings: {}
+  boots:
+    "minecraft:feather_falling": 8
+    "exampleplugin:custom_enchant": 2
+```
+
+Main-hand enchantments use the same registry-based resolution. API inventory methods preserve the complete `ItemStack` metadata, including arbitrary registered enchantments.

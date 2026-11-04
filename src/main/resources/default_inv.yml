@@ -36,6 +36,17 @@ armor-type: netherite
 leggings-enchant: protection
 leggings-material: netherite
 
+# Optional unrestricted enchantment maps for each armor slot.
+# Keys may be vanilla names (protection, swift_sneak) or namespaced keys
+# (minecraft:protection, anotherplugin:custom_enchant). Levels use unsafe
+# enchant application, so levels above vanilla limits are supported.
+# A non-empty map replaces that slot's legacy *-enchant setting.
+armor-enchantments:
+  helmet: {}
+  chestplate: {}
+  leggings: {}
+  boots: {}
+
 # ----------------------------------------------------------
 #  WEAPON PROFILE
 #

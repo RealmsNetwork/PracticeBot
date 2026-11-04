@@ -20,7 +20,7 @@
 #    display-name            NPC name shown above the bot.
 #    skin-name               Minecraft account skin name. Empty = default/editor skin.
 #    bot-type                NORMAL, CRYSTAL, CART, MACE, UHC, WATER, or DUMMY (CPVP is a legacy alias).
-#    weapon-profile          SWORD, MACE, MACE_ELYTRA, SPEAR, SPEAR_ELYTRA, SPEAR_MACE, CART, CART_ELYTRA, UHC, or WATER.
+#    weapon-profile          SWORD, MACE, MACE_ELYTRA, SPEAR, SPEAR_ELYTRA, SPEAR_MACE, SPEAR_MACE_ELYTRA, CART, CART_ELYTRA, UHC, or WATER.
 #    allow-gui               Compatibility flag. Runtime template bots keep normal GUI closed.
 #    target-binding          REQUIRED = target player needed, NONE = nearest player, BOT = nearest bot.
 #    death-mode              REMOVE = despawn after death, RESPAWN = respawn from this template.
@@ -53,7 +53,10 @@
 #
 #  Inventory fields for all template types:
 #    helmet/chestplate/leggings/boots-material  leather, copper, gold, chain, iron, diamond, netherite.
-#    helmet/chestplate/leggings/boots-enchant   protection, blast_protection, or none.
+#    helmet/chestplate/leggings/boots-enchant   Legacy single-enchantment setting.
+#    armor-enchantments.<piece>                Map of ANY registered Bukkit/Paper enchantment key to level.
+#                                               Supports namespaced keys and unsafe levels above vanilla caps.
+#                                               A non-empty map overrides that piece's legacy *-enchant value.
 #    offhand-type                               totem, shield, or none.
 #    totem-count                                Amount of totems to give when offhand uses totems.
 #    main-hand.material                         Bukkit material name for custom weapon/item.
@@ -134,6 +137,11 @@ templates:
       chestplate-enchant: protection
       leggings-enchant: protection
       boots-enchant: protection
+      armor-enchantments:
+        helmet: {}
+        chestplate: {}
+        leggings: {}
+        boots: {}
       offhand-type: totem
       totem-count: 64
       main-hand:

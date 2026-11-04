@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.8.9
+
+- Rebuilt Cart PvP around close-range setups: place a real rail and TNT minecart, use flint and steel to create a crossbow fire lane, and ignite the cart with a burning arrow; Flame-bow carting remains an alternate technique.
+- Carting now requires a nearby grounded target, consumes the actual kit items, avoids dropped equipment, and cleans up temporary carts, rails and fire.
+- Added a melee sword to the Cart kit so bots can switch from ranged cart pressure to real melee knockback at close range.
+- Added 12 configurable Wind Charges to the base Spear kit, plus wind-charge gap closing and native Lunge Jab approaches; hybrid Spear/Mace bots use spear to close distance and swap to mace while airborne.
+- Added optional axe-to-mace stun slam, disabled by default, and automatically includes an axe in Mace/Spear-Mace kits only when enabled.
+- Enabled attribute-swap tactics by default when the Paper server exposes the required compatibility setting.
+- Added regression tests for cart range gating, Lunge selection and opt-in stun-slam behavior.
+
 ## 1.8.8
 
 - Added runtime-only PracticeBot templates for integrations; temporary match templates stay in memory and never write to `bot_templates.yml`.

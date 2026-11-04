@@ -1,4 +1,4 @@
-config-version: 8
+config-version: 9
 # ==========================================================
 #  PracticeBot - Configuration
 #  Author: THEMPGUY
@@ -340,6 +340,12 @@ pvp:
 # ----------------------------------------------------------
 modern-weapons:
   mace:
+    stun-slam:
+      # Axe shield-disable followed by the native mace smash. Opt-in only.
+      enabled: false
+      require-shield: true
+      followup-delay-ticks: 2
+      window-ticks: 5
     # Primary launch is a real down-fired Wind Charge projectile.
     # The server applies the actual burst, particles and self-knockback.
     wind-charge-enabled: true
@@ -401,6 +407,11 @@ modern-weapons:
         aim-jitter-degrees: 0.15
 
   spear:
+    wind-charge-approach:
+      enabled: true
+      min-distance: 5.0
+      max-distance: 10.0
+      cooldown-ms: 1800
     # Java 1.21.11+ Spear supports Jab and a kinetic Charge.
     charge-enabled: true
     charge-delay-ms: 400
@@ -743,13 +754,12 @@ template-difficulty:
         spear-charge-delay-ms: 400
     CART:
       EASY:
-        cart-cooldown-ms: 6500
-        cart-min-distance: 6.5
-        cart-max-distance: 14.0
-        cart-launch-speed: 0.45
-        cart-fuse-ticks: 55
-        cart-rail-search-radius: 2
-        cart-followup-delay-ms: 1100
+        cart-cooldown-ms: 7500
+        cart-min-distance: 3.5
+        cart-max-distance: 5.0
+        cart-fuse-ticks: 40
+        cart-rail-search-radius: 1
+        cart-followup-delay-ms: 1300
         elytra-start-min-distance: 12.0
         elytra-start-max-distance: 22.0
         elytra-launch-y: 0.42
@@ -758,13 +768,12 @@ template-difficulty:
         elytra-dive-distance: 3.6
         elytra-cart-dive-y: -0.70
       NORMAL:
-        cart-cooldown-ms: 5500
-        cart-min-distance: 6.0
-        cart-max-distance: 15.0
-        cart-launch-speed: 0.55
-        cart-fuse-ticks: 52
-        cart-rail-search-radius: 3
-        cart-followup-delay-ms: 950
+        cart-cooldown-ms: 6500
+        cart-min-distance: 3.0
+        cart-max-distance: 5.5
+        cart-fuse-ticks: 38
+        cart-rail-search-radius: 1
+        cart-followup-delay-ms: 1150
         elytra-start-min-distance: 11.0
         elytra-start-max-distance: 24.0
         elytra-launch-y: 0.46
@@ -773,13 +782,12 @@ template-difficulty:
         elytra-dive-distance: 3.8
         elytra-cart-dive-y: -0.76
       HARD:
-        cart-cooldown-ms: 4500
-        cart-min-distance: 5.5
-        cart-max-distance: 16.0
-        cart-launch-speed: 0.62
-        cart-fuse-ticks: 50
-        cart-rail-search-radius: 4
-        cart-followup-delay-ms: 850
+        cart-cooldown-ms: 5500
+        cart-min-distance: 2.8
+        cart-max-distance: 6.0
+        cart-fuse-ticks: 36
+        cart-rail-search-radius: 2
+        cart-followup-delay-ms: 1000
         elytra-start-min-distance: 10.0
         elytra-start-max-distance: 25.0
         elytra-launch-y: 0.50
@@ -788,13 +796,12 @@ template-difficulty:
         elytra-dive-distance: 4.0
         elytra-cart-dive-y: -0.80
       EXPERT:
-        cart-cooldown-ms: 3800
-        cart-min-distance: 5.0
-        cart-max-distance: 17.0
-        cart-launch-speed: 0.70
-        cart-fuse-ticks: 48
-        cart-rail-search-radius: 5
-        cart-followup-delay-ms: 750
+        cart-cooldown-ms: 4800
+        cart-min-distance: 2.5
+        cart-max-distance: 6.5
+        cart-fuse-ticks: 35
+        cart-rail-search-radius: 2
+        cart-followup-delay-ms: 900
         elytra-start-min-distance: 9.5
         elytra-start-max-distance: 26.0
         elytra-launch-y: 0.54
@@ -803,13 +810,12 @@ template-difficulty:
         elytra-dive-distance: 4.2
         elytra-cart-dive-y: -0.84
       HACKER:
-        cart-cooldown-ms: 3200
-        cart-min-distance: 5.0
-        cart-max-distance: 18.0
-        cart-launch-speed: 0.76
-        cart-fuse-ticks: 46
-        cart-rail-search-radius: 6
-        cart-followup-delay-ms: 700
+        cart-cooldown-ms: 4200
+        cart-min-distance: 2.5
+        cart-max-distance: 7.0
+        cart-fuse-ticks: 34
+        cart-rail-search-radius: 2
+        cart-followup-delay-ms: 850
         elytra-start-min-distance: 9.0
         elytra-start-max-distance: 27.0
         elytra-launch-y: 0.57
@@ -818,13 +824,12 @@ template-difficulty:
         elytra-dive-distance: 4.3
         elytra-cart-dive-y: -0.88
       MASTER:
-        cart-cooldown-ms: 2800
-        cart-min-distance: 4.5
-        cart-max-distance: 20.0
-        cart-launch-speed: 0.82
-        cart-fuse-ticks: 44
-        cart-rail-search-radius: 6
-        cart-followup-delay-ms: 650
+        cart-cooldown-ms: 3800
+        cart-min-distance: 2.5
+        cart-max-distance: 7.5
+        cart-fuse-ticks: 32
+        cart-rail-search-radius: 2
+        cart-followup-delay-ms: 800
         elytra-start-min-distance: 8.5
         elytra-start-max-distance: 28.0
         elytra-launch-y: 0.60
@@ -833,13 +838,12 @@ template-difficulty:
         elytra-dive-distance: 4.4
         elytra-cart-dive-y: -0.92
       NIGHTMARE:
-        cart-cooldown-ms: 2400
-        cart-min-distance: 4.0
-        cart-max-distance: 22.0
-        cart-launch-speed: 0.88
-        cart-fuse-ticks: 42
-        cart-rail-search-radius: 8
-        cart-followup-delay-ms: 600
+        cart-cooldown-ms: 3500
+        cart-min-distance: 2.5
+        cart-max-distance: 8.0
+        cart-fuse-ticks: 30
+        cart-rail-search-radius: 3
+        cart-followup-delay-ms: 750
         elytra-start-min-distance: 8.0
         elytra-start-max-distance: 30.0
         elytra-launch-y: 0.63
@@ -924,7 +928,7 @@ tactics:
   attribute-swap:
     # Only turns on automatically when Paper reports
     # unsupported-settings.update-equipment-on-player-actions=false.
-    enabled: false
+    enabled: true
     chance-percent: 10.0
 
   pearl:
@@ -944,12 +948,13 @@ tactics:
 
   cart-pvp:
     enabled: true
-    cooldown-ms: 3500
-    min-distance: 5.0
-    max-distance: 18.0
-    launch-speed: 0.8
-    fuse-ticks: 45
-    rail-search-radius: 6
+    cooldown-ms: 4500
+    min-distance: 2.5
+    max-distance: 7.5
+    fuse-ticks: 35
+    rail-search-radius: 2
+    cart-followup-delay-ms: 900
+    flame-bow-chance-percent: 35.0
 
 # ----------------------------------------------------------
 #  SHIELD SYSTEM

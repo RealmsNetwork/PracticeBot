@@ -30,6 +30,33 @@ class ModernWeaponCombatTest {
    }
 
    @Test
+   void stunSlamIsOptInAndRequiresAnAxe() {
+      assertEquals(false, ModernWeaponCombat.shouldAttemptStunSlam(false, true, true, true));
+      assertEquals(false, ModernWeaponCombat.shouldAttemptStunSlam(true, true, true, false));
+      assertEquals(false, ModernWeaponCombat.shouldAttemptStunSlam(true, true, false, true));
+      assertEquals(true, ModernWeaponCombat.shouldAttemptStunSlam(true, true, true, true));
+      assertEquals(true, ModernWeaponCombat.shouldAttemptStunSlam(true, false, false, true));
+   }
+
+   @Test
+   void lungeJabIsOnlyUsedWithLungeOutsideNormalJabRange() {
+      assertEquals(true, ModernWeaponCombat.shouldUseLungeJab(4.0, 4.5, 3, false, false));
+      assertEquals(false, ModernWeaponCombat.shouldUseLungeJab(3.0, 4.5, 3, false, false));
+      assertEquals(false, ModernWeaponCombat.shouldUseLungeJab(4.0, 4.5, 0, false, false));
+      assertEquals(false, ModernWeaponCombat.shouldUseLungeJab(4.0, 4.5, 3, true, false));
+      assertEquals(false, ModernWeaponCombat.shouldUseLungeJab(4.0, 4.5, 3, false, true));
+      assertEquals(false, ModernWeaponCombat.shouldUseLungeJab(5.0, 4.5, 3, false, false));
+   }
+
+   @Test
+   void stunSlamFollowupStaysInsideTheFiveTickWindow() {
+      assertEquals(2, ModernWeaponCombat.stunSlamDelayTicks(2, 5));
+      assertEquals(5, ModernWeaponCombat.stunSlamDelayTicks(8, 5));
+      assertEquals(1, ModernWeaponCombat.stunSlamDelayTicks(0, 5));
+      assertEquals(1, ModernWeaponCombat.stunSlamDelayTicks(2, 0));
+   }
+
+   @Test
    void bareMaceAtTwoBlocksMatchesPublishedExample() {
       assertEquals(14.0,
          ModernWeaponCombat.maceSmashDamage(6.0, 2.0, 0), 1.0E-9);

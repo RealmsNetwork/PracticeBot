@@ -329,8 +329,23 @@ public class j {
             Math.max(4, Math.min(64, defaults.getInt("weapon.mobility.firework-rockets", 24))));
       }
 
-      if (normalized.startsWith("mace") || "spear_mace".equals(normalized)) {
-         this.giveWindCharges(player, defaults);
+      if (normalized.startsWith("mace") || normalized.startsWith("spear_mace")) {
+         this.giveWindCharges(player, defaults, "weapon.mace.wind-charges", 16);
+         if (this.ax.getConfig().getBoolean("modern-weapons.mace.stun-slam.enabled", false)) {
+            ItemStack stunAxe = new ItemStack(Material.NETHERITE_AXE);
+            this.b(stunAxe, "sharpness", 5);
+            ItemMeta stunAxeMeta = stunAxe.getItemMeta();
+            if (stunAxeMeta != null) {
+               stunAxeMeta.setUnbreakable(true);
+               stunAxeMeta.addItemFlags(new ItemFlag[]{ItemFlag.HIDE_UNBREAKABLE, ItemFlag.HIDE_ATTRIBUTES});
+               stunAxe.setItemMeta(stunAxeMeta);
+            }
+            player.getInventory().addItem(stunAxe);
+         }
+      }
+
+      if (normalized.startsWith("spear") && !normalized.startsWith("spear_mace")) {
+         this.giveWindCharges(player, defaults, "weapon.spear.wind-charges", 12);
       }
 
       if ("spear_mace".equals(normalized)) {
@@ -364,7 +379,9 @@ public class j {
          this.giveItems(player, Material.POWERED_RAIL, Math.max(1, Math.min(64, defaults.getInt("weapon.cart.powered-rails", 16))));
          this.giveItems(player, Material.RAIL, Math.max(1, Math.min(64, defaults.getInt("weapon.cart.rails", 32))));
          this.giveItems(player, Material.FLINT_AND_STEEL, 1);
+         this.giveItems(player, Material.CROSSBOW, 1);
          this.giveItems(player, Material.ARROW, Math.max(1, Math.min(64, defaults.getInt("weapon.cart.arrows", 32))));
+         player.getInventory().addItem(this.E());
       }
    }
 
@@ -384,8 +401,8 @@ public class j {
       }
    }
 
-   private void giveWindCharges(Player player, FileConfiguration defaults) {
-      int amount = Math.max(0, Math.min(64, defaults.getInt("weapon.mace.wind-charges", 16)));
+   private void giveWindCharges(Player player, FileConfiguration defaults, String path, int fallback) {
+      int amount = Math.max(0, Math.min(64, defaults.getInt(path, fallback)));
       if (amount <= 0) return;
 
       ItemStack charges = new ItemStack(Material.WIND_CHARGE, amount);

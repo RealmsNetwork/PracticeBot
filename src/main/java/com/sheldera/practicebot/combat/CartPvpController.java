@@ -177,6 +177,7 @@ public final class CartPvpController {
             consume(rails);
             return new RailPlacement(center, true);
         } catch (Throwable ex) {
+            if (center.getType() == Material.RAIL) center.setType(Material.AIR, false);
             plugin.debugLog(() -> "CartPvP rail placement failed: " + ex.getMessage());
             return null;
         }
@@ -232,6 +233,8 @@ public final class CartPvpController {
                 if (fireBlock != null && fireBlock.getType() == Material.FIRE) fireBlock.setType(Material.AIR, false);
                 fireBlock = null;
             }
+        } else {
+            cart.setFuseTicks(35);
         }
         bot.getInventory().setItemInMainHand(oldHand);
         return fireBlock;
@@ -256,6 +259,7 @@ public final class CartPvpController {
             return fire;
         } catch (Throwable ex) {
             bot.getInventory().setItemInMainHand(oldHand);
+            if (fire.getType() == Material.FIRE) fire.setType(Material.AIR, false);
             plugin.debugLog(() -> "CartPvP flint-and-steel fire placement failed: " + ex.getMessage());
             return null;
         }

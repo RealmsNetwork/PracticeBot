@@ -240,7 +240,7 @@ public final class CartPvpController {
         Block fire = bot.getLocation().clone().add(line.multiply(1.25D)).getBlock();
         Block support = fire.getRelative(0, -1, 0);
         if (!fire.getType().isAir() || !support.getType().isSolid() ||
-            support.getType().isFlammable() || fire.isLiquid()) return null;
+            support.getType().isFlammable() || fire.isLiquid() || hasFlammableNeighbor(fire)) return null;
         ItemStack oldHand = bot.getInventory().getItemInMainHand();
         try {
             bot.getInventory().setItemInMainHand(flintSteel.clone());
@@ -254,6 +254,18 @@ public final class CartPvpController {
             plugin.debugLog(() -> "CartPvP flint-and-steel fire placement failed: " + ex.getMessage());
             return null;
         }
+    }
+
+    private boolean hasFlammableNeighbor(Block fire) {
+        for (int x = -1; x <= 1; x++) {
+            for (int y = -1; y <= 1; y++) {
+                for (int z = -1; z <= 1; z++) {
+                    if (x == 0 && y == 0 && z == 0) continue;
+                    if (fire.getRelative(x, y, z).getType().isFlammable()) return true;
+                }
+            }
+        }
+        return false;
     }
 
     private void damageFlintAndSteel(ItemStack item) {

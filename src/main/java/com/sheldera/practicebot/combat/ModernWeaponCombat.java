@@ -1023,27 +1023,25 @@ public final class ModernWeaponCombat {
     private ItemStack findAlternateWeapon(
         PlayerInventory inventory, ItemStack current
     ) {
+        boolean currentIsSpear = current != null && current.getType().name().endsWith("_SPEAR");
+        ItemStack fallback = null;
         for (int slot = 0; slot < inventory.getSize(); slot++) {
             ItemStack candidate = inventory.getItem(slot);
 
-            if (candidate == null || candidate.getType().isAir()) {
-                continue;
-            }
+            if (candidate == null || candidate.getType().isAir()) continue;
 
             String name = candidate.getType().name();
+            boolean weapon = name.endsWith("_SWORD") || name.endsWith("_AXE") ||
+                name.equals("MACE") || name.endsWith("_MACE") || name.endsWith("_SPEAR");
+            if (!weapon || (current != null && candidate.getType() == current.getType())) continue;
 
-            if ((name.endsWith("_SWORD") ||
-                name.endsWith("_AXE") ||
-                name.equals("MACE") ||
-                name.endsWith("_MACE") ||
-                name.endsWith("_SPEAR")) &&
-                (current == null ||
-                 candidate.getType() != current.getType())) {
-                return candidate;
-            }
+            // In a Spear/Mace kit the mace is the intended damage-attribute
+            // donor for the Lunge Jab. Do not let the optional stun-slam axe
+            // in an earlier hotbar slot shadow it.
+            if (currentIsSpear && candidate.getType() == Material.MACE) return candidate;
+            if (fallback == null) fallback = candidate;
         }
-
-        return null;
+        return fallback;
     }
 
     private long attackCooldownMs(Player bot) {

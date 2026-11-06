@@ -373,7 +373,12 @@ public class v {
          ItemStack heldItem = var1.getInventory().getItemInMainHand();
          boolean nativeWaterTridentMelee = "water".equals(profile) &&
             heldItem != null && heldItem.getType() == Material.TRIDENT;
-         if (!nativeWaterTridentMelee) return;
+         // CartPvpController intentionally switches to the kit sword inside
+         // 3.25 blocks. Allow that explicit close-range fallback, but do not
+         // permit a sword fallback for Mace, Spear, Bow, or missing Cart gear.
+         boolean nativeCartCloseRangeMelee = profile.startsWith("cart") &&
+            heldItem != null && heldItem.getType().name().endsWith("_SWORD");
+         if (!nativeWaterTridentMelee && !nativeCartCloseRangeMelee) return;
       }
 
       if (var2.getGameMode() != GameMode.SPECTATOR) {

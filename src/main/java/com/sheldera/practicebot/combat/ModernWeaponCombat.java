@@ -118,6 +118,12 @@ public final class ModernWeaponCombat {
         if ("spear_mace".equals(trait.getWeaponProfile()) ||
             "spear_mace_elytra".equals(trait.getWeaponProfile())) {
             selectHybridWeapon(bot, target, trait);
+        } else if (isDedicatedMaceProfile(trait)) {
+            if (!selectDedicatedMace(bot)) {
+                NmsCombatBridge.stopUsingItem(bot);
+                reset(trait);
+                return;
+            }
         }
 
         ItemStack item = bot.getInventory().getItemInMainHand();
@@ -418,6 +424,42 @@ public final class ModernWeaponCombat {
         else item.setAmount(item.getAmount() - 1);
     }
 
+    public boolean isDedicatedMaceProfile(BotTrait trait) {
+        if (trait == null || trait.getWeaponProfile() == null) return false;
+        String profile = trait.getWeaponProfile().trim().toLowerCase(java.util.Locale.ROOT);
+        return profile.startsWith("mace");
+    }
+
+    private boolean selectDedicatedMace(Player bot) {
+        PlayerInventory inventory = bot.getInventory();
+        int maceSlot = -1;
+        ItemStack[] contents = inventory.getStorageContents();
+        for (int slot = 0; slot < contents.length; slot++) {
+            ItemStack item = contents[slot];
+            if (item != null && item.getType() == Material.MACE) {
+                maceSlot = slot;
+                break;
+            }
+        }
+        if (maceSlot < 0) return false;
+
+        if (maceSlot < 9) {
+            inventory.setHeldItemSlot(maceSlot);
+            return true;
+        }
+
+        // StrikePractice kit imports preserve all 36 storage slots, but the
+        // selected hotbar slot is not part of the inventory snapshot. Move the
+        // kit's Mace into the current slot without discarding the displaced item.
+        int heldSlot = inventory.getHeldItemSlot();
+        ItemStack displaced = inventory.getItem(heldSlot);
+        ItemStack mace = inventory.getItem(maceSlot);
+        inventory.setItem(heldSlot, mace);
+        inventory.setItem(maceSlot, displaced);
+        return inventory.getItemInMainHand() != null &&
+            inventory.getItemInMainHand().getType() == Material.MACE;
+    }
+
     private void selectHybridWeapon(Player bot, Player target, BotTrait trait) {
         double distance = bot.getLocation().distance(target.getLocation());
         ItemStack targetWeapon = target.getInventory().getItemInMainHand();
@@ -572,7 +614,10 @@ public final class ModernWeaponCombat {
     }
 
     private boolean attemptStunSlam(Player bot, Player target, BotTrait trait) {
-        boolean enabled = plugin.getConfig().getBoolean("modern-weapons.mace.stun-slam.enabled", false);
+        boolean enabled = MaceDifficultyTuning.getBoolean(
+            plugin, trait, "stun-slam-enabled", false,
+            "modern-weapons.mace.stun-slam.enabled"
+        );
         boolean requireShield = plugin.getConfig().getBoolean("modern-weapons.mace.stun-slam.require-shield", true);
         int axeSlot = -1;
         for (int slot = 0; slot < 9; slot++) {

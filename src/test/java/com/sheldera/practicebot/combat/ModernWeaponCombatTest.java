@@ -8,14 +8,38 @@ class ModernWeaponCombatTest {
    @Test
    void maceSmashUsesVanillaTierBreakpoints() {
       assertEquals(0.0, ModernWeaponCombat.maceSmashBonus(1.5), 1.0E-9);
+      assertEquals(6.0004, ModernWeaponCombat.maceSmashBonus(1.5001), 1.0E-6);
       assertEquals(12.0, ModernWeaponCombat.maceSmashBonus(3.0), 1.0E-9);
       assertEquals(22.0, ModernWeaponCombat.maceSmashBonus(8.0), 1.0E-9);
       assertEquals(24.0, ModernWeaponCombat.maceSmashBonus(10.0), 1.0E-9);
    }
 
    @Test
-   void maceSmashStartsAtVanillaOnePointFiveBlockThreshold() {
-      assertEquals(true,
+   void maceWindChargeLaunchRangeIncludesNormalMeleeNavigationDistance() {
+      assertEquals(true, ModernWeaponCombat.shouldLaunchMaceWindCharge(
+         3.0, 2.0, 10.0, true, true, true, false));
+      assertEquals(false, ModernWeaponCombat.shouldLaunchMaceWindCharge(
+         1.9, 2.0, 10.0, true, true, true, false));
+      assertEquals(false, ModernWeaponCombat.shouldLaunchMaceWindCharge(
+         10.1, 2.0, 10.0, true, true, true, false));
+      assertEquals(false, ModernWeaponCombat.shouldLaunchMaceWindCharge(
+         3.0, 2.0, 10.0, true, false, true, false));
+      assertEquals(false, ModernWeaponCombat.shouldLaunchMaceWindCharge(
+         3.0, 2.0, 10.0, true, true, false, false));
+      assertEquals(false, ModernWeaponCombat.shouldLaunchMaceWindCharge(
+         3.0, 2.0, 10.0, true, true, true, true));
+   }
+
+   @Test
+   void maceFallDistanceUsesTheGreaterOfNativeAndTrackedApexDistance() {
+      assertEquals(2.5, ModernWeaponCombat.resolveMaceFallDistance(1.0, 80.0, 77.5), 1.0E-9);
+      assertEquals(3.0, ModernWeaponCombat.resolveMaceFallDistance(3.0, 80.0, 79.0), 1.0E-9);
+      assertEquals(0.0, ModernWeaponCombat.resolveMaceFallDistance(Double.NaN, 80.0, 82.0), 1.0E-9);
+   }
+
+   @Test
+   void maceSmashRequiresFallDistanceGreaterThanOnePointFiveBlocksForBonusDamage() {
+      assertEquals(false,
          ModernWeaponCombat.shouldPerformMaceSmash(true, 1.5, false));
       assertEquals(true,
          ModernWeaponCombat.shouldPerformMaceSmash(true, 1.5001, false));

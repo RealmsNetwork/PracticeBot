@@ -10,6 +10,7 @@ class NmsCombatBridgeTest {
         assertFalse(NmsCombatBridge.attack(null, null));
         assertFalse(NmsCombatBridge.stabAttack(null));
         assertFalse(NmsCombatBridge.startUsingMainHand(null));
+        assertFalse(NmsCombatBridge.useMainHand(null));
         assertFalse(NmsCombatBridge.stopUsingItem(null));
         assertFalse(NmsCombatBridge.isUsingItem(null));
     }

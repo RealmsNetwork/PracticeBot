@@ -151,6 +151,7 @@ public class BotTrait extends Trait {
    public double maceMissOffsetDegrees = 0.0D;
    public double maceLaunchOriginY = 0.0D;
    public double macePeakY = 0.0D;
+   public transient boolean maceFallTracking = false;
    public long spearChargeStartedAt = 0L;
    public long spearLastHitAt = 0L;
    public UUID modernWeaponTarget = null;
@@ -253,6 +254,7 @@ public class BotTrait extends Trait {
       this.maceMissOffsetDegrees = 0.0D;
       this.maceLaunchOriginY = 0.0D;
       this.macePeakY = 0.0D;
+      this.maceFallTracking = false;
       this.spearChargeStartedAt = 0L;
       this.spearLastHitAt = 0L;
       this.modernWeaponTarget = null;
@@ -775,6 +777,7 @@ public class BotTrait extends Trait {
       this.maceMissOffsetDegrees = 0.0D;
       this.maceLaunchOriginY = 0.0D;
       this.macePeakY = 0.0D;
+      this.maceFallTracking = false;
       this.spearChargeStartedAt = 0L;
       this.spearLastHitAt = 0L;
       this.modernWeaponTarget = null;

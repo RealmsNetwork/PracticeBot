@@ -16,7 +16,6 @@ import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
-import org.bukkit.entity.WindCharge;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -130,8 +129,6 @@ public final class ModernWeaponCombat {
                 reset(trait);
                 return;
             }
-        } else if ("bow".equals(profile) || "cart".equals(profile) || "cart_elytra".equals(profile)) {
-            selectProfileItem(bot, item -> item.getType() == Material.BOW);
         } else if ("water".equals(profile)) {
             selectProfileItem(bot, item -> item.getType() == Material.TRIDENT);
         }
@@ -163,14 +160,21 @@ public final class ModernWeaponCombat {
             return false;
         }
 
-        if (now < trait.tacticCooldownUntil) {
-            return false;
+        if (item.getType() == Material.MACE) {
+            boolean falling = !bot.isOnGround() && !bot.isGliding() &&
+                bot.getVelocity().getY() < -0.02D;
+            double fallDistance = resolveMaceFallDistance(
+                bot.getFallDistance(), trait.macePeakY, bot.getLocation().getY());
+            // Vanilla mace smash attacks ignore the normal attack cooldown.
+            // Let a valid descending hit reach tryMace even if the last swing
+            // or a tactic cooldown would block an ordinary melee attack.
+            if (shouldPerformMaceSmash(falling, fallDistance,
+                bot.hasPotionEffect(PotionEffectType.SLOW_FALLING))) return true;
+            if (trait.maceLaunchActive && !bot.isOnGround()) return true;
         }
 
-        if (item.getType() == Material.MACE &&
-            trait.maceLaunchActive &&
-            !bot.isOnGround()) {
-            return true;
+        if (now < trait.tacticCooldownUntil) {
+            return false;
         }
 
         if (isSpear(item) && NmsCombatBridge.isUsingItem(bot)) {
@@ -216,6 +220,7 @@ public final class ModernWeaponCombat {
             trait.maceLaunchActive = false;
             trait.maceWindChargePending = false;
             trait.maceAttemptedThisFall = false;
+            trait.maceFallTracking = false;
             trait.maceLaunchStartedAt = 0L;
         }
         trait.modernWeaponTarget = target.getUniqueId();
@@ -227,6 +232,7 @@ public final class ModernWeaponCombat {
             if (blastDetected) {
                 trait.maceWindChargePending = false;
                 trait.lastTactic = "mace-wind-charge-boosted";
+                plugin.debugLog("Mace Wind Charge burst detected; starting vanilla smash flight.");
                 return;
             }
             if (now - trait.maceLaunchStartedAt <= 1200L) {
@@ -249,9 +255,15 @@ public final class ModernWeaponCombat {
             return;
         }
 
-        if (!bot.isOnGround() || bot.isGliding()) {
+        if (!bot.isOnGround()) {
+            double currentY = bot.getLocation().getY();
+            if (!trait.maceFallTracking) {
+                trait.macePeakY = currentY;
+                trait.maceFallTracking = true;
+            } else {
+                trait.macePeakY = Math.max(trait.macePeakY, currentY);
+            }
             if (trait.maceLaunchActive) {
-                trait.macePeakY = Math.max(trait.macePeakY, bot.getLocation().getY());
                 guideMaceFlight(bot, target, trait);
                 if (now - trait.maceLaunchStartedAt > 6500L) {
                     trait.maceLaunchActive = false;
@@ -263,15 +275,19 @@ public final class ModernWeaponCombat {
             return;
         }
 
-        // Landing ends the previous aerial attempt. Never carry a miss/launch
-        // flag into the next jump.
-        if (trait.maceLaunchActive || trait.maceWindChargePending) {
+        // Reset every completed fall, including ordinary jumps/knockback falls
+        // that were not initiated by a Wind Charge. Previously those attempts
+        // could leave maceAttemptedThisFall latched forever after one miss.
+        if (trait.maceFallTracking || trait.maceLaunchActive || trait.maceWindChargePending) {
             trait.maceLaunchActive = false;
             trait.maceWindChargePending = false;
             trait.maceAttemptedThisFall = false;
             trait.maceMissThisAttack = false;
+            trait.maceMissOffsetDegrees = 0.0D;
             trait.maceLaunchStartedAt = 0L;
         }
+        trait.maceFallTracking = false;
+        trait.macePeakY = bot.getLocation().getY();
 
         double distance = bot.getLocation().distance(target.getLocation());
         double launchMin = plugin.getConfig().getDouble(
@@ -281,47 +297,59 @@ public final class ModernWeaponCombat {
             "modern-weapons.mace.launch-max-distance", 10.0D
         );
 
-        if (distance < launchMin || distance > launchMax ||
-            now < trait.modernWeaponCooldownUntil ||
-            now - trait.lastAttackTime < attackCooldownMs(bot) ||
-            bot.hasPotionEffect(PotionEffectType.SLOW_FALLING)) {
-            return;
-        }
-
         int windChargeSlot = findWindChargeSlot(bot);
         boolean windChargeEnabled = plugin.getConfig().getBoolean(
             "modern-weapons.mace.wind-charge-enabled", true
         );
+        boolean cooldownReady = now >= trait.modernWeaponCooldownUntil &&
+            now - trait.lastAttackTime >= attackCooldownMs(bot);
+        if (!shouldLaunchMaceWindCharge(
+            distance, launchMin, launchMax, windChargeEnabled, windChargeSlot >= 0,
+            cooldownReady, bot.hasPotionEffect(PotionEffectType.SLOW_FALLING))) {
+            return;
+        }
+
         boolean launchedWindCharge = false;
 
         if (windChargeEnabled && windChargeSlot >= 0) {
             float yaw = bot.getLocation().getYaw();
-            // Look straight down and actually throw the Wind Charge at the
-            // ground beneath the bot. The server owns the burst particles and
-            // the resulting self-knockback.
+            float pitch = bot.getLocation().getPitch();
+            int previousSlot = bot.getInventory().getHeldItemSlot();
+            PlayerInventory inventory = bot.getInventory();
+            boolean swapped = windChargeSlot >= 9;
+            if (swapped) {
+                ItemStack displaced = inventory.getItem(previousSlot);
+                inventory.setItem(previousSlot, inventory.getItem(windChargeSlot));
+                inventory.setItem(windChargeSlot, displaced);
+            } else {
+                inventory.setHeldItemSlot(windChargeSlot);
+            }
+
+            // Send the same server-side use-item interaction as a real
+            // right-click. This invokes WindChargeItem.use(), consumes the
+            // held stack natively and creates the vanilla projectile/burst.
             bot.setRotation(yaw, 90.0F);
-            ItemStack heldWeapon = bot.getInventory().getItemInMainHand();
-            trait.maceRestoreWeapon = heldWeapon == null ? null : heldWeapon.clone();
-            trait.maceRestoreAt = now + 150L;
-            bot.getInventory().setItemInMainHand(new ItemStack(Material.WIND_CHARGE));
             bot.swingMainHand();
             try {
-                WindCharge projectile = bot.launchProjectile(
-                    WindCharge.class, new Vector(0.0D, -1.0D, 0.0D)
-                );
-                if (projectile != null && projectile.isValid()) {
-                    consumeWindCharge(bot, windChargeSlot);
-                    launchedWindCharge = true;
-                } else {
-                    restoreMaceWeapon(bot, trait);
-                }
+                launchedWindCharge = NmsCombatBridge.useMainHand(bot);
             } catch (Throwable ex) {
-                restoreMaceWeapon(bot, trait);
-                plugin.debugLog(() -> "Mace Wind Charge launch failed: " + ex.getMessage());
+                plugin.debugLog(() -> "Mace native Wind Charge use failed: " + ex.getMessage());
+            } finally {
+                if (swapped) {
+                    ItemStack remainingCharge = inventory.getItem(previousSlot);
+                    ItemStack displaced = inventory.getItem(windChargeSlot);
+                    inventory.setItem(windChargeSlot, remainingCharge);
+                    inventory.setItem(previousSlot, displaced);
+                } else {
+                    inventory.setHeldItemSlot(previousSlot);
+                }
+                bot.setRotation(yaw, pitch);
+                bot.updateInventory();
             }
         }
 
         if (!launchedWindCharge) {
+            plugin.debugLog(() -> "Mace Wind Charge right-click failed: " + NmsCombatBridge.lastFailure());
             if (!plugin.getConfig().getBoolean(
                 "modern-weapons.mace.assisted-jump-without-wind-charge", false
             )) {
@@ -427,13 +455,6 @@ public final class ModernWeaponCombat {
         return -1;
     }
 
-    private void consumeWindCharge(Player bot, int slot) {
-        ItemStack item = bot.getInventory().getItem(slot);
-        if (item == null || item.getType() != Material.WIND_CHARGE) return;
-        if (item.getAmount() <= 1) bot.getInventory().setItem(slot, null);
-        else item.setAmount(item.getAmount() - 1);
-    }
-
     public boolean isDedicatedWeaponProfile(BotTrait trait) {
         if (trait == null || trait.getWeaponProfile() == null) return false;
         String profile = trait.getWeaponProfile().trim().toLowerCase(java.util.Locale.ROOT);
@@ -512,7 +533,7 @@ public final class ModernWeaponCombat {
         if (!bot.hasLineOfSight(target)) return false;
         Vector direction = bot.getEyeLocation().getDirection().normalize();
         return bot.getWorld().rayTraceEntities(
-            bot.getEyeLocation(), direction, effectiveMaceReach(bot), 0.08D,
+            bot.getEyeLocation(), direction, effectiveMaceReach(bot), 0.30D,
             entity -> entity.getUniqueId().equals(target.getUniqueId())
         ) != null;
     }
@@ -536,13 +557,23 @@ public final class ModernWeaponCombat {
 
         boolean falling = !bot.isOnGround() && !bot.isGliding() &&
             bot.getVelocity().getY() < -0.02D;
-        double fallDistance = Math.max(0.0D, bot.getFallDistance());
+        double fallDistance = resolveMaceFallDistance(
+            bot.getFallDistance(), trait.macePeakY, bot.getLocation().getY());
 
         if (shouldPerformMaceSmash(
             falling, fallDistance, bot.hasPotionEffect(PotionEffectType.SLOW_FALLING)
         )) {
             if (trait.maceAttemptedThisFall) return true;
             trait.maceAttemptedThisFall = true;
+            // The native ServerPlayer attack handler reads LivingEntity's
+            // fallDistance field. Synchronize it with the measured apex delta
+            // so packetless Citizens NPC physics still trigger vanilla smash.
+            if (fallDistance > bot.getFallDistance()) {
+                bot.setFallDistance((float) fallDistance);
+            }
+            plugin.debugLog(() -> "Mace smash attempt: fall=" + String.format(java.util.Locale.ROOT, "%.2f", fallDistance) +
+                " blocks, velocityY=" + String.format(java.util.Locale.ROOT, "%.3f", bot.getVelocity().getY()) +
+                ", grounded=" + bot.isOnGround() + ", slowFalling=" + bot.hasPotionEffect(PotionEffectType.SLOW_FALLING));
             if (!maceAimHitsTarget(bot, target)) {
                 bot.swingMainHand();
                 trait.lastAttackTime = now;
@@ -603,7 +634,11 @@ public final class ModernWeaponCombat {
         int windBurst = enchantLevel(bot.getInventory().getItemInMainHand(), "wind_burst");
         trait.maceLaunchActive = windBurst > 0 && bot.getVelocity().getY() > 0.05D;
         trait.maceWindChargePending = false;
-        trait.maceAttemptedThisFall = true;
+        trait.maceFallTracking = false;
+        trait.macePeakY = bot.getLocation().getY();
+        // A successful vanilla smash resets fallDistance. Permit the next
+        // independent fall (including a Wind Burst relaunch) to be tracked.
+        trait.maceAttemptedThisFall = false;
         trait.maceLaunchStartedAt = now;
         trait.lastAttackTime = now;
         trait.modernWeaponCooldownUntil = now + attackCooldownMs(bot);
@@ -1310,16 +1345,35 @@ public final class ModernWeaponCombat {
         return enabled && hasAxe && (!requireShield || targetBlocking);
     }
 
+    static boolean shouldLaunchMaceWindCharge(
+        double distance, double launchMin, double launchMax, boolean enabled,
+        boolean hasCharge, boolean cooldownReady, boolean slowFalling
+    ) {
+        return enabled && hasCharge && cooldownReady && !slowFalling &&
+            Double.isFinite(distance) && Double.isFinite(launchMin) && Double.isFinite(launchMax) &&
+            launchMin >= 0.0D && launchMax >= launchMin &&
+            distance >= launchMin && distance <= launchMax;
+    }
+
+    static double resolveMaceFallDistance(double trackedFallDistance, double peakY, double currentY) {
+        double tracked = Double.isFinite(trackedFallDistance) ? Math.max(0.0D, trackedFallDistance) : 0.0D;
+        double measured = Double.isFinite(peakY) && Double.isFinite(currentY)
+            ? Math.max(0.0D, peakY - currentY) : 0.0D;
+        return Math.max(tracked, measured);
+    }
+
     static boolean shouldPerformMaceSmash(
         boolean falling, double fallDistance, boolean slowFalling
     ) {
+        // The Java mace bonus formula starts only above 1.5 blocks. Waiting
+        // until strictly past the boundary avoids a normal-damage hit at 1.5.
         return falling && Double.isFinite(fallDistance) &&
-            fallDistance >= MACE_MIN_SMASH_FALL && !slowFalling;
+            fallDistance > MACE_MIN_SMASH_FALL && !slowFalling;
     }
 
     /** Reference formula retained for regression tests; live mace hits use NMS. */
     static double maceSmashBonus(double fallDistance) {
-        if (fallDistance <= MACE_MIN_SMASH_FALL) {
+        if (!Double.isFinite(fallDistance) || fallDistance <= MACE_MIN_SMASH_FALL) {
             return 0.0D;
         }
 
@@ -1554,6 +1608,7 @@ public final class ModernWeaponCombat {
         trait.maceMissOffsetDegrees = 0.0D;
         trait.maceLaunchOriginY = 0.0D;
         trait.macePeakY = 0.0D;
+        trait.maceFallTracking = false;
         trait.spearChargeStartedAt = 0L;
         trait.spearLastHitAt = 0L;
         trait.spearWindChargeLaunchedAt = 0L;

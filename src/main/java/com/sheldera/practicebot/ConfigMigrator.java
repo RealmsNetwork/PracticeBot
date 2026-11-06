@@ -11,7 +11,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public final class ConfigMigrator {
-    private static final int CURRENT_VERSION = 10;
+    private static final int CURRENT_VERSION = 11;
     private static final int CURRENT_INVENTORY_VERSION = 5;
 
     private ConfigMigrator() {
@@ -34,11 +34,15 @@ public final class ConfigMigrator {
         }
 
         // The version guard above guarantees current < CURRENT_VERSION, so
-        // apply the v10 migration without a redundant always-true comparison.
+        // apply the v11 migration without a redundant always-true comparison.
         migrateCartCombatDefaults(config);
         // Attribute swapping was previously opt-in. The new spear/mace
         // approach uses it when the Paper runtime explicitly supports it.
         replaceIfOldDefault(config, "tactics.attribute-swap.enabled", false, true);
+        // Mace's normal melee reach is about 3.1 blocks. The old 3.2 launch
+        // floor could be outside the bot's navigation stop distance, causing
+        // it to skip the Wind Charge and repeatedly use grounded melee.
+        replaceIfOldDefault(config, "modern-weapons.mace.launch-min-distance", 3.2D, 2.0D);
 
         backup(plugin, file);
 
@@ -207,7 +211,7 @@ public final class ConfigMigrator {
         defaults.put("modern-weapons.mace.wind-charge-enabled", true);
         defaults.put("modern-weapons.mace.wind-charge-launch-height", 7.0D);
         defaults.put("modern-weapons.mace.assisted-jump-without-wind-charge", false);
-        defaults.put("modern-weapons.mace.launch-min-distance", 3.2D);
+        defaults.put("modern-weapons.mace.launch-min-distance", 2.0D);
         defaults.put("modern-weapons.mace.launch-max-distance", 10.0D);
         defaults.put("modern-weapons.mace.miss-chance-percent", 10.0D);
         defaults.put("modern-weapons.mace.miss-offset-degrees", 6.0D);
@@ -324,7 +328,18 @@ public final class ConfigMigrator {
         defaults.put("tactics.cart-pvp.flame-bow-chance-percent", 35.0D);
         defaults.put("tactics.cart-pvp.cart-followup-delay-ms", 900L);
 
+        defaults.put("tactics.consumables.enabled", true);
+        defaults.put("tactics.consumables.food-level-threshold", 14);
+        defaults.put("tactics.consumables.saturation-threshold", 1.0D);
+        defaults.put("tactics.consumables.heal-health-ratio", 0.62D);
+        defaults.put("tactics.consumables.golden-apple-health-ratio", 0.72D);
+        defaults.put("tactics.consumables.buff-safe-distance", 8.0D);
+        defaults.put("tactics.consumables.debuff-max-distance", 8.0D);
+        defaults.put("tactics.consumables.debuff-chance-percent", 35.0D);
+
         defaults.put("tactics.bow.min-distance", 5.0D);
+        defaults.put("tactics.bow.melee-switch-distance", 4.25D);
+        defaults.put("tactics.bow.melee-return-distance", 7.0D);
         defaults.put("tactics.bow.max-distance", 32.0D);
         defaults.put("tactics.bow.preferred-distance", 16.0D);
         defaults.put("tactics.bow.draw-min-ticks", 18);

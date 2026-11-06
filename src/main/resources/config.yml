@@ -1,4 +1,4 @@
-config-version: 10
+config-version: 11
 # ==========================================================
 #  PracticeBot - Configuration
 #  Author: THEMPGUY
@@ -351,7 +351,7 @@ modern-weapons:
     wind-charge-enabled: true
     wind-charge-launch-height: 7.0
     assisted-jump-without-wind-charge: false
-    launch-min-distance: 3.2
+    launch-min-distance: 2.0
     launch-max-distance: 10.0
     # Aim and misses keep aerial smashes from being guaranteed hits.
     miss-chance-percent: 10.0
@@ -963,6 +963,17 @@ tactics:
       wind-charge-lunge:
         enabled: true
 
+  consumables:
+    enabled: true
+    # Eat before hunger becomes critical so normal regeneration and sprinting remain available.
+    food-level-threshold: 14
+    saturation-threshold: 1.0
+    heal-health-ratio: 0.62
+    golden-apple-health-ratio: 0.72
+    buff-safe-distance: 8.0
+    debuff-max-distance: 8.0
+    debuff-chance-percent: 35.0
+
   pearl:
     enabled: true
     low-health-threshold: 0.35
@@ -980,6 +991,8 @@ tactics:
 
   bow:
     min-distance: 5.0
+    melee-switch-distance: 4.25
+    melee-return-distance: 7.0
     max-distance: 32.0
     preferred-distance: 16.0
     draw-min-ticks: 18

@@ -43,4 +43,24 @@ public final class MaceDifficultyTuning {
             "modern-weapons.mace." + setting
         );
     }
+
+    public static boolean getBoolean(
+        PracticeBotPlugin plugin,
+        BotTrait trait,
+        String setting,
+        boolean fallback,
+        String... legacyPaths
+    ) {
+        String tierPath = "modern-weapons.mace.difficulty-levels." +
+            difficultyFor(trait) + "." + setting;
+
+        return TemplateDifficultyTuning.getBoolean(
+            plugin,
+            trait,
+            setting,
+            fallback,
+            tierPath,
+            legacyPaths == null ? new String[0] : legacyPaths
+        );
+    }
 }

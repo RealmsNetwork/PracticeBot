@@ -85,12 +85,11 @@ public final class ModernWeaponCombat {
         }
 
         if (isSpear(item)) {
-            PaperItemDataBridge.AttackRangeData range =
-                PaperItemDataBridge.attackRange(item);
-
-            return range == null
-                ? SPEAR_MAX_REACH + SPEAR_HITBOX_MARGIN
-                : range.maxReach() + range.hitboxMargin();
+            // The combat controller performs the native STAB jab at close range.
+            // Do not let navigation stop at the spear component's 4.5-block max
+            // reach: that leaves the bot charging in place and body-blocking.
+            // Stop at the jab window so the controller releases use and stabs.
+            return 3.45D;
         }
 
         return configuredReach;
@@ -115,9 +114,26 @@ public final class ModernWeaponCombat {
             return;
         }
 
-        if ("spear_mace".equals(trait.getWeaponProfile()) ||
-            "spear_mace_elytra".equals(trait.getWeaponProfile())) {
+        String profile = trait.getWeaponProfile() == null ? "" :
+            trait.getWeaponProfile().trim().toLowerCase(java.util.Locale.ROOT);
+        if ("spear_mace".equals(profile) || "spear_mace_elytra".equals(profile)) {
             selectHybridWeapon(bot, target, trait);
+        } else if (profile.startsWith("mace")) {
+            if (!selectProfileItem(bot, item -> item.getType() == Material.MACE)) {
+                NmsCombatBridge.stopUsingItem(bot);
+                reset(trait);
+                return;
+            }
+        } else if (profile.startsWith("spear")) {
+            if (!selectProfileItem(bot, this::isSpear)) {
+                NmsCombatBridge.stopUsingItem(bot);
+                reset(trait);
+                return;
+            }
+        } else if ("bow".equals(profile) || "cart".equals(profile) || "cart_elytra".equals(profile)) {
+            selectProfileItem(bot, item -> item.getType() == Material.BOW);
+        } else if ("water".equals(profile)) {
+            selectProfileItem(bot, item -> item.getType() == Material.TRIDENT);
         }
 
         ItemStack item = bot.getInventory().getItemInMainHand();
@@ -418,6 +434,39 @@ public final class ModernWeaponCombat {
         else item.setAmount(item.getAmount() - 1);
     }
 
+    public boolean isDedicatedWeaponProfile(BotTrait trait) {
+        if (trait == null || trait.getWeaponProfile() == null) return false;
+        String profile = trait.getWeaponProfile().trim().toLowerCase(java.util.Locale.ROOT);
+        return profile.startsWith("mace") || profile.startsWith("spear") ||
+            "bow".equals(profile) || "cart".equals(profile) ||
+            "cart_elytra".equals(profile) || "water".equals(profile);
+    }
+
+    private boolean selectProfileItem(Player bot, java.util.function.Predicate<ItemStack> matches) {
+        PlayerInventory inventory = bot.getInventory();
+        ItemStack[] contents = inventory.getStorageContents();
+        int selected = -1;
+        for (int slot = 0; slot < contents.length; slot++) {
+            ItemStack item = contents[slot];
+            if (item != null && !item.getType().isAir() && matches.test(item)) {
+                selected = slot;
+                break;
+            }
+        }
+        if (selected < 0) return false;
+        if (selected < 9) {
+            inventory.setHeldItemSlot(selected);
+            return true;
+        }
+
+        int heldSlot = inventory.getHeldItemSlot();
+        ItemStack displaced = inventory.getItem(heldSlot);
+        ItemStack wanted = inventory.getItem(selected);
+        inventory.setItem(heldSlot, wanted);
+        inventory.setItem(selected, displaced);
+        return matches.test(inventory.getItemInMainHand());
+    }
+
     private void selectHybridWeapon(Player bot, Player target, BotTrait trait) {
         double distance = bot.getLocation().distance(target.getLocation());
         ItemStack targetWeapon = target.getInventory().getItemInMainHand();
@@ -439,17 +488,10 @@ public final class ModernWeaponCombat {
             (distance > spearReach && distance <= maceLaunchMax &&
                 !plugin.getConfig().getBoolean("modern-weapons.spear.wind-charge-approach.enabled", true));
 
-        Material wanted = useMace ? Material.MACE : null;
-        int selected = -1;
-        for (int slot = 0; slot < 9; slot++) {
-            ItemStack stack = bot.getInventory().getItem(slot);
-            if (stack == null || stack.getType().isAir()) continue;
-            if (wanted != null && stack.getType() == wanted) { selected = slot; break; }
-            if (wanted == null && stack.getType().name().endsWith("_SPEAR")) { selected = slot; break; }
-        }
-        if (selected >= 0 && bot.getInventory().getHeldItemSlot() != selected) {
-            bot.getInventory().setHeldItemSlot(selected);
-        }
+        java.util.function.Predicate<ItemStack> matches = useMace
+            ? stack -> stack.getType() == Material.MACE
+            : this::isSpear;
+        selectProfileItem(bot, matches);
     }
 
     private boolean shouldUseBreachSwap(Player bot, Player target) {
@@ -572,19 +614,28 @@ public final class ModernWeaponCombat {
     }
 
     private boolean attemptStunSlam(Player bot, Player target, BotTrait trait) {
-        boolean enabled = plugin.getConfig().getBoolean("modern-weapons.mace.stun-slam.enabled", false);
+        boolean enabled = MaceDifficultyTuning.getBoolean(
+            plugin, trait, "stun-slam-enabled", false,
+            "modern-weapons.mace.stun-slam.enabled"
+        );
         boolean requireShield = plugin.getConfig().getBoolean("modern-weapons.mace.stun-slam.require-shield", true);
-        int axeSlot = -1;
-        for (int slot = 0; slot < 9; slot++) {
-            ItemStack item = bot.getInventory().getItem(slot);
-            if (item != null && item.getType().name().endsWith("_AXE")) {
-                axeSlot = slot;
-                break;
-            }
-        }
+        int axeSlot = findAxeSlot(bot);
         if (!shouldAttemptStunSlam(enabled, requireShield, target.isBlocking(), axeSlot >= 0)) return false;
 
         int maceSlot = bot.getInventory().getHeldItemSlot();
+        boolean moveAxeFromStorage = axeSlot >= 9;
+        int originalAxeSlot = axeSlot;
+        if (moveAxeFromStorage) {
+            // addItem() may place the optional Stun Slam axe in slots 9-35.
+            // Temporarily exchange it with the held Mace so the axe action can
+            // execute without dropping or overwriting either item.
+            ItemStack axe = bot.getInventory().getItem(originalAxeSlot);
+            ItemStack mace = bot.getInventory().getItem(maceSlot);
+            bot.getInventory().setItem(maceSlot, axe);
+            bot.getInventory().setItem(originalAxeSlot, mace);
+            axeSlot = maceSlot;
+        }
+
         boolean axeActionSucceeded = false;
         try {
             bot.getInventory().setHeldItemSlot(axeSlot);
@@ -593,6 +644,12 @@ public final class ModernWeaponCombat {
         } catch (Throwable ex) {
             plugin.debugLog(() -> "Optional stun-slam axe step failed: " + ex.getMessage());
         } finally {
+            if (moveAxeFromStorage) {
+                ItemStack axe = bot.getInventory().getItem(maceSlot);
+                ItemStack mace = bot.getInventory().getItem(originalAxeSlot);
+                bot.getInventory().setItem(maceSlot, mace);
+                bot.getInventory().setItem(originalAxeSlot, axe);
+            }
             bot.getInventory().setHeldItemSlot(maceSlot);
         }
 
@@ -631,6 +688,18 @@ public final class ModernWeaponCombat {
             }
         }, delayTicks);
         return true;
+    }
+
+    private int findAxeSlot(Player player) {
+        ItemStack[] contents = player.getInventory().getStorageContents();
+        for (int slot = 0; slot < contents.length; slot++) {
+            ItemStack item = contents[slot];
+            if (item != null && !item.getType().isAir() &&
+                item.getType().name().endsWith("_AXE")) {
+                return slot;
+            }
+        }
+        return -1;
     }
 
     private int findHotbarSlot(Player player, Material material) {
@@ -807,7 +876,7 @@ public final class ModernWeaponCombat {
             : range.maxReach() + range.hitboxMargin();
         Vector direction = bot.getEyeLocation().getDirection().normalize();
         return bot.getWorld().rayTraceEntities(
-            bot.getEyeLocation(), direction, reach, 0.08D,
+            bot.getEyeLocation(), direction, reach, 0.30D,
             entity -> entity.getUniqueId().equals(target.getUniqueId())
         ) != null;
     }

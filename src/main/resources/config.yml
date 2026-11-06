@@ -633,6 +633,8 @@ template-difficulty:
   profiles:
     MACE:
       EASY:
+        # Enable the shield-stun axe setup before a Mace smash for this tier.
+        stun-slam-enabled: false
         elytra-start-min-distance: 12
         elytra-start-max-distance: 22
         elytra-launch-y: 0.42
@@ -641,6 +643,8 @@ template-difficulty:
         elytra-dive-distance: 3.6
         elytra-mace-dive-y: -1.1
       NORMAL:
+        # Enable the shield-stun axe setup before a Mace smash for this tier.
+        stun-slam-enabled: false
         elytra-start-min-distance: 11
         elytra-start-max-distance: 24
         elytra-launch-y: 0.46
@@ -649,6 +653,8 @@ template-difficulty:
         elytra-dive-distance: 3.8
         elytra-mace-dive-y: -1.22
       HARD:
+        # Enable the shield-stun axe setup before a Mace smash for this tier.
+        stun-slam-enabled: false
         elytra-start-min-distance: 10
         elytra-start-max-distance: 25
         elytra-launch-y: 0.5
@@ -657,6 +663,8 @@ template-difficulty:
         elytra-dive-distance: 4
         elytra-mace-dive-y: -1.32
       EXPERT:
+        # Enable the shield-stun axe setup before a Mace smash for this tier.
+        stun-slam-enabled: false
         elytra-start-min-distance: 9.5
         elytra-start-max-distance: 26
         elytra-launch-y: 0.54
@@ -665,6 +673,8 @@ template-difficulty:
         elytra-dive-distance: 4.2
         elytra-mace-dive-y: -1.4
       HACKER:
+        # Enable the shield-stun axe setup before a Mace smash for this tier.
+        stun-slam-enabled: false
         elytra-start-min-distance: 9
         elytra-start-max-distance: 27
         elytra-launch-y: 0.57
@@ -673,6 +683,8 @@ template-difficulty:
         elytra-dive-distance: 4.3
         elytra-mace-dive-y: -1.45
       MASTER:
+        # Enable the shield-stun axe setup before a Mace smash for this tier.
+        stun-slam-enabled: false
         elytra-start-min-distance: 8.5
         elytra-start-max-distance: 28
         elytra-launch-y: 0.6
@@ -681,6 +693,8 @@ template-difficulty:
         elytra-dive-distance: 4.4
         elytra-mace-dive-y: -1.5
       NIGHTMARE:
+        # Enable the shield-stun axe setup before a Mace smash for this tier.
+        stun-slam-enabled: false
         elytra-start-min-distance: 8
         elytra-start-max-distance: 30
         elytra-launch-y: 0.63

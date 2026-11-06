@@ -52,7 +52,7 @@ public class j {
                var3.getInventory().setItemInMainHand(this.createModernWeapon(var2));
             }
 
-            this.applyTacticKit(var3, var2.getWeaponProfile(), var14);
+            this.applyTacticKit(var3, var2, var14);
 
             if (var2.isShieldInMainHand()) {
                var3.getInventory().setItemInMainHand(this.F());
@@ -312,9 +312,9 @@ public class j {
       return this.E();
    }
 
-   private void applyTacticKit(Player player, String profile, FileConfiguration defaults) {
-      if (profile == null) return;
-      String normalized = profile.toLowerCase(Locale.ROOT);
+   private void applyTacticKit(Player player, BotTrait trait, FileConfiguration defaults) {
+      if (trait == null || trait.getWeaponProfile() == null) return;
+      String normalized = trait.getWeaponProfile().toLowerCase(Locale.ROOT);
 
       if (normalized.endsWith("_elytra")) {
          ItemStack elytra = new ItemStack(Material.ELYTRA);
@@ -346,7 +346,10 @@ public class j {
 
       if (normalized.startsWith("mace") || normalized.startsWith("spear_mace")) {
          this.giveWindCharges(player, defaults, "weapon.mace.wind-charges", 16);
-         if (this.ax.getConfig().getBoolean("modern-weapons.mace.stun-slam.enabled", false)) {
+         if (com.sheldera.practicebot.MaceDifficultyTuning.getBoolean(
+            this.ax, trait, "stun-slam-enabled", false,
+            "modern-weapons.mace.stun-slam.enabled"
+         )) {
             ItemStack stunAxe = new ItemStack(Material.NETHERITE_AXE);
             this.b(stunAxe, "sharpness", 5);
             ItemMeta stunAxeMeta = stunAxe.getItemMeta();

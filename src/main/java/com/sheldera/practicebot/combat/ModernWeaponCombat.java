@@ -619,17 +619,23 @@ public final class ModernWeaponCombat {
             "modern-weapons.mace.stun-slam.enabled"
         );
         boolean requireShield = plugin.getConfig().getBoolean("modern-weapons.mace.stun-slam.require-shield", true);
-        int axeSlot = -1;
-        for (int slot = 0; slot < 9; slot++) {
-            ItemStack item = bot.getInventory().getItem(slot);
-            if (item != null && item.getType().name().endsWith("_AXE")) {
-                axeSlot = slot;
-                break;
-            }
-        }
+        int axeSlot = findAxeSlot(bot);
         if (!shouldAttemptStunSlam(enabled, requireShield, target.isBlocking(), axeSlot >= 0)) return false;
 
         int maceSlot = bot.getInventory().getHeldItemSlot();
+        boolean moveAxeFromStorage = axeSlot >= 9;
+        int originalAxeSlot = axeSlot;
+        if (moveAxeFromStorage) {
+            // addItem() may place the optional Stun Slam axe in slots 9-35.
+            // Temporarily exchange it with the held Mace so the axe action can
+            // execute without dropping or overwriting either item.
+            ItemStack axe = bot.getInventory().getItem(originalAxeSlot);
+            ItemStack mace = bot.getInventory().getItem(maceSlot);
+            bot.getInventory().setItem(maceSlot, axe);
+            bot.getInventory().setItem(originalAxeSlot, mace);
+            axeSlot = maceSlot;
+        }
+
         boolean axeActionSucceeded = false;
         try {
             bot.getInventory().setHeldItemSlot(axeSlot);
@@ -638,6 +644,12 @@ public final class ModernWeaponCombat {
         } catch (Throwable ex) {
             plugin.debugLog(() -> "Optional stun-slam axe step failed: " + ex.getMessage());
         } finally {
+            if (moveAxeFromStorage) {
+                ItemStack axe = bot.getInventory().getItem(maceSlot);
+                ItemStack mace = bot.getInventory().getItem(originalAxeSlot);
+                bot.getInventory().setItem(maceSlot, mace);
+                bot.getInventory().setItem(originalAxeSlot, axe);
+            }
             bot.getInventory().setHeldItemSlot(maceSlot);
         }
 
@@ -676,6 +688,18 @@ public final class ModernWeaponCombat {
             }
         }, delayTicks);
         return true;
+    }
+
+    private int findAxeSlot(Player player) {
+        ItemStack[] contents = player.getInventory().getStorageContents();
+        for (int slot = 0; slot < contents.length; slot++) {
+            ItemStack item = contents[slot];
+            if (item != null && !item.getType().isAir() &&
+                item.getType().name().endsWith("_AXE")) {
+                return slot;
+            }
+        }
+        return -1;
     }
 
     private int findHotbarSlot(Player player, Material material) {

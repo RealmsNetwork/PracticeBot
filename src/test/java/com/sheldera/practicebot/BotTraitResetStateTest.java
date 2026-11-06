@@ -30,6 +30,7 @@ class BotTraitResetStateTest {
         trait.tacticNextDecisionAt = 4000L;
         trait.tacticCooldownUntil = 3000L;
         trait.windChargeResetCooldownUntil = 2000L;
+        trait.spearWindChargeLaunchedAt = 1500L;
         trait.elytraFlightUntil = 1000L;
         trait.lastCartActionAt = 900L;
         trait.lastPingDriftAt = 800L;
@@ -56,6 +57,7 @@ class BotTraitResetStateTest {
         assertEquals(0L, trait.tacticNextDecisionAt);
         assertEquals(0L, trait.tacticCooldownUntil);
         assertEquals(0L, trait.windChargeResetCooldownUntil);
+        assertEquals(0L, trait.spearWindChargeLaunchedAt);
         assertEquals(0L, trait.elytraFlightUntil);
         assertEquals(0L, trait.lastCartActionAt);
         assertEquals(0L, trait.lastPingDriftAt);

@@ -47,8 +47,11 @@ public final class PvpEnvironment {
             "fastcrystalsreborn",
             "fastercrystals"
         );
+        // Treat the explicit Paper config key as the capability signal. Forks
+        // such as UniverseSpigot may not identify themselves as Paper/Purpur,
+        // even though they inherit Paper's configuration and behavior.
         this.attributeSwapAvailable = supportsAttributeSwapping(
-            paperFamily, equipmentSettingDetected, equipmentUpdatesOnActions
+            equipmentSettingDetected, equipmentUpdatesOnActions
         );
         logAttributeSwapCapability();
     }
@@ -127,9 +130,9 @@ public final class PvpEnvironment {
     }
 
     static boolean supportsAttributeSwapping(
-        boolean paperFamily, boolean settingDetected, boolean equipmentUpdatesOnActions
+        boolean settingDetected, boolean equipmentUpdatesOnActions
     ) {
-        return paperFamily && settingDetected && !equipmentUpdatesOnActions;
+        return settingDetected && !equipmentUpdatesOnActions;
     }
 
     private record EquipmentUpdateSetting(boolean value, boolean detected, String source) {}
@@ -177,24 +180,24 @@ public final class PvpEnvironment {
             plugin.getLogger().info(
                 "Attribute-swap techniques enabled: " + equipmentSettingSource +
                 " explicitly sets unsupported-settings.update-equipment-on-player-actions=false. " +
-                "These techniques rely on unsupported vanilla behavior and should be tested on this server build."
+                "Server brand=" + serverName + ". These techniques rely on unsupported vanilla behavior " +
+                "and should be tested on this server build."
             );
             return;
         }
 
         String reason;
-        if (!paperFamily) {
-            reason = "the server is not detected as Paper/Purpur";
-        } else if (!equipmentSettingDetected) {
-            reason = "unsupported-settings.update-equipment-on-player-actions was not explicitly found";
+        if (!equipmentSettingDetected) {
+            reason = "unsupported-settings.update-equipment-on-player-actions was not explicitly found in a recognized Paper config file";
         } else {
             reason = "unsupported-settings.update-equipment-on-player-actions is true";
         }
 
         plugin.getLogger().warning(
             "Attribute-swap techniques are DISABLED because " + reason + ". " +
-            "On supported Paper/Purpur builds, set unsupported-settings.update-equipment-on-player-actions: false " +
-            "in config/paper-global.yml and restart the server. Normal native weapon attacks remain enabled; " +
+            "On Paper-based servers and forks, set unsupported-settings.update-equipment-on-player-actions: false " +
+            "in config/paper-global.yml and restart the server. Detection is config-driven and does not depend " +
+            "on the server brand/name. Normal native weapon attacks remain enabled; " +
             "PracticeBot will not substitute a synthetic damage bonus for unsupported swapping."
         );
     }

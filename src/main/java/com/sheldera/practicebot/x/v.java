@@ -364,8 +364,9 @@ public class v {
          return;
       }
 
-      // A dedicated Mace profile must never silently fall back to sword damage
-      // when a StrikePractice kit has not placed its Mace in the held slot.
+      // Dedicated weapon profiles must not silently fall back to sword damage.
+      // Water is the exception when its intended Trident is actually in hand:
+      // that kit uses the normal native melee path rather than a special controller.
       if (this.modernWeaponCombat.isDedicatedWeaponProfile(var3)) {
          String profile = var3.getWeaponProfile() == null ? "" :
             var3.getWeaponProfile().trim().toLowerCase(java.util.Locale.ROOT);

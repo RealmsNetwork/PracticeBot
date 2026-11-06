@@ -926,10 +926,28 @@ tactics:
     mace-min-smash-fall: 2.0
 
   attribute-swap:
-    # Only turns on automatically when Paper reports
-    # unsupported-settings.update-equipment-on-player-actions=false.
+    # Requires Paper/Purpur and an explicit
+    # unsupported-settings.update-equipment-on-player-actions: false setting.
+    # These are same-tick hotbar transitions followed by native server actions;
+    # the feature is an unsupported vanilla quirk and must be tested per server build.
     enabled: true
     chance-percent: 10.0
+    force-on-lunge: true
+    techniques:
+      lunge-damage:
+        enabled: true
+      reach:
+        enabled: true
+        max-distance: 4.625
+      cooldown:
+        enabled: true
+      breach:
+        enabled: true
+        minimum-target-armor: 12.0
+      density:
+        enabled: true
+      wind-charge-lunge:
+        enabled: true
 
   pearl:
     enabled: true
@@ -949,12 +967,21 @@ tactics:
   cart-pvp:
     enabled: true
     cooldown-ms: 4500
-    min-distance: 2.5
-    max-distance: 7.5
+    # Do not attempt cart detonations at point-blank range. The TNT minecart
+    # explosion is real server damage and must not be treated as harmless.
+    min-distance: 5.5
+    max-distance: 8.0
+    self-safe-distance: 6.0
+    plan-timeout-ms: 6500
     fuse-ticks: 35
     rail-search-radius: 2
-    cart-followup-delay-ms: 900
-    flame-bow-chance-percent: 35.0
+    rail-side-offset: 1.05
+    reaction-delay-ms: 180
+    look-down-delay-ms: 250
+    rail-look-delay-ms: 220
+    arrow-aim-delay-ms: 850
+    arrow-speed: 3.15
+    followup-delay-ms: 900
 
 # ----------------------------------------------------------
 #  SHIELD SYSTEM

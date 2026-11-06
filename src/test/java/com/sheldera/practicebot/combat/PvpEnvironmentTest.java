@@ -7,10 +7,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PvpEnvironmentTest {
     @Test
-    void attributeSwapRequiresPaperAndAnExplicitFalseSetting() {
-        assertTrue(PvpEnvironment.supportsAttributeSwapping(true, true, false));
-        assertFalse(PvpEnvironment.supportsAttributeSwapping(true, true, true));
-        assertFalse(PvpEnvironment.supportsAttributeSwapping(true, false, false));
-        assertFalse(PvpEnvironment.supportsAttributeSwapping(false, true, false));
+    void attributeSwapUsesExplicitPaperConfigValueRegardlessOfServerBrand() {
+        // The server implementation name is deliberately not part of this gate.
+        assertTrue(PvpEnvironment.supportsAttributeSwapping(true, false));
+    }
+
+    @Test
+    void attributeSwapRequiresExplicitFalseSetting() {
+        assertFalse(PvpEnvironment.supportsAttributeSwapping(true, true));
+        assertFalse(PvpEnvironment.supportsAttributeSwapping(false, false));
     }
 }

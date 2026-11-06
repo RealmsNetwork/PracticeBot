@@ -51,17 +51,44 @@ public final class MaceDifficultyTuning {
         boolean fallback,
         String... legacyPaths
     ) {
-        String tierPath = "modern-weapons.mace.difficulty-levels." +
-            difficultyFor(trait) + "." + setting;
-        int legacyCount = legacyPaths == null ? 0 : legacyPaths.length;
-        String[] paths = new String[legacyCount + 1];
-        paths[0] = tierPath;
-        if (legacyCount > 0) {
-            System.arraycopy(legacyPaths, 0, paths, 1, legacyCount);
+        if (plugin == null || setting == null || setting.isBlank()) {
+            return fallback;
         }
 
-        return TemplateDifficultyTuning.getBoolean(
-            plugin, trait, setting, fallback, paths
-        );
+        String tier = difficultyFor(trait);
+        String kit = TemplateDifficultyTuning.kitFor(trait);
+        org.bukkit.configuration.file.FileConfiguration config = plugin.getConfig();
+
+        // Preserve the standard resolver's kit > profile > defaults precedence.
+        if (!kit.isEmpty()) {
+            String kitPath = "template-difficulty.kits." +
+                kit + "." + tier + "." + setting;
+            if (config.contains(kitPath)) return config.getBoolean(kitPath, fallback);
+        }
+
+        // Hybrid spear_mace profiles are classified as SPEAR by the shared
+        // profile resolver, but Stun Slam is specifically a Mace capability.
+        String maceProfilePath = "template-difficulty.profiles.MACE." +
+            tier + "." + setting;
+        if (config.contains(maceProfilePath)) {
+            return config.getBoolean(maceProfilePath, fallback);
+        }
+
+        String defaultPath = "template-difficulty.defaults." +
+            tier + "." + setting;
+        if (config.contains(defaultPath)) return config.getBoolean(defaultPath, fallback);
+
+        String tierPath = "modern-weapons.mace.difficulty-levels." +
+            tier + "." + setting;
+        if (config.contains(tierPath)) return config.getBoolean(tierPath, fallback);
+
+        if (legacyPaths != null) {
+            for (String path : legacyPaths) {
+                if (path != null && !path.isBlank() && config.contains(path)) {
+                    return config.getBoolean(path, fallback);
+                }
+            }
+        }
+        return fallback;
     }
 }

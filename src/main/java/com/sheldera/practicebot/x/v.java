@@ -364,6 +364,12 @@ public class v {
          return;
       }
 
+      // A dedicated Mace profile must never silently fall back to sword damage
+      // when a StrikePractice kit has not placed its Mace in the held slot.
+      if (this.modernWeaponCombat.isDedicatedMaceProfile(var3)) {
+         return;
+      }
+
       if (var2.getGameMode() != GameMode.SPECTATOR) {
          this.a(var1, var2);
          var3.lastAttackTime = var5;

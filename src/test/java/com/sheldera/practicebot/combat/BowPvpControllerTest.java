@@ -9,6 +9,14 @@ import org.junit.jupiter.api.Test;
 
 class BowPvpControllerTest {
     @Test
+    void bowProfileSwitchesToMeleeAtCloseRangeAndUsesHysteresisOnReturn() {
+        assertTrue(PvpTacticsEngine.shouldUseBowMelee(4.0D, false, true, 4.25D, 7.0D));
+        assertTrue(PvpTacticsEngine.shouldUseBowMelee(6.0D, true, true, 4.25D, 7.0D));
+        assertTrue(!PvpTacticsEngine.shouldUseBowMelee(7.0D, true, true, 4.25D, 7.0D));
+        assertTrue(!PvpTacticsEngine.shouldUseBowMelee(3.0D, false, false, 4.25D, 7.0D));
+    }
+
+    @Test
     void bowChargeUsesVanillaChargeCurveAndCapsAtFullPower() {
         assertEquals(0.0D, BowPvpController.bowLaunchSpeed(0), 1.0E-9D);
         assertEquals(1.25D, BowPvpController.bowLaunchSpeed(10), 1.0E-9D);

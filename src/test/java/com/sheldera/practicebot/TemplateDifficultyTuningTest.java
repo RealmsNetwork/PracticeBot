@@ -81,13 +81,16 @@ class TemplateDifficultyTuningTest {
                 config = YamlConfiguration.loadConfiguration(reader);
             }
 
-            assertEquals(10, config.getInt("config-version"));
+            assertEquals(11, config.getInt("config-version"));
             assertTrue(config.getBoolean("modern-weapons.spear.wind-charge-approach.enabled"));
             assertFalse(config.getBoolean("modern-weapons.mace.stun-slam.enabled"));
             assertTrue(config.getBoolean("tactics.attribute-swap.enabled"));
             assertTrue(config.getBoolean("tactics.attribute-swap.force-on-lunge"));
             assertEquals(14.0D, config.getDouble("tactics.bow.miss-chance-percent"));
             assertEquals(24, config.getInt("tactics.bow.draw-max-ticks"));
+            assertTrue(config.getBoolean("tactics.consumables.enabled"));
+            assertEquals(4.25D, config.getDouble("tactics.bow.melee-switch-distance"));
+            assertEquals(2.0D, config.getDouble("modern-weapons.mace.launch-min-distance"));
             assertTrue(config.getDouble("tactics.cart-pvp.max-distance") <= 8.0D);
 
             String[] tiers = {

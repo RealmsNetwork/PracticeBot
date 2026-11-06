@@ -378,7 +378,9 @@ public class v {
          // permit a sword fallback for Mace, Spear, Bow, or missing Cart gear.
          boolean nativeCartCloseRangeMelee = profile.startsWith("cart") &&
             heldItem != null && heldItem.getType().name().endsWith("_SWORD");
-         if (!nativeWaterTridentMelee && !nativeCartCloseRangeMelee) return;
+         boolean nativeBowCloseRangeMelee = "bow".equals(profile) && heldItem != null &&
+            (heldItem.getType().name().endsWith("_SWORD") || heldItem.getType().name().endsWith("_AXE"));
+         if (!nativeWaterTridentMelee && !nativeCartCloseRangeMelee && !nativeBowCloseRangeMelee) return;
       }
 
       if (var2.getGameMode() != GameMode.SPECTATOR) {

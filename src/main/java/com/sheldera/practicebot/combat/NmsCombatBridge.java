@@ -7,6 +7,10 @@ import java.lang.reflect.Modifier;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Projectile;
+import org.bukkit.inventory.ItemStack;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Dispatches the same serverbound packet handlers used by vanilla clients for
@@ -82,14 +86,21 @@ public final class NmsCombatBridge {
         try {
             Object handle = handle(player);
             if (isHandleUsingItem(handle)) return true;
-            Object connection = connection(handle);
             ClassLoader loader = handle.getClass().getClassLoader();
             Class<?> handType = Class.forName("net.minecraft.world.InteractionHand", true, loader);
             @SuppressWarnings({"rawtypes", "unchecked"})
             Object mainHand = Enum.valueOf((Class<? extends Enum>) handType.asSubclass(Enum.class), "MAIN_HAND");
             Location location = player.getLocation();
             Object packet = createUseItemPacket(loader, mainHand, location.getYaw(), location.getPitch());
-            invokeCompatible(connection, "handleUseItem", packet);
+
+            // Packetless Citizens connections still have a valid game-mode
+            // object, so don't make connection discovery a hard prerequisite.
+            try {
+                Object connection = connection(handle);
+                invokeCompatible(connection, "handleUseItem", packet);
+            } catch (Throwable packetFailure) {
+                lastFailure = rootMessage(packetFailure);
+            }
 
             // A few NPC connection implementations do not forward packets to
             // their listener. Fall back to the same ServerPlayerGameMode method
@@ -102,6 +113,89 @@ public final class NmsCombatBridge {
             lastFailure = rootMessage(throwable);
             return false;
         }
+    }
+
+    /**
+     * Performs one vanilla main-hand right-click interaction. Unlike
+     * startUsingMainHand this also supports instant-use items such as Wind
+     * Charges, Ender Pearls and splash potions, which create a projectile
+     * without entering a sustained active-item state.
+     */
+    public static boolean useMainHand(Player player) {
+        if (player == null || player.isDead()) return false;
+        try {
+            Object handle = handle(player);
+            ClassLoader loader = handle.getClass().getClassLoader();
+            Class<?> handType = Class.forName("net.minecraft.world.InteractionHand", true, loader);
+            @SuppressWarnings({"rawtypes", "unchecked"})
+            Object mainHand = Enum.valueOf((Class<? extends Enum>) handType.asSubclass(Enum.class), "MAIN_HAND");
+            Location location = player.getLocation();
+            Object packet = createUseItemPacket(loader, mainHand, location.getYaw(), location.getPitch());
+            ItemStack heldBefore = player.getInventory().getItemInMainHand();
+            ItemStack before = heldBefore == null ? new ItemStack(org.bukkit.Material.AIR) : heldBefore.clone();
+            Set<java.util.UUID> beforeProjectiles = nearbyProjectileIds(player);
+
+            Throwable packetFailure = null;
+            try {
+                Object connection = connection(handle);
+                invokeCompatible(connection, "handleUseItem", packet);
+            } catch (Throwable failure) {
+                // Citizens NPC connections can exist without a functioning
+                // packet listener. Continue to the native game-mode path.
+                packetFailure = failure;
+            }
+            if (useWasObserved(player, handle, before, beforeProjectiles)) {
+                lastFailure = null;
+                return true;
+            }
+
+            // This is the same ServerPlayerGameMode.useItem method called by
+            // the vanilla packet handler. It is required for packetless NPCs
+            // and preserves the item's real use behavior and particles.
+            try {
+                startUsingViaGameMode(handle, mainHand);
+            } catch (Throwable fallbackFailure) {
+                if (packetFailure != null) fallbackFailure.addSuppressed(packetFailure);
+                throw fallbackFailure;
+            }
+            if (useWasObserved(player, handle, before, beforeProjectiles)) {
+                lastFailure = null;
+                return true;
+            }
+            IllegalStateException noUse = new IllegalStateException(
+                "Native main-hand use produced no active use or projectile.");
+            if (packetFailure != null) noUse.addSuppressed(packetFailure);
+            throw noUse;
+        } catch (Throwable throwable) {
+            lastFailure = rootMessage(throwable);
+            return false;
+        }
+    }
+
+    private static boolean useWasObserved(Player player, Object handle, ItemStack before,
+                                          Set<java.util.UUID> beforeProjectiles) throws ReflectiveOperationException {
+        if (isHandleUsingItem(handle)) return true;
+        ItemStack after = player.getInventory().getItemInMainHand();
+        if (after == null || after.getType() != before.getType() || after.getAmount() < before.getAmount()) return true;
+        for (Entity entity : player.getWorld().getNearbyEntities(player.getLocation(), 4.0D, 4.0D, 4.0D)) {
+            boolean firedByBot = entity instanceof Projectile projectile && player.equals(projectile.getShooter());
+            // WindCharge implementations differ across Paper forks; include
+            // the native entity type even if the API wrapper isn't a Projectile.
+            boolean windCharge = "WIND_CHARGE".equals(entity.getType().name());
+            if ((firedByBot || windCharge) && !beforeProjectiles.contains(entity.getUniqueId())) return true;
+        }
+        return false;
+    }
+
+    private static Set<java.util.UUID> nearbyProjectileIds(Player player) {
+        Set<java.util.UUID> ids = new HashSet<>();
+        for (Entity entity : player.getWorld().getNearbyEntities(player.getLocation(), 4.0D, 4.0D, 4.0D)) {
+            if ((entity instanceof Projectile projectile && player.equals(projectile.getShooter())) ||
+                "WIND_CHARGE".equals(entity.getType().name())) {
+                ids.add(entity.getUniqueId());
+            }
+        }
+        return ids;
     }
 
     /** Releases the held item through RELEASE_USE_ITEM, then the native release method if needed. */

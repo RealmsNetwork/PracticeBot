@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.8.14
+
+- Added native food and potion use for player NPCs, including custom food-component items, golden apples, healing/buff/debuff potions, and configurable consumable timing.
+- Routed Ender Pearl and Wind Charge throws through the server's native right-click item-use handler, with a game-mode fallback for packetless Citizens NPC connections.
+- Improved Mace smash reliability by tracking the actual apex-to-current fall distance, synchronizing it with the native entity fall-distance field, and resetting one-attempt-per-fall state after every landing.
+- Require more than 1.5 blocks of fall distance before attempting a Mace smash, avoiding a normal-damage hit at the bonus-damage boundary; improved target ray-hit tolerance.
+- Added regression coverage for food decisions, Mace fall tracking, and smash thresholds.
+
 ## 1.8.13
 
 - Fixed dedicated Mace, Spear, and hybrid kit weapon selection so intended weapons are found across the full inventory and displaced held items are preserved.

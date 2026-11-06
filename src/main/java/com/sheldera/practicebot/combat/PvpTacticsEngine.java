@@ -10,24 +10,28 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Player;
-import org.bukkit.entity.EnderPearl;
-import org.bukkit.entity.WindCharge;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
 
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class PvpTacticsEngine {
     private final PracticeBotPlugin plugin;
     private final PvpEnvironment environment;
     private final CartPvpController cartController;
     private final BowPvpController bowController;
+    private final PvpConsumableController consumables;
+    private final Map<UUID, Boolean> bowMeleeModes = new ConcurrentHashMap<>();
 
     public PvpTacticsEngine(PracticeBotPlugin plugin) {
         this.plugin = plugin;
         this.environment = new PvpEnvironment(plugin);
         this.cartController = new CartPvpController(plugin);
         this.bowController = new BowPvpController(plugin);
+        this.consumables = new PvpConsumableController(plugin);
 
         plugin.debugLog(() -> "PvP environment: " + environment.summary());
 
@@ -52,14 +56,42 @@ public final class PvpTacticsEngine {
         if (bot == null || target == null || trait == null ||
             bot.isDead() || target.isDead() ||
             !bot.getWorld().equals(target.getWorld())) {
-            if (bot != null) bowController.cancel(bot);
+            if (bot != null) {
+                bowController.cancel(bot);
+                consumables.cancel(bot);
+                bowMeleeModes.remove(bot.getUniqueId());
+            }
             return false;
         }
 
         initializeLatencyProfile(trait);
 
+        // Knockback is part of the core combat loop. Do not let a ranged
+        // controller swallow it; the normal AI must retain gravity recovery,
+        // target reacquisition and attack timing while the NPC is airborne.
+        if (trait.wasKnockedBack) {
+            bowController.cancel(bot);
+            return false;
+        }
+
+        if (consumables.tick(bot, target, trait, now)) return true;
+        if (tryPearlDisengage(bot, target, trait, now)) return false;
+
         String weaponProfile = trait.getWeaponProfile();
         if ("bow".equals(weaponProfile)) {
+            double distance = bot.getLocation().distance(target.getLocation());
+            boolean hasMelee = hasBowProfileMeleeWeapon(bot);
+            boolean meleeMode = shouldUseBowMelee(distance,
+                bowMeleeModes.getOrDefault(bot.getUniqueId(), false), hasMelee,
+                plugin.getConfig().getDouble("tactics.bow.melee-switch-distance", 4.25D),
+                plugin.getConfig().getDouble("tactics.bow.melee-return-distance", 7.0D));
+            if (meleeMode && hasMelee) {
+                bowMeleeModes.put(bot.getUniqueId(), true);
+                selectBowProfileMeleeWeapon(bot);
+                bowController.cancel(bot);
+                return false;
+            }
+            bowMeleeModes.remove(bot.getUniqueId());
             bowController.tick(npc, bot, target, trait, now);
             return true;
         }
@@ -68,10 +100,10 @@ public final class PvpTacticsEngine {
         // at range, then hand control back to normal melee combat when the target
         // closes inside bow range. Previously UHC bots carried a bow but never
         // selected or fired it because only the exact "bow" profile was handled.
-        if ("uhc".equals(weaponProfile)) {
+        if ("uhc".equals(weaponProfile) && hasBowAndArrow(bot)) {
             double distance = bot.getLocation().distance(target.getLocation());
             double bowMinimum = Math.max(2.0D, plugin.getConfig().getDouble("tactics.bow.min-distance", 5.0D));
-            if (distance > bowMinimum + 1.0D || !bot.hasLineOfSight(target)) {
+            if (distance > bowMinimum || !bot.hasLineOfSight(target)) {
                 bowController.tick(npc, bot, target, trait, now);
                 return true;
             }
@@ -85,10 +117,6 @@ public final class PvpTacticsEngine {
 
         trait.tacticNextDecisionAt = now + nextDecisionDelay(trait);
         updateHumanAim(bot, target, trait);
-
-        if (tryPearlDisengage(bot, target, trait, now)) {
-            return false;
-        }
 
         String profile = trait.getWeaponProfile();
 
@@ -112,6 +140,74 @@ public final class PvpTacticsEngine {
 
         applyHumanMovementNoise(bot, target, trait, now);
         return false;
+    }
+
+    private boolean hasBowAndArrow(Player bot) {
+        if (bot == null) return false;
+        boolean bow = false;
+        boolean arrow = false;
+        for (ItemStack item : bot.getInventory().getStorageContents()) {
+            if (item == null || item.getType().isAir()) continue;
+            if (item.getType() == Material.BOW) bow = true;
+            if (item.getType() == Material.ARROW || item.getType() == Material.SPECTRAL_ARROW ||
+                item.getType() == Material.TIPPED_ARROW) arrow = true;
+            if (bow && arrow) return true;
+        }
+        ItemStack offhand = bot.getInventory().getItemInOffHand();
+        if (offhand != null && (offhand.getType() == Material.ARROW ||
+            offhand.getType() == Material.SPECTRAL_ARROW || offhand.getType() == Material.TIPPED_ARROW)) arrow = true;
+        return bow && arrow;
+    }
+
+    static boolean shouldUseBowMelee(double distance, boolean currentlyMelee, boolean hasMeleeWeapon,
+                                     double switchDistance, double returnDistance) {
+        if (!hasMeleeWeapon || !Double.isFinite(distance)) return false;
+        return currentlyMelee ? distance < returnDistance : distance <= switchDistance;
+    }
+
+    private boolean hasBowProfileMeleeWeapon(Player bot) {
+        if (bot == null) return false;
+        ItemStack held = bot.getInventory().getItemInMainHand();
+        if (isSwordOrAxe(held)) return true;
+        for (ItemStack item : bot.getInventory().getStorageContents()) {
+            if (isSwordOrAxe(item)) return true;
+        }
+        return false;
+    }
+
+    private boolean selectBowProfileMeleeWeapon(Player bot) {
+        if (bot == null) return false;
+        var inventory = bot.getInventory();
+        ItemStack held = inventory.getItemInMainHand();
+        if (held != null && held.getType().name().endsWith("_SWORD")) return true;
+        ItemStack[] contents = inventory.getStorageContents();
+        int selected = -1;
+        // Prefer a sword over an axe for the BowPvP kit's normal close-range combo.
+        for (int pass = 0; pass < 2 && selected < 0; pass++) {
+            for (int slot = 0; slot < contents.length; slot++) {
+                ItemStack item = contents[slot];
+                if (item == null || item.getType().isAir()) continue;
+                String name = item.getType().name();
+                boolean match = pass == 0 ? name.endsWith("_SWORD") : name.endsWith("_AXE");
+                if (match) { selected = slot; break; }
+            }
+        }
+        if (selected < 0) return isSwordOrAxe(held);
+        if (selected < 9) {
+            inventory.setHeldItemSlot(selected);
+        } else {
+            int heldSlot = inventory.getHeldItemSlot();
+            ItemStack displaced = inventory.getItem(heldSlot);
+            inventory.setItem(heldSlot, inventory.getItem(selected));
+            inventory.setItem(selected, displaced);
+        }
+        return isSwordOrAxe(inventory.getItemInMainHand());
+    }
+
+    private boolean isSwordOrAxe(ItemStack item) {
+        if (item == null || item.getType().isAir()) return false;
+        String name = item.getType().name();
+        return name.endsWith("_SWORD") || name.endsWith("_AXE");
     }
 
     public boolean shouldUseAttributeSwap(BotTrait trait, long now) {
@@ -170,29 +266,47 @@ public final class PvpTacticsEngine {
             return false;
         }
 
-        ItemStack pearl = find(bot, Material.ENDER_PEARL);
-        if (pearl == null || pearl.getAmount() <= 0) {
-            return false;
-        }
+        int pearlSlot = findSlot(bot, Material.ENDER_PEARL);
+        if (pearlSlot < 0) return false;
 
         Vector away = bot.getLocation().toVector()
             .subtract(target.getLocation().toVector());
         away.setY(0.12D);
-
-        if (away.lengthSquared() < 1.0E-5D) {
-            return false;
-        }
-
+        if (away.lengthSquared() < 1.0E-5D) return false;
         away.normalize();
 
-        try {
-            bot.launchProjectile(EnderPearl.class, away);
-        } catch (Throwable ex) {
-            plugin.debugLog(() -> "Pearl disengage failed: " + ex.getMessage());
+        // Cancel a bow draw before changing hands, then use the pearl through
+        // the same native right-click handler as a real player. The server
+        // consumes the stack and creates the actual Ender Pearl projectile.
+        bowController.cancel(bot);
+        NmsCombatBridge.stopUsingItem(bot);
+        var inventory = bot.getInventory();
+        int previousSlot = inventory.getHeldItemSlot();
+        boolean swapped = pearlSlot >= 9;
+        if (swapped) {
+            ItemStack displaced = inventory.getItem(previousSlot);
+            inventory.setItem(previousSlot, inventory.getItem(pearlSlot));
+            inventory.setItem(pearlSlot, displaced);
+        } else {
+            inventory.setHeldItemSlot(pearlSlot);
+        }
+        Location aim = bot.getLocation().clone();
+        aim.setDirection(away);
+        bot.setRotation(aim.getYaw(), aim.getPitch());
+        boolean used = NmsCombatBridge.useMainHand(bot);
+        if (swapped) {
+            ItemStack remainingPearls = inventory.getItem(previousSlot);
+            ItemStack displaced = inventory.getItem(pearlSlot);
+            inventory.setItem(pearlSlot, remainingPearls);
+            inventory.setItem(previousSlot, displaced);
+        } else {
+            inventory.setHeldItemSlot(previousSlot);
+        }
+        bot.updateInventory();
+        if (!used) {
+            plugin.debugLog(() -> "Pearl disengage failed: " + NmsCombatBridge.lastFailure());
             return false;
         }
-
-        pearl.setAmount(pearl.getAmount() - 1);
 
         trait.lastTactic = "pearl-disengage";
         trait.tacticCooldownUntil = now + TemplateDifficultyTuning.getLong(plugin, trait, "pearl-cooldown-ms", 7000L, "tactics.pearl.cooldown-ms");
@@ -397,8 +511,8 @@ public final class PvpTacticsEngine {
             "modern-weapons.spear.wind-charge-approach.max-distance", 10.0D);
         if (distance < minimum || distance > maximum) return false;
 
-        ItemStack charges = find(bot, Material.WIND_CHARGE);
-        if (charges == null || charges.getAmount() <= 0) return false;
+        int chargeSlot = findSlot(bot, Material.WIND_CHARGE);
+        if (chargeSlot < 0) return false;
 
         Vector toward = target.getLocation().toVector()
             .subtract(bot.getLocation().toVector());
@@ -411,26 +525,13 @@ public final class PvpTacticsEngine {
         Vector launch = toward.clone().multiply(-0.32D)
             .add(new Vector(0.0D, -1.0D, 0.0D)).normalize();
         Location original = bot.getLocation().clone();
-        try {
-            bot.setRotation(original.getYaw(), 78.0F);
-            WindCharge projectile = bot.launchProjectile(WindCharge.class, launch);
-            if (projectile == null || !projectile.isValid()) {
-                bot.setRotation(original.getYaw(), original.getPitch());
-                return false;
-            }
-            charges.setAmount(charges.getAmount() - 1);
-            trait.spearWindChargeLaunchedAt = now;
-        } catch (Throwable ex) {
-            bot.setRotation(original.getYaw(), original.getPitch());
-            plugin.debugLog(() -> "Spear wind-charge approach failed: " + ex.getMessage());
+        Location aim = original.clone();
+        aim.setDirection(launch);
+        if (!useWindCharge(bot, chargeSlot, aim.getYaw(), aim.getPitch())) {
+            plugin.debugLog(() -> "Spear wind-charge approach failed: " + NmsCombatBridge.lastFailure());
             return false;
         }
-
-        Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            if (bot.isValid() && !bot.isDead()) {
-                bot.setRotation(original.getYaw(), original.getPitch());
-            }
-        }, 1L);
+        trait.spearWindChargeLaunchedAt = now;
         trait.windChargeResetCooldownUntil = now + plugin.getConfig().getLong(
             "modern-weapons.spear.wind-charge-approach.cooldown-ms", 1800L);
         trait.tacticCooldownUntil = now + 250L;
@@ -466,10 +567,8 @@ public final class PvpTacticsEngine {
             return false;
         }
 
-        ItemStack windCharges = find(bot, Material.WIND_CHARGE);
-        if (windCharges == null || windCharges.getAmount() <= 0) {
-            return false;
-        }
+        int windChargeSlot = findSlot(bot, Material.WIND_CHARGE);
+        if (windChargeSlot < 0) return false;
 
         double maxDistance = plugin.getConfig().getDouble(
             "tactics.wind-charge-reset.max-target-distance", 18.0D
@@ -487,23 +586,11 @@ public final class PvpTacticsEngine {
             "tactics.wind-charge-reset.plugin-pitch", 82.0D
         );
 
-        bot.setRotation(yaw, Math.max(75.0F, Math.min(90.0F, pluginPitch)));
-
-        Vector downward = new Vector(0.0D, -1.0D, 0.0D);
-
-        try {
-            WindCharge projectile = bot.launchProjectile(WindCharge.class, downward);
-            if (projectile == null || !projectile.isValid()) {
-                bot.setRotation(yaw, originalPitch);
-                return false;
-            }
-            trait.spearWindChargeLaunchedAt = now;
-        } catch (Throwable ex) {
-            bot.setRotation(yaw, originalPitch);
+        if (!useWindCharge(bot, windChargeSlot, yaw, Math.max(75.0F, Math.min(90.0F, pluginPitch)))) {
+            plugin.debugLog(() -> "Wind Charge reset use failed: " + NmsCombatBridge.lastFailure());
             return false;
         }
-
-        windCharges.setAmount(windCharges.getAmount() - 1);
+        trait.spearWindChargeLaunchedAt = now;
 
         trait.windChargeResetCooldownUntil = now +
             plugin.getConfig().getLong(
@@ -683,6 +770,46 @@ public final class PvpTacticsEngine {
         Location view = player.getLocation().clone();
         view.setDirection(direction);
         player.setRotation(view.getYaw(), view.getPitch());
+    }
+
+    private boolean useWindCharge(Player bot, int chargeSlot, float yaw, float pitch) {
+        if (bot == null || chargeSlot < 0 || chargeSlot >= 36) return false;
+        var inventory = bot.getInventory();
+        int previousSlot = inventory.getHeldItemSlot();
+        boolean swapped = chargeSlot >= 9;
+        if (swapped) {
+            ItemStack displaced = inventory.getItem(previousSlot);
+            inventory.setItem(previousSlot, inventory.getItem(chargeSlot));
+            inventory.setItem(chargeSlot, displaced);
+        } else {
+            inventory.setHeldItemSlot(chargeSlot);
+        }
+        Location original = bot.getLocation().clone();
+        try {
+            bot.setRotation(yaw, pitch);
+            bot.swingMainHand();
+            return NmsCombatBridge.useMainHand(bot);
+        } finally {
+            if (swapped) {
+                ItemStack remainingCharge = inventory.getItem(previousSlot);
+                ItemStack displaced = inventory.getItem(chargeSlot);
+                inventory.setItem(chargeSlot, remainingCharge);
+                inventory.setItem(previousSlot, displaced);
+            } else {
+                inventory.setHeldItemSlot(previousSlot);
+            }
+            bot.setRotation(original.getYaw(), original.getPitch());
+            bot.updateInventory();
+        }
+    }
+
+    private int findSlot(Player player, Material material) {
+        ItemStack[] contents = player.getInventory().getStorageContents();
+        for (int slot = 0; slot < contents.length; slot++) {
+            ItemStack item = contents[slot];
+            if (item != null && item.getType() == material && item.getAmount() > 0) return slot;
+        }
+        return -1;
     }
 
     private ItemStack find(Player player, Material material) {

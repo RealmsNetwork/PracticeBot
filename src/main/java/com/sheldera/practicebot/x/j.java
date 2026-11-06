@@ -346,7 +346,10 @@ public class j {
 
       if (normalized.startsWith("mace") || normalized.startsWith("spear_mace")) {
          this.giveWindCharges(player, defaults, "weapon.mace.wind-charges", 16);
-         if (this.ax.getConfig().getBoolean("modern-weapons.mace.stun-slam.enabled", false)) {
+         if (com.sheldera.practicebot.MaceDifficultyTuning.getBoolean(
+            this.ax, var2, "stun-slam-enabled", false,
+            "modern-weapons.mace.stun-slam.enabled"
+         )) {
             ItemStack stunAxe = new ItemStack(Material.NETHERITE_AXE);
             this.b(stunAxe, "sharpness", 5);
             ItemMeta stunAxeMeta = stunAxe.getItemMeta();

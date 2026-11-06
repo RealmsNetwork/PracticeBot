@@ -367,7 +367,12 @@ public class v {
       // A dedicated Mace profile must never silently fall back to sword damage
       // when a StrikePractice kit has not placed its Mace in the held slot.
       if (this.modernWeaponCombat.isDedicatedWeaponProfile(var3)) {
-         return;
+         String profile = var3.getWeaponProfile() == null ? "" :
+            var3.getWeaponProfile().trim().toLowerCase(java.util.Locale.ROOT);
+         ItemStack heldItem = var1.getInventory().getItemInMainHand();
+         boolean nativeWaterTridentMelee = "water".equals(profile) &&
+            heldItem != null && heldItem.getType() == Material.TRIDENT;
+         if (!nativeWaterTridentMelee) return;
       }
 
       if (var2.getGameMode() != GameMode.SPECTATOR) {

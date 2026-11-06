@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.8.13
+
+- Fixed dedicated Mace, Spear, and hybrid kit weapon selection so intended weapons are found across the full inventory and displaced held items are preserved.
+- Prevented dedicated Mace, Spear, Bow, and other kit profiles from silently falling back to sword attacks when their required weapon is missing.
+- Improved Spear combat engagement by aligning attack reach with navigation range and widening the ray-hit margin to reduce bots stopping just outside jab range.
+- Added per-difficulty Mace Stun Slam configuration, disabled by default, and made axe handling work when the axe is outside the hotbar.
+- Fixed Cart PvP close-range melee so Cart bots can use their configured sword when the target gets within melee range.
+
 ## 1.8.12
 
 - Fixed Citizens bot knockback physics by restoring vanilla gravity and removing the custom gravity-off simulation that could leave bots floating.

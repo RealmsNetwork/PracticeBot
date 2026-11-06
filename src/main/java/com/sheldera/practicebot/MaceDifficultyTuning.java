@@ -53,14 +53,15 @@ public final class MaceDifficultyTuning {
     ) {
         String tierPath = "modern-weapons.mace.difficulty-levels." +
             difficultyFor(trait) + "." + setting;
+        int legacyCount = legacyPaths == null ? 0 : legacyPaths.length;
+        String[] paths = new String[legacyCount + 1];
+        paths[0] = tierPath;
+        if (legacyCount > 0) {
+            System.arraycopy(legacyPaths, 0, paths, 1, legacyCount);
+        }
 
         return TemplateDifficultyTuning.getBoolean(
-            plugin,
-            trait,
-            setting,
-            fallback,
-            tierPath,
-            legacyPaths == null ? new String[0] : legacyPaths
+            plugin, trait, setting, fallback, paths
         );
     }
 }

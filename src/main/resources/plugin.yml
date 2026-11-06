@@ -15,7 +15,7 @@ softdepend: [PlaceholderAPI, WindChargeReset, FastCrystals]
 commands:
   spawnbot:
     description: Spawn your personal PvP bot.
-    usage: "/spawnbot [normal|crystal|cart|cartelytra|mace|maceelytra|spear|spearelytra|spearmace|uhc|water]"
+    usage: "/spawnbot [normal|crystal|cart|cartelytra|mace|maceelytra|spear|spearelytra|spearmace|bow|uhc|water]"
     aliases: [bot]
 
   practicebot:

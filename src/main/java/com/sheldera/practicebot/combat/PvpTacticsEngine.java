@@ -4,6 +4,7 @@ import com.sheldera.practicebot.BotTrait;
 import com.sheldera.practicebot.MaceDifficultyTuning;
 import com.sheldera.practicebot.TemplateDifficultyTuning;
 import com.sheldera.practicebot.PracticeBotPlugin;
+import net.citizensnpcs.api.npc.NPC;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -20,11 +21,13 @@ public final class PvpTacticsEngine {
     private final PracticeBotPlugin plugin;
     private final PvpEnvironment environment;
     private final CartPvpController cartController;
+    private final BowPvpController bowController;
 
     public PvpTacticsEngine(PracticeBotPlugin plugin) {
         this.plugin = plugin;
         this.environment = new PvpEnvironment(plugin);
         this.cartController = new CartPvpController(plugin);
+        this.bowController = new BowPvpController(plugin);
 
         plugin.debugLog(() -> "PvP environment: " + environment.summary());
 
@@ -45,24 +48,32 @@ public final class PvpTacticsEngine {
         return environment;
     }
 
-    public void tick(Player bot, Player target, BotTrait trait, long now) {
+    public boolean tick(NPC npc, Player bot, Player target, BotTrait trait, long now) {
         if (bot == null || target == null || trait == null ||
             bot.isDead() || target.isDead() ||
             !bot.getWorld().equals(target.getWorld())) {
-            return;
+            if (bot != null) bowController.cancel(bot);
+            return false;
         }
 
         initializeLatencyProfile(trait);
 
+        if ("bow".equals(trait.getWeaponProfile())) {
+            bowController.tick(npc, bot, target, trait, now);
+            return true;
+        }
+
+        bowController.cancel(bot);
+
         if (now < trait.tacticNextDecisionAt) {
-            return;
+            return false;
         }
 
         trait.tacticNextDecisionAt = now + nextDecisionDelay(trait);
         updateHumanAim(bot, target, trait);
 
         if (tryPearlDisengage(bot, target, trait, now)) {
-            return;
+            return false;
         }
 
         String profile = trait.getWeaponProfile();
@@ -71,21 +82,22 @@ public final class PvpTacticsEngine {
             // A Spear-only bot may use the fall-reset tactic. Hybrid Spear/Mace
             // must preserve its fall so it can convert the launch into a smash.
             if (!profile.equals("spear_mace") &&
-                tryWindChargeReset(bot, target, trait, now)) return;
-            if (trySpearWindChargeApproach(bot, target, trait, now)) return;
+                tryWindChargeReset(bot, target, trait, now)) return false;
+            if (trySpearWindChargeApproach(bot, target, trait, now)) return false;
         }
 
         if (profile.endsWith("_elytra") &&
             tryElytraApproach(bot, target, trait, now, profile)) {
-            return;
+            return false;
         }
 
         if ("cart".equals(profile) || "cart_elytra".equals(profile)) {
             cartController.tick(bot, target, trait, now);
-            return;
+            return false;
         }
 
         applyHumanMovementNoise(bot, target, trait, now);
+        return false;
     }
 
     public boolean shouldUseAttributeSwap(BotTrait trait, long now) {

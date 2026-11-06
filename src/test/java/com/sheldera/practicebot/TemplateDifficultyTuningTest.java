@@ -81,11 +81,13 @@ class TemplateDifficultyTuningTest {
                 config = YamlConfiguration.loadConfiguration(reader);
             }
 
-            assertEquals(9, config.getInt("config-version"));
+            assertEquals(10, config.getInt("config-version"));
             assertTrue(config.getBoolean("modern-weapons.spear.wind-charge-approach.enabled"));
             assertFalse(config.getBoolean("modern-weapons.mace.stun-slam.enabled"));
             assertTrue(config.getBoolean("tactics.attribute-swap.enabled"));
             assertTrue(config.getBoolean("tactics.attribute-swap.force-on-lunge"));
+            assertEquals(14.0D, config.getDouble("tactics.bow.miss-chance-percent"));
+            assertEquals(24, config.getInt("tactics.bow.draw-max-ticks"));
             assertTrue(config.getDouble("tactics.cart-pvp.max-distance") <= 8.0D);
 
             String[] tiers = {
@@ -172,8 +174,10 @@ class TemplateDifficultyTuningTest {
             assertNotNull(stream);
             try (InputStreamReader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
                 YamlConfiguration inventory = YamlConfiguration.loadConfiguration(reader);
-                assertEquals(4, inventory.getInt("inventory-config-version"));
+                assertEquals(5, inventory.getInt("inventory-config-version"));
                 assertEquals(12, inventory.getInt("weapon.spear.wind-charges"));
+                assertEquals(5, inventory.getInt("weapon.bow.power"));
+                assertEquals(32, inventory.getInt("weapon.bow.arrows"));
             }
         }
     }

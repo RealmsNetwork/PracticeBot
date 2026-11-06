@@ -14,6 +14,7 @@ This fork keeps the existing Citizens player-NPC architecture and adds a dedicat
 - Crystal PvP
 - Mace PvP for Java 1.21+
 - Spear PvP for Java 1.21.11+
+- Native Bow PvP with draw timing, predictive lead, gravity compensation, strafing and humanized misses
 - Citizens player NPCs with navigation and server-side movement
 - Mace smash fall-distance damage and launch planning
 - Density, Breach and Wind Burst handling
@@ -34,10 +35,11 @@ Minecraft's Mace smash uses fall distance with a falloff of 4 damage per block f
 
 ## Commands
 
-`/spawnbot normal`  
-`/spawnbot crystal`  
-`/spawnbot mace`  
-`/spawnbot spear`
+- `/spawnbot normal`
+- `/spawnbot crystal`
+- `/spawnbot mace`
+- `/spawnbot spear`
+- `/spawnbot bow`
 
 Spear spawning checks for the runtime Spear material, so the plugin still loads on older 1.21.x servers that do not yet expose 1.21.11 Spear materials.
 
@@ -79,8 +81,8 @@ Pushing a tag matching `v*.*.*` runs the release workflow. It rebuilds and tests
 Example:
 
 ```bash
-git tag v1.8.10
-git push origin v1.8.10
+git tag v1.8.11
+git push origin v1.8.11
 ```
 
 ## Compatibility
@@ -97,6 +99,11 @@ The Maven build still targets the existing Paper 1.21.1 API. Spear materials are
 Bukkit/Citizens does not provide one public API call that reproduces every internal vanilla fake-player interaction. Where the public API does not expose a direct weapon action, the modern combat layer uses the documented vanilla model and server-side motion/damage handling instead of treating Mace or Spear as renamed swords.
 
 
+## 1.8.11 highlights
+
+- Added native Bow PvP with real server-side draw/release, moving-target lead, gravity-compensated aim, humanized tracking, configurable draw timing, strafing/spacing, and deliberate imperfect shots.
+- Added a persistent integration inventory override so template refreshes cannot overwrite exact kit armor or interrupt a bot using its kit.
+
 ## 1.8.0 highlights
 
 This release adds the expanded modern PvP layer used by the fork: Elytra Mace/Spear profiles, server-aware damage, real per-bot simulated latency, low-health pearl disengage, Wind Charge Reset compatibility, FastCrystals-aware CPvP scheduling, optional Paper attribute-swap simulation, and Cart PvP equipment/controller support.
@@ -110,12 +117,12 @@ Bot types describe the game mode; weapon profiles describe the equipment/combat 
 | `CRYSTAL` | Crystal PvP | `SWORD` |
 | `CART` | TNT Minecart PvP | `CART` |
 | `MACE` | Mace PvP | `MACE` |
-| `UHC` | UHC (no natural saturation regeneration for that bot) | `UHC` |
+| `UHC` | UHC (no natural saturation regeneration for that bot) | `UHC` or `BOW` |
 | `WATER` | Water / Riptide equipment preset | `WATER` |
 
 `CPVP` remains accepted as a legacy alias for `CRYSTAL`. `DUMMY` remains available for older template/editor workflows.
 
-Supported weapon profiles include `SWORD`, `MACE`, `MACE_ELYTRA`, `SPEAR`, `SPEAR_ELYTRA`, `SPEAR_MACE`, `SPEAR_MACE_ELYTRA`, `CART`, `CART_ELYTRA`, `UHC`, and `WATER`.
+Supported weapon profiles include `SWORD`, `BOW`, `MACE`, `MACE_ELYTRA`, `SPEAR`, `SPEAR_ELYTRA`, `SPEAR_MACE`, `SPEAR_MACE_ELYTRA`, `CART`, `CART_ELYTRA`, `UHC`, and `WATER`.
 
 Example template:
 

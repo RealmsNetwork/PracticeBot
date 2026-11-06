@@ -7,6 +7,7 @@ import com.sheldera.practicebot.EnchantmentResolver;
 import com.sheldera.practicebot.PracticeBotPlugin;
 import com.sheldera.practicebot.api.event.PracticeBotTargetChangeCause;
 import com.sheldera.practicebot.api.event.PracticeBotTemplateApplyCause;
+import com.sheldera.practicebot.api.inventory.BotInventoryProfile;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -95,7 +96,7 @@ public class k {
       }
 
       String profile = weaponProfile == null ? "sword" : weaponProfile.trim().toLowerCase(Locale.ROOT);
-      if (!java.util.Set.of("sword", "mace", "mace_elytra", "spear", "spear_elytra", "spear_mace", "spear_mace_elytra", "cart", "cart_elytra", "uhc", "water").contains(profile)) {
+      if (!java.util.Set.of("sword", "mace", "mace_elytra", "spear", "spear_elytra", "spear_mace", "spear_mace_elytra", "cart", "cart_elytra", "bow", "uhc", "water").contains(profile)) {
          profile = "sword";
       }
 
@@ -108,7 +109,7 @@ public class k {
       a requestedType = switch (profile) {
          case "cart", "cart_elytra" -> a.CART;
          case "mace", "mace_elytra", "spear", "spear_elytra", "spear_mace", "spear_mace_elytra" -> a.MACE;
-         case "uhc" -> a.UHC;
+         case "bow", "uhc" -> a.UHC;
          case "water" -> a.WATER;
          default -> a.NORMAL;
       };
@@ -573,6 +574,7 @@ public class k {
                this.bl.a(var1, var2);
             }
 
+            this.applyApiInventoryOverride(var3x, var2);
             this.b(var1, var2);
          }
       }, var3);
@@ -1247,6 +1249,19 @@ public class k {
       }
    }
 
+   private void applyApiInventoryOverride(Player player, BotTrait trait) {
+      BotInventoryProfile override = trait.getApiInventoryOverride();
+      if (override == null || player == null || !player.isValid() || player.isDead()) return;
+
+      org.bukkit.inventory.PlayerInventory inventory = player.getInventory();
+      inventory.clear();
+      inventory.setStorageContents(override.getStorage());
+      inventory.setArmorContents(override.getArmor());
+      inventory.setItemInOffHand(override.getOffhand());
+      inventory.setHeldItemSlot(override.getHeldSlot());
+      player.updateInventory();
+   }
+
    private void c(r var1) {
       if (var1 != null) {
          this.d(var1);
@@ -1279,6 +1294,7 @@ public class k {
                            this.bl.a(var2, var8);
                         }
 
+                        this.applyApiInventoryOverride(var3, var8);
                         this.b(var2, var8);
                      }
 
@@ -1307,6 +1323,9 @@ public class k {
    }
 
    private boolean a(Player var1, BotTrait var2) {
+      if (var2.hasApiInventoryOverride()) {
+         return false;
+      }
       if (var1.getInventory().getHelmet() == null || var1.getInventory().getHelmet().getType().isAir()) {
          return true;
       } else if (var1.getInventory().getChestplate() == null || var1.getInventory().getChestplate().getType().isAir()) {
@@ -1510,6 +1529,7 @@ public class k {
             String var5 = this.q(var1);
             UUID var6 = var4.getBoundTargetUUID();
             this.a(var4, var2, var3);
+            var4.setApiInventoryOverride(null);
             this.bl.a(var1, var4);
             this.f(var1);
             this.b(var1, var4);

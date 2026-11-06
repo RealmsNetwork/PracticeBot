@@ -495,6 +495,7 @@ public final class x1 implements PracticeBotApi {
       inventory.setItemInOffHand(offhandCopy);
       inventory.setHeldItemSlot(profile.getHeldSlot());
       BotTrait trait = this.ae(npc);
+      trait.setApiInventoryOverride(new BotInventoryProfile(storageCopy, armorCopy, offhandCopy, profile.getHeldSlot()));
       trait.setTotemCount(totemCount);
       trait.setOffhandType(totemCount > 0 ? "totem" : offhandCopy != null && offhandCopy.getType() == org.bukkit.Material.SHIELD ? "shield" : "none");
       if (trait.hasStoredInventory()) {

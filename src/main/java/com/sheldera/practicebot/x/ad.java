@@ -58,6 +58,7 @@ public class ad implements CommandExecutor, TabCompleter {
          case "spear" -> { permission = "practicebot.spawn.mace"; profile = "spear"; }
          case "spearelytra", "spear_elytra" -> { permission = "practicebot.spawn.mace"; profile = "spear_elytra"; }
          case "spearmace", "spear_mace" -> { permission = "practicebot.spawn.mace"; profile = "spear_mace"; }
+         case "bow" -> { permission = "practicebot.spawn.uhc"; profile = "bow"; }
          case "uhc" -> { permission = "practicebot.spawn.uhc"; profile = "uhc"; }
          case "water" -> { permission = "practicebot.spawn.water"; profile = "water"; }
          default -> { player.sendMessage(h.ac("invalid-usage.spawnbot")); return true; }
@@ -91,6 +92,7 @@ public class ad implements CommandExecutor, TabCompleter {
       add(choices, sender, "spear", prefix, "practicebot.spawn.mace");
       add(choices, sender, "spearelytra", prefix, "practicebot.spawn.mace");
       add(choices, sender, "spearmace", prefix, "practicebot.spawn.mace");
+      add(choices, sender, "bow", prefix, "practicebot.spawn.uhc");
       add(choices, sender, "uhc", prefix, "practicebot.spawn.uhc");
       add(choices, sender, "water", prefix, "practicebot.spawn.water");
       return choices;

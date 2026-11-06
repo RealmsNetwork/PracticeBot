@@ -11,8 +11,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public final class ConfigMigrator {
-    private static final int CURRENT_VERSION = 9;
-    private static final int CURRENT_INVENTORY_VERSION = 4;
+    private static final int CURRENT_VERSION = 10;
+    private static final int CURRENT_INVENTORY_VERSION = 5;
 
     private ConfigMigrator() {
     }
@@ -34,7 +34,7 @@ public final class ConfigMigrator {
         }
 
         // The version guard above guarantees current < CURRENT_VERSION, so
-        // apply the v9 migration without a redundant always-true comparison.
+        // apply the v10 migration without a redundant always-true comparison.
         migrateCartCombatDefaults(config);
         // Attribute swapping was previously opt-in. The new spear/mace
         // approach uses it when the Paper runtime explicitly supports it.
@@ -324,6 +324,20 @@ public final class ConfigMigrator {
         defaults.put("tactics.cart-pvp.flame-bow-chance-percent", 35.0D);
         defaults.put("tactics.cart-pvp.cart-followup-delay-ms", 900L);
 
+        defaults.put("tactics.bow.min-distance", 5.0D);
+        defaults.put("tactics.bow.max-distance", 32.0D);
+        defaults.put("tactics.bow.preferred-distance", 16.0D);
+        defaults.put("tactics.bow.draw-min-ticks", 18);
+        defaults.put("tactics.bow.draw-max-ticks", 24);
+        defaults.put("tactics.bow.shot-cooldown-min-ms", 650L);
+        defaults.put("tactics.bow.shot-cooldown-max-ms", 1050L);
+        defaults.put("tactics.bow.miss-chance-percent", 14.0D);
+        defaults.put("tactics.bow.miss-offset-degrees", 2.6D);
+        defaults.put("tactics.bow.max-turn-degrees-per-tick", 12.0D);
+        defaults.put("tactics.bow.aim-jitter-degrees", 0.22D);
+        defaults.put("tactics.bow.strafe-switch-ms", 1100L);
+        defaults.put("tactics.bow.strafe-speed", 0.12D);
+
         defaults.put("weapon.type", "sword");
         defaults.put("weapon.mobility.firework-rockets", 24);
         defaults.put("weapon.mace.density", 5);
@@ -340,6 +354,8 @@ public final class ConfigMigrator {
         defaults.put("weapon.cart.arrows", 32);
         defaults.put("weapon.cart.power", 5);
         defaults.put("weapon.cart.punch", 2);
+        defaults.put("weapon.bow.power", 5);
+        defaults.put("weapon.bow.arrows", 32);
         defaults.put("weapon.uhc.golden-apples", 6);
         defaults.put("weapon.uhc.cobwebs", 8);
         defaults.put("weapon.uhc.arrows", 24);
@@ -418,6 +434,8 @@ public final class ConfigMigrator {
         defaults.put("weapon.cart.arrows", 32);
         defaults.put("weapon.cart.power", 5);
         defaults.put("weapon.cart.punch", 2);
+        defaults.put("weapon.bow.power", 5);
+        defaults.put("weapon.bow.arrows", 32);
         defaults.put("weapon.uhc.golden-apples", 6);
         defaults.put("weapon.uhc.cobwebs", 8);
         defaults.put("weapon.uhc.arrows", 24);

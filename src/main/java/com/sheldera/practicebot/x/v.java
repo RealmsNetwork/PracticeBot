@@ -103,7 +103,9 @@ public class v {
             }
 
             var2.setSprinting(false);
-            this.tacticsEngine.tick(var2, var3, var4, var5);
+            if (this.tacticsEngine.tick(var1, var2, var3, var4, var5)) {
+               return;
+            }
             this.modernWeaponCombat.tick(var2, var3, var4, var5);
             boolean var26 = var4.isPvpRetreat() && var4.shouldRetreatNow(var5);
             if (var4.sTapActive && var5 < var4.sTapEndTime) {

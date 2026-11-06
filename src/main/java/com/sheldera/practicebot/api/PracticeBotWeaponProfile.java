@@ -14,7 +14,8 @@ public enum PracticeBotWeaponProfile {
    CART,
    CART_ELYTRA,
    UHC,
-   WATER;
+   WATER,
+   BOW;
 
    public static PracticeBotWeaponProfile fromName(String value) {
       if (value == null || value.isBlank()) return SWORD;

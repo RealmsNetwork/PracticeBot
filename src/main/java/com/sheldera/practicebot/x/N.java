@@ -210,7 +210,7 @@ public class N {
       String type = botType == null ? "NORMAL" : botType.trim().toUpperCase(Locale.ROOT);
       if (!Set.of("NORMAL", "CRYSTAL", "CART", "MACE", "UHC", "WATER", "DUMMY").contains(type)) return false;
       String profile = weaponProfile == null ? "sword" : weaponProfile.trim().toLowerCase(Locale.ROOT);
-      if (!Set.of("sword", "mace", "mace_elytra", "spear", "spear_elytra", "spear_mace", "spear_mace_elytra", "cart", "cart_elytra", "uhc", "water").contains(profile)) return false;
+      if (!Set.of("sword", "mace", "mace_elytra", "spear", "spear_elytra", "spear_mace", "spear_mace_elytra", "cart", "cart_elytra", "bow", "uhc", "water").contains(profile)) return false;
       G sourceSettings = source.gg();
       G pausedSettings = new G(sourceSettings.go(), sourceSettings.gp(), sourceSettings.isRandomWalk(),
          sourceSettings.isHoldShield(), sourceSettings.isUseShield(), sourceSettings.isResistance(),
@@ -236,7 +236,7 @@ public class N {
       String type = botType == null ? "NORMAL" : botType.trim().toUpperCase(Locale.ROOT);
       if (!Set.of("NORMAL", "CRYSTAL", "CART", "MACE", "UHC", "WATER", "DUMMY").contains(type)) return false;
       String profile = weaponProfile == null ? "sword" : weaponProfile.trim().toLowerCase(Locale.ROOT);
-      if (!Set.of("sword", "mace", "mace_elytra", "spear", "spear_elytra", "spear_mace", "spear_mace_elytra", "cart", "cart_elytra", "uhc", "water").contains(profile)) return false;
+      if (!Set.of("sword", "mace", "mace_elytra", "spear", "spear_elytra", "spear_mace", "spear_mace_elytra", "cart", "cart_elytra", "bow", "uhc", "water").contains(profile)) return false;
       this.pe.set("templates." + key + ".bot-type", type);
       this.pe.set("templates." + key + ".weapon-profile", profile);
       if (!this.gK()) return false;
@@ -320,7 +320,7 @@ public class N {
          String weaponProfile = var2.getString("weapon-profile", var6.defaultWeaponProfile());
          if (weaponProfile == null) weaponProfile = var6.defaultWeaponProfile();
          weaponProfile = weaponProfile.trim().toLowerCase(Locale.ROOT);
-         if (!java.util.Set.of("sword", "mace", "mace_elytra", "spear", "spear_elytra", "spear_mace", "spear_mace_elytra", "cart", "cart_elytra", "uhc", "water").contains(weaponProfile)) {
+         if (!java.util.Set.of("sword", "mace", "mace_elytra", "spear", "spear_elytra", "spear_mace", "spear_mace_elytra", "cart", "cart_elytra", "bow", "uhc", "water").contains(weaponProfile)) {
             this.sX.getLogger().warning("Unknown weapon-profile '" + weaponProfile + "' in bot_templates.yml, using " + var6.defaultWeaponProfile() + ".");
             weaponProfile = var6.defaultWeaponProfile();
          }

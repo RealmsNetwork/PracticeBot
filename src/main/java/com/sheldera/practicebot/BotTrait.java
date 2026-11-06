@@ -1,6 +1,7 @@
 package com.sheldera.practicebot;
 
 import com.sheldera.practicebot.EnchantmentResolver;
+import com.sheldera.practicebot.api.inventory.BotInventoryProfile;
 import com.sheldera.practicebot.x.a;
 import com.sheldera.practicebot.x.ae;
 import com.sheldera.practicebot.x.af;
@@ -52,6 +53,7 @@ public class BotTrait extends Trait {
    private ItemStack[] storedInventory = null;
    private ItemStack[] storedArmor = null;
    private ItemStack storedOffhand = null;
+   private transient BotInventoryProfile apiInventoryOverride = null;
    private String armorType = "netherite";
    private String helmetMaterial = "netherite";
    private String chestplateMaterial = "netherite";
@@ -533,6 +535,21 @@ public class BotTrait extends Trait {
       this.storedOffhand = null;
    }
 
+   public boolean hasApiInventoryOverride() {
+      return this.apiInventoryOverride != null;
+   }
+
+   public BotInventoryProfile getApiInventoryOverride() {
+      if (this.apiInventoryOverride == null) return null;
+      return new BotInventoryProfile(this.apiInventoryOverride.getStorage(), this.apiInventoryOverride.getArmor(),
+         this.apiInventoryOverride.getOffhand(), this.apiInventoryOverride.getHeldSlot());
+   }
+
+   public void setApiInventoryOverride(BotInventoryProfile profile) {
+      this.apiInventoryOverride = profile == null ? null : new BotInventoryProfile(profile.getStorage(),
+         profile.getArmor(), profile.getOffhand(), profile.getHeldSlot());
+   }
+
    public boolean isFollowOwner() {
       return this.followOwner;
    }
@@ -770,7 +787,7 @@ public class BotTrait extends Trait {
 
       String normalized = profile.trim().toLowerCase(Locale.ROOT);
       return switch (normalized) {
-         case "mace", "mace_elytra", "spear", "spear_elytra", "spear_mace", "spear_mace_elytra", "cart", "cart_elytra", "uhc", "water", "sword" -> normalized;
+         case "mace", "mace_elytra", "spear", "spear_elytra", "spear_mace", "spear_mace_elytra", "cart", "cart_elytra", "bow", "uhc", "water", "sword" -> normalized;
          default -> "sword";
       };
    }
@@ -1364,6 +1381,7 @@ public class BotTrait extends Trait {
       this.cleanupCpvpRuntime();
       this.clearTransientCombatReferences();
       this.clearStoredInventory();
+      this.setApiInventoryOverride(null);
    }
 
    public void onDespawn() {

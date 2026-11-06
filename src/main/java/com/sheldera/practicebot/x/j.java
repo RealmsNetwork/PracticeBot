@@ -329,6 +329,21 @@ public class j {
             Math.max(4, Math.min(64, defaults.getInt("weapon.mobility.firework-rockets", 24))));
       }
 
+      if ("bow".equals(normalized)) {
+         ItemStack bow = new ItemStack(Material.BOW);
+         int power = Math.max(0, defaults.getInt("weapon.bow.power", 5));
+         if (power > 0) this.b(bow, "power", power);
+         ItemMeta bowMeta = bow.getItemMeta();
+         if (bowMeta != null) {
+            bowMeta.setUnbreakable(true);
+            bowMeta.addItemFlags(new ItemFlag[]{ItemFlag.HIDE_UNBREAKABLE, ItemFlag.HIDE_ATTRIBUTES});
+            bow.setItemMeta(bowMeta);
+         }
+         player.getInventory().setItemInMainHand(bow);
+         this.giveItems(player, Material.ARROW, Math.max(1, Math.min(64,
+            defaults.getInt("weapon.bow.arrows", 32))));
+      }
+
       if (normalized.startsWith("mace") || normalized.startsWith("spear_mace")) {
          this.giveWindCharges(player, defaults, "weapon.mace.wind-charges", 16);
          if (this.ax.getConfig().getBoolean("modern-weapons.mace.stun-slam.enabled", false)) {

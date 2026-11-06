@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.8.11
+
+- Added a first-class BOW combat profile and bumped the public API to 1.11.0. Native draw/release preserves arrow damage, enchantments, durability, ammunition use and projectile events.
+- Added predictive aiming that leads moving targets and compensates for arrow gravity, with smooth aim tracking, configurable draw timing, deliberate misses, and ranged strafing/spacing.
+- Added StrikePractice kit detection for Bow PvP and a standalone `/spawnbot bow` preset.
+- Made exact API-applied kit inventories persist across delayed template equipment refreshes without repeatedly resetting the held slot or interrupting bow use.
+- Preserved integration-supplied armor, custom ItemStack metadata, and empty armor slots instead of allowing the template's default armor to overwrite them.
+- Clear the API inventory override when an integration explicitly replaces a bot's template, so the new template can apply its own equipment.
+
 ## 1.8.9
 
 - Rebuilt Cart PvP around close-range setups: place a real rail and TNT minecart, use flint and steel to create a crossbow fire lane, and ignite the cart with a burning arrow; Flame-bow carting remains an alternate technique.

@@ -13,6 +13,8 @@ class PracticeBotWeaponProfileTest {
             PracticeBotWeaponProfile.fromName("spear_elytra"));
         assertEquals(PracticeBotWeaponProfile.SPEAR_MACE,
             PracticeBotWeaponProfile.fromName("SPEAR_MACE"));
+        assertEquals(PracticeBotWeaponProfile.BOW,
+            PracticeBotWeaponProfile.fromName("bow"));
     }
 
     @Test

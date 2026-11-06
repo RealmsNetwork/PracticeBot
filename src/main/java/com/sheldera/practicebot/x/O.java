@@ -1746,7 +1746,7 @@ public class O implements Listener {
    }
 
    private String nextWeaponProfile(String current) {
-      List<String> profiles = List.of("sword", "mace", "mace_elytra", "spear", "spear_elytra", "spear_mace", "cart", "cart_elytra", "uhc", "water");
+      List<String> profiles = List.of("sword", "mace", "mace_elytra", "spear", "spear_elytra", "spear_mace", "cart", "cart_elytra", "bow", "uhc", "water");
       int index = profiles.indexOf(current == null ? "sword" : current.toLowerCase(Locale.ROOT));
       return profiles.get((index + 1 + profiles.size()) % profiles.size());
    }

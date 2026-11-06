@@ -1,4 +1,4 @@
-inventory-config-version: 4
+inventory-config-version: 5
 # ==========================================================
 #  PracticeBot - Default Bot Inventory Configuration
 #
@@ -59,6 +59,7 @@ armor-enchantments:
 #    spear_mace  - Ground Spear exchanges plus Mace/Wind Charge launches
 #    cart        - TNT minecart / Flame bow combat
 #    cart_elytra - Cart PvP + Elytra mobility
+#    bow         - Native Bow PvP with predictive aim and humanized misses
 #    uhc         - UHC melee/utility loadout
 #    water       - Trident + water bucket loadout
 # ----------------------------------------------------------
@@ -70,6 +71,10 @@ weapon:
     breach: 0
     wind-burst: 3
     wind-charges: 16
+
+  bow:
+    power: 5
+    arrows: 32
 
   spear:
     material: netherite

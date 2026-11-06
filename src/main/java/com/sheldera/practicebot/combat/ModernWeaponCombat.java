@@ -85,12 +85,11 @@ public final class ModernWeaponCombat {
         }
 
         if (isSpear(item)) {
-            PaperItemDataBridge.AttackRangeData range =
-                PaperItemDataBridge.attackRange(item);
-
-            return range == null
-                ? SPEAR_MAX_REACH + SPEAR_HITBOX_MARGIN
-                : range.maxReach() + range.hitboxMargin();
+            // The combat controller performs the native STAB jab at close range.
+            // Do not let navigation stop at the spear component's 4.5-block max
+            // reach: that leaves the bot charging in place and body-blocking.
+            // Stop at the jab window so the controller releases use and stabs.
+            return 3.45D;
         }
 
         return configuredReach;
@@ -115,15 +114,26 @@ public final class ModernWeaponCombat {
             return;
         }
 
-        if ("spear_mace".equals(trait.getWeaponProfile()) ||
-            "spear_mace_elytra".equals(trait.getWeaponProfile())) {
+        String profile = trait.getWeaponProfile() == null ? "" :
+            trait.getWeaponProfile().trim().toLowerCase(java.util.Locale.ROOT);
+        if ("spear_mace".equals(profile) || "spear_mace_elytra".equals(profile)) {
             selectHybridWeapon(bot, target, trait);
-        } else if (isDedicatedMaceProfile(trait)) {
-            if (!selectDedicatedMace(bot)) {
+        } else if (profile.startsWith("mace")) {
+            if (!selectProfileItem(bot, item -> item.getType() == Material.MACE)) {
                 NmsCombatBridge.stopUsingItem(bot);
                 reset(trait);
                 return;
             }
+        } else if (profile.startsWith("spear")) {
+            if (!selectProfileItem(bot, this::isSpear)) {
+                NmsCombatBridge.stopUsingItem(bot);
+                reset(trait);
+                return;
+            }
+        } else if ("bow".equals(profile) || "cart".equals(profile) || "cart_elytra".equals(profile)) {
+            selectProfileItem(bot, item -> item.getType() == Material.BOW);
+        } else if ("water".equals(profile)) {
+            selectProfileItem(bot, item -> item.getType() == Material.TRIDENT);
         }
 
         ItemStack item = bot.getInventory().getItemInMainHand();
@@ -424,40 +434,35 @@ public final class ModernWeaponCombat {
         else item.setAmount(item.getAmount() - 1);
     }
 
-    public boolean isDedicatedMaceProfile(BotTrait trait) {
+    public boolean isDedicatedModernWeaponProfile(BotTrait trait) {
         if (trait == null || trait.getWeaponProfile() == null) return false;
         String profile = trait.getWeaponProfile().trim().toLowerCase(java.util.Locale.ROOT);
-        return profile.startsWith("mace");
+        return profile.startsWith("mace") || profile.startsWith("spear");
     }
 
-    private boolean selectDedicatedMace(Player bot) {
+    private boolean selectProfileItem(Player bot, java.util.function.Predicate<ItemStack> matches) {
         PlayerInventory inventory = bot.getInventory();
-        int maceSlot = -1;
         ItemStack[] contents = inventory.getStorageContents();
+        int selected = -1;
         for (int slot = 0; slot < contents.length; slot++) {
             ItemStack item = contents[slot];
-            if (item != null && item.getType() == Material.MACE) {
-                maceSlot = slot;
+            if (item != null && !item.getType().isAir() && matches.test(item)) {
+                selected = slot;
                 break;
             }
         }
-        if (maceSlot < 0) return false;
-
-        if (maceSlot < 9) {
-            inventory.setHeldItemSlot(maceSlot);
+        if (selected < 0) return false;
+        if (selected < 9) {
+            inventory.setHeldItemSlot(selected);
             return true;
         }
 
-        // StrikePractice kit imports preserve all 36 storage slots, but the
-        // selected hotbar slot is not part of the inventory snapshot. Move the
-        // kit's Mace into the current slot without discarding the displaced item.
         int heldSlot = inventory.getHeldItemSlot();
         ItemStack displaced = inventory.getItem(heldSlot);
-        ItemStack mace = inventory.getItem(maceSlot);
-        inventory.setItem(heldSlot, mace);
-        inventory.setItem(maceSlot, displaced);
-        return inventory.getItemInMainHand() != null &&
-            inventory.getItemInMainHand().getType() == Material.MACE;
+        ItemStack wanted = inventory.getItem(selected);
+        inventory.setItem(heldSlot, wanted);
+        inventory.setItem(selected, displaced);
+        return matches.test(inventory.getItemInMainHand());
     }
 
     private void selectHybridWeapon(Player bot, Player target, BotTrait trait) {
@@ -481,17 +486,10 @@ public final class ModernWeaponCombat {
             (distance > spearReach && distance <= maceLaunchMax &&
                 !plugin.getConfig().getBoolean("modern-weapons.spear.wind-charge-approach.enabled", true));
 
-        Material wanted = useMace ? Material.MACE : null;
-        int selected = -1;
-        for (int slot = 0; slot < 9; slot++) {
-            ItemStack stack = bot.getInventory().getItem(slot);
-            if (stack == null || stack.getType().isAir()) continue;
-            if (wanted != null && stack.getType() == wanted) { selected = slot; break; }
-            if (wanted == null && stack.getType().name().endsWith("_SPEAR")) { selected = slot; break; }
-        }
-        if (selected >= 0 && bot.getInventory().getHeldItemSlot() != selected) {
-            bot.getInventory().setHeldItemSlot(selected);
-        }
+        java.util.function.Predicate<ItemStack> matches = useMace
+            ? stack -> stack.getType() == Material.MACE
+            : this::isSpear;
+        selectProfileItem(bot, matches);
     }
 
     private boolean shouldUseBreachSwap(Player bot, Player target) {
@@ -852,7 +850,7 @@ public final class ModernWeaponCombat {
             : range.maxReach() + range.hitboxMargin();
         Vector direction = bot.getEyeLocation().getDirection().normalize();
         return bot.getWorld().rayTraceEntities(
-            bot.getEyeLocation(), direction, reach, 0.08D,
+            bot.getEyeLocation(), direction, reach, 0.30D,
             entity -> entity.getUniqueId().equals(target.getUniqueId())
         ) != null;
     }

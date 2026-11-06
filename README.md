@@ -81,8 +81,8 @@ Pushing a tag matching `v*.*.*` runs the release workflow. It rebuilds and tests
 Example:
 
 ```bash
-git tag v1.8.11
-git push origin v1.8.11
+git tag v1.8.12
+git push origin v1.8.12
 ```
 
 ## Compatibility
@@ -98,6 +98,11 @@ The Maven build still targets the existing Paper 1.21.1 API. Spear materials are
 
 Bukkit/Citizens does not provide one public API call that reproduces every internal vanilla fake-player interaction. Where the public API does not expose a direct weapon action, the modern combat layer uses the documented vanilla model and server-side motion/damage handling instead of treating Mace or Spear as renamed swords.
 
+
+## 1.8.12 highlights
+
+- Fixed knockback gravity for Citizens NPCs so hit bots fall normally instead of accumulating upward float.
+- Added ranged bow behavior to UHC bots while preserving sword melee at close range.
 
 ## 1.8.11 highlights
 

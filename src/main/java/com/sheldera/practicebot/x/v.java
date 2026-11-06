@@ -117,15 +117,15 @@ public class v {
             } else if (var16) {
                this.a(var1, var2, var3);
                boolean var31 = x.a(var2);
+               // Let the server apply vanilla gravity during knockback. Disabling
+               // entity gravity and emulating it here can leave Citizens player
+               // NPCs suspended when knockback state outlives the velocity impulse.
+               var2.setGravity(true);
                if (!var31) {
-                  var2.setGravity(false);
                   Vector var32 = var2.getVelocity();
-                  var32.setY((var32.getY() - 0.08) * 0.98);
                   var32.setX(var32.getX() * 0.91);
                   var32.setZ(var32.getZ() * 0.91);
                   var2.setVelocity(var32);
-               } else {
-                  var2.setGravity(true);
                }
 
                if (var26) {

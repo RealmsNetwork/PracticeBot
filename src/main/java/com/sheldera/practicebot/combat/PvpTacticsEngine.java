@@ -58,9 +58,23 @@ public final class PvpTacticsEngine {
 
         initializeLatencyProfile(trait);
 
-        if ("bow".equals(trait.getWeaponProfile())) {
+        String weaponProfile = trait.getWeaponProfile();
+        if ("bow".equals(weaponProfile)) {
             bowController.tick(npc, bot, target, trait, now);
             return true;
+        }
+
+        // UHC kits contain both a sword and a bow. Use the native bow controller
+        // at range, then hand control back to normal melee combat when the target
+        // closes inside bow range. Previously UHC bots carried a bow but never
+        // selected or fired it because only the exact "bow" profile was handled.
+        if ("uhc".equals(weaponProfile)) {
+            double distance = bot.getLocation().distance(target.getLocation());
+            double bowMinimum = Math.max(2.0D, plugin.getConfig().getDouble("tactics.bow.min-distance", 5.0D));
+            if (distance > bowMinimum + 1.0D || !bot.hasLineOfSight(target)) {
+                bowController.tick(npc, bot, target, trait, now);
+                return true;
+            }
         }
 
         bowController.cancel(bot);

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.8.12
+
+- Fixed Citizens bot knockback physics by restoring vanilla gravity and removing the custom gravity-off simulation that could leave bots floating.
+- Enabled hybrid UHC bow combat: UHC bots now draw and fire their equipped bow at range, then return to sword melee when opponents close in.
+
+
 ## 1.8.11
 
 - Added a first-class BOW combat profile and bumped the public API to 1.11.0. Native draw/release preserves arrow damage, enchantments, durability, ammunition use and projectile events.

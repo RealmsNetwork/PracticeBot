@@ -85,6 +85,7 @@ class TemplateDifficultyTuningTest {
             assertTrue(config.getBoolean("modern-weapons.spear.wind-charge-approach.enabled"));
             assertFalse(config.getBoolean("modern-weapons.mace.stun-slam.enabled"));
             assertTrue(config.getBoolean("tactics.attribute-swap.enabled"));
+            assertTrue(config.getBoolean("tactics.attribute-swap.force-on-lunge"));
             assertTrue(config.getDouble("tactics.cart-pvp.max-distance") <= 8.0D);
 
             String[] tiers = {

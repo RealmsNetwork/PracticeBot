@@ -10,14 +10,15 @@ import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Rail;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Arrow;
-import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.minecart.ExplosiveMinecart;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
 
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Cart PvP setup and ignition. Unlike the old controller this never creates a
@@ -27,6 +28,7 @@ import java.util.concurrent.ThreadLocalRandom;
  */
 public final class CartPvpController {
     private final PracticeBotPlugin plugin;
+    private final Map<UUID, CartPlan> plans = new ConcurrentHashMap<>();
 
     public CartPvpController(PracticeBotPlugin plugin) {
         this.plugin = plugin;
@@ -36,9 +38,25 @@ public final class CartPvpController {
         if (bot == null || target == null || trait == null || bot.isDead() ||
             target.isDead() || !bot.isValid() || !target.isValid() ||
             !bot.getWorld().equals(target.getWorld())) {
+            if (bot != null) cleanupPlan(bot, plans.remove(bot.getUniqueId()));
             return false;
         }
-        if (!plugin.getConfig().getBoolean("tactics.cart-pvp.enabled", true)) return false;
+        if (!plugin.getConfig().getBoolean("tactics.cart-pvp.enabled", true)) {
+            cleanupPlan(bot, plans.remove(bot.getUniqueId()));
+            return false;
+        }
+
+        UUID botId = bot.getUniqueId();
+        CartPlan plan = plans.get(botId);
+        if (plan != null && (!plan.targetId().equals(target.getUniqueId()) ||
+            now - plan.startedAt() > configLong("tactics.cart-pvp.plan-timeout-ms", 6500L, 1000L, 20000L))) {
+            cleanupPlan(bot, plan);
+            plans.remove(botId);
+            plan = null;
+        }
+        if (plan != null) {
+            return advancePlan(bot, target, trait, plan, now);
+        }
 
         double distance = bot.getLocation().distance(target.getLocation());
         selectCombatItem(bot, distance);
@@ -47,93 +65,228 @@ public final class CartPvpController {
         if (now - trait.lastCartActionAt < cooldown) return false;
 
         double minDistance = TemplateDifficultyTuning.getDouble(plugin, trait,
-            "cart-min-distance", 2.5D, "tactics.cart-pvp.min-distance");
+            "cart-min-distance", 5.5D, "tactics.cart-pvp.min-distance");
         double maxDistance = TemplateDifficultyTuning.getDouble(plugin, trait,
-            "cart-max-distance", 7.5D, "tactics.cart-pvp.max-distance");
+            "cart-max-distance", 8.0D, "tactics.cart-pvp.max-distance");
         if (!shouldAttemptCart(distance, minDistance, maxDistance,
             bot.isOnGround(), target.isOnGround(), bot.hasLineOfSight(target))) return false;
 
         ItemStack carts = find(bot, Material.TNT_MINECART);
-        if (carts == null) return false;
+        ItemStack rails = find(bot, Material.RAIL);
+        ItemStack bow = find(bot, Material.BOW);
+        ItemStack arrows = find(bot, Material.ARROW);
+        boolean flameBow = bow != null && bow.getEnchantmentLevel(Enchantment.FLAME) > 0;
+        if (carts == null || rails == null || arrows == null || !flameBow) return false;
 
         Vector towardTarget = target.getLocation().toVector()
             .subtract(bot.getLocation().toVector());
         towardTarget.setY(0.0D);
         if (towardTarget.lengthSquared() < 1.0E-5D) return false;
         towardTarget.normalize();
-
-        // Put the cart just beyond the opponent, so normal forward knockback
-        // carries them toward the rail instead of placing the trap behind us.
         Vector side = new Vector(-towardTarget.getZ(), 0.0D, towardTarget.getX());
         Location desiredRail = target.getLocation().clone()
             .add(towardTarget.clone().multiply(1.1D))
-            .add(side.multiply(1.05D));
+            .add(side.multiply(configDouble("tactics.cart-pvp.rail-side-offset", 1.05D, 0.0D, 3.0D)));
         desiredRail.setY(target.getLocation().getY());
-        RailPlacement placement = findOrPlaceRail(bot, desiredRail, towardTarget, trait);
-        if (placement == null) return false;
-        Block railBlock = placement.block();
-        if (!railBlock.getRelative(0, 1, 0).isPassable()) {
-            rollbackRail(bot, placement);
-            return false;
-        }
 
-        Location spawn = railBlock.getLocation().add(0.5D, 0.12D, 0.5D);
-        ExplosiveMinecart cart;
-        try {
-            if (!(bot.getWorld().spawnEntity(spawn, EntityType.TNT_MINECART)
-                instanceof ExplosiveMinecart spawned)) {
-                rollbackRail(bot, placement);
-                return false;
-            }
-            cart = spawned;
-        } catch (Throwable ex) {
-            rollbackRail(bot, placement);
-            plugin.debugLog(() -> "CartPvP minecart placement failed: " + ex.getMessage());
-            return false;
-        }
-
-        // Keep the cart on its rail. The burning arrow's own velocity drives
-        // the TNT minecart explosion strength when it collides with the cart.
-        cart.setVelocity(new Vector(0.0D, 0.0D, 0.0D));
-        if (!bot.hasLineOfSight(cart)) {
-            cart.remove();
-            rollbackRail(bot, placement);
-            return false;
-        }
-        consume(carts);
-        Block fireBlock = ignite(bot, cart, spawn, trait);
-
-        // Clean up only blocks/entities created by this attempt. Existing arena
-        // rails are never touched, and a missed cart cannot litter the map.
-        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
-            if (cart.isValid() && !cart.isDead()) cart.remove();
-            if (placement.placed() && railBlock.getType() == Material.RAIL) {
-                railBlock.setType(Material.AIR, false);
-            }
-            if (fireBlock != null && fireBlock.getType() == Material.FIRE) {
-                fireBlock.setType(Material.AIR, false);
-            }
-        }, 50L);
-
-        // Keep the bot advancing from the opposite side of the target. Its
-        // normal attack routine supplies the actual melee hit/knockback.
-        Vector approach = target.getLocation().toVector()
-            .subtract(bot.getLocation().toVector());
-        approach.setY(0.0D);
-        if (approach.lengthSquared() > 1.0E-5D) {
-            approach.normalize().multiply(0.18D);
-            Vector velocity = bot.getVelocity();
-            velocity.setX(velocity.getX() * 0.72D + approach.getX());
-            velocity.setZ(velocity.getZ() * 0.72D + approach.getZ());
-            bot.setVelocity(velocity);
-            bot.setSprinting(true);
-        }
-
-        trait.lastCartActionAt = now;
-        trait.tacticCooldownUntil = now + TemplateDifficultyTuning.getLong(plugin, trait,
-            "cart-followup-delay-ms", 900L);
-        trait.lastTactic = "cart-rail-place-ignite";
+        // Never begin a detonation sequence unless the bot has room to back away.
+        // TNT minecart explosions are server-authoritative and can kill the shooter.
+        double safeDistance = configDouble("tactics.cart-pvp.self-safe-distance", 6.0D, 3.0D, 12.0D);
+        if (!isOutsideSelfSafetyRadius(bot.getLocation().distance(desiredRail), safeDistance)) return false;
+        CartPlan created = new CartPlan(target.getUniqueId(), desiredRail, now,
+            now + configLong("tactics.cart-pvp.look-down-delay-ms", 250L, 0L, 2000L)
+                + configLong("tactics.cart-pvp.reaction-delay-ms", 180L, 0L, 1500L));
+        plans.put(botId, created);
+        aimAt(bot, desiredRail.clone().add(0.5D, 0.0D, 0.5D));
+        trait.lastTactic = "cart-aim-ground";
         return true;
+    }
+
+    private boolean advancePlan(Player bot, Player target, BotTrait trait, CartPlan plan, long now) {
+        // The shared human-aim routine runs before this controller each tick.
+        // Reassert the current action's look target while waiting so the bot
+        // visibly keeps looking down, at the rail, and then at the cart.
+        if (plan.stage() == 0) {
+            aimAt(bot, plan.railLocation().clone().add(0.5D, 0.0D, 0.5D));
+        } else if (plan.stage() == 1 && plan.rail() != null) {
+            aimAt(bot, plan.rail().block().getLocation().add(0.5D, 0.15D, 0.5D));
+        } else if ((plan.stage() == 2 || plan.stage() == 3) && plan.cart() != null && plan.cart().isValid()) {
+            aimAt(bot, plan.cart().getLocation().add(0.0D, 0.35D, 0.0D));
+        }
+        if (now < plan.nextAt()) return true;
+        switch (plan.stage()) {
+            case 0 -> {
+                RailPlacement placement = findOrPlaceRail(bot, plan.railLocation(),
+                    target.getLocation().toVector().subtract(bot.getLocation().toVector()), trait);
+                if (placement == null || !placement.block().getRelative(0, 1, 0).isPassable()) {
+                    if (placement != null) rollbackRail(bot, placement);
+                    plans.remove(bot.getUniqueId());
+                    return true;
+                }
+                plan.rail(placement);
+                plan.stage(1);
+                plan.nextAt(now + configLong("tactics.cart-pvp.rail-look-delay-ms", 220L, 0L, 2000L));
+                aimAt(bot, placement.block().getLocation().add(0.5D, 0.15D, 0.5D));
+                trait.lastTactic = "cart-look-at-rail";
+                return true;
+            }
+            case 1 -> {
+                if (plan.rail() == null || !isRail(plan.rail().block().getType())) {
+                    plans.remove(bot.getUniqueId());
+                    return true;
+                }
+                Location spawn = plan.rail().block().getLocation().add(0.5D, 0.12D, 0.5D);
+                double safeDistance = configDouble("tactics.cart-pvp.self-safe-distance", 6.0D, 3.0D, 12.0D);
+                if (!isOutsideSelfSafetyRadius(bot.getLocation().distance(spawn), safeDistance)) {
+                    cleanupPlan(bot, plan);
+                    plans.remove(bot.getUniqueId());
+                    trait.lastTactic = "cart-abort-self-safety";
+                    return true;
+                }
+                try {
+                    if (!(bot.getWorld().spawnEntity(spawn, EntityType.TNT_MINECART) instanceof ExplosiveMinecart cart)) {
+                        cleanupPlan(bot, plan);
+                        plans.remove(bot.getUniqueId());
+                        return true;
+                    }
+                    plan.cart(cart);
+                    cart.setVelocity(new Vector(0.0D, 0.0D, 0.0D));
+                    consume(find(bot, Material.TNT_MINECART));
+                    plan.stage(2);
+                    plan.nextAt(now + configLong("tactics.cart-pvp.arrow-aim-delay-ms", 850L, 100L, 3000L));
+                    ItemStack shooter = find(bot, Material.BOW);
+                    if (shooter != null) {
+                        plan.previousMainHand(bot.getInventory().getItemInMainHand() == null
+                            ? null : bot.getInventory().getItemInMainHand().clone());
+                        bot.getInventory().setItemInMainHand(shooter.clone());
+                    }
+                    aimAt(bot, spawn.clone().add(0.0D, 0.35D, 0.0D));
+                    trait.lastTactic = "cart-hold-aim-arrow";
+                    return true;
+                } catch (Throwable ex) {
+                    cleanupPlan(bot, plan);
+                    plans.remove(bot.getUniqueId());
+                    plugin.debugLog(() -> "CartPvP staged minecart placement failed: " + ex.getMessage());
+                    return true;
+                }
+            }
+            case 2 -> {
+                ExplosiveMinecart cart = plan.cart();
+                if (cart == null || !cart.isValid() || cart.isDead()) {
+                    cleanupPlan(bot, plan);
+                    plans.remove(bot.getUniqueId());
+                    return true;
+                }
+                Location cartLocation = cart.getLocation();
+                if (!isOutsideSelfSafetyRadius(bot.getLocation().distance(cartLocation), configDouble(
+                    "tactics.cart-pvp.self-safe-distance", 6.0D, 3.0D, 12.0D))) {
+                    cleanupPlan(bot, plan);
+                    plans.remove(bot.getUniqueId());
+                    trait.lastTactic = "cart-abort-self-safety";
+                    return true;
+                }
+                ItemStack arrows = find(bot, Material.ARROW);
+                ItemStack bow = find(bot, Material.BOW);
+                if (arrows == null || bow == null || bow.getEnchantmentLevel(Enchantment.FLAME) == 0) {
+                    cleanupPlan(bot, plan);
+                    plans.remove(bot.getUniqueId());
+                    return true;
+                }
+                aimAt(bot, cartLocation.clone().add(0.0D, 0.35D, 0.0D));
+                Vector aim = cartLocation.clone().add(0.0D, 0.35D, 0.0D).toVector()
+                    .subtract(bot.getEyeLocation().toVector());
+                if (aim.lengthSquared() < 1.0E-5D || !bot.hasLineOfSight(cart)) {
+                    cleanupPlan(bot, plan);
+                    plans.remove(bot.getUniqueId());
+                    trait.lastTactic = "cart-abort-no-shot-line";
+                    return true;
+                }
+                aim.normalize().multiply(configDouble("tactics.cart-pvp.arrow-speed", 3.15D, 1.0D, 4.0D));
+                try {
+                    bot.swingMainHand();
+                    Arrow arrow = bot.launchProjectile(Arrow.class, aim);
+                    arrow.setFireTicks(100);
+                    consume(arrows);
+                    restoreMainHand(bot, plan);
+                    plan.stage(3);
+                    plan.nextAt(now + 2500L);
+                    trait.lastTactic = "cart-fire-aimed-arrow";
+                    trait.lastCartActionAt = now;
+                    trait.tacticCooldownUntil = now + configLong("tactics.cart-pvp.followup-delay-ms", 900L, 0L, 5000L);
+                    return true;
+                } catch (Throwable ex) {
+                    cleanupPlan(bot, plan);
+                    plans.remove(bot.getUniqueId());
+                    plugin.debugLog(() -> "CartPvP staged arrow launch failed: " + ex.getMessage());
+                    return true;
+                }
+            }
+            default -> {
+                cleanupPlan(bot, plan);
+                plans.remove(bot.getUniqueId());
+                return true;
+            }
+        }
+    }
+
+    private void aimAt(Player bot, Location target) {
+        Vector direction = target.toVector().subtract(bot.getEyeLocation().toVector());
+        if (direction.lengthSquared() < 1.0E-6D) return;
+        direction.normalize();
+        float yaw = (float) Math.toDegrees(Math.atan2(-direction.getX(), direction.getZ()));
+        float pitch = (float) Math.toDegrees(-Math.asin(Math.max(-1.0D, Math.min(1.0D, direction.getY()))));
+        bot.setRotation(yaw, Math.max(-90.0F, Math.min(90.0F, pitch)));
+    }
+
+    private void cleanupPlan(Player bot, CartPlan plan) {
+        if (plan == null) return;
+        if (plan.cart() != null && plan.cart().isValid() && !plan.cart().isDead()) plan.cart().remove();
+        if (plan.rail() != null) rollbackRail(bot, plan.rail());
+        restoreMainHand(bot, plan);
+    }
+
+    private void restoreMainHand(Player bot, CartPlan plan) {
+        if (bot != null && plan != null && plan.previousMainHand() != null) {
+            bot.getInventory().setItemInMainHand(plan.previousMainHand().clone());
+            plan.previousMainHand(null);
+        }
+    }
+
+    private long configLong(String path, long fallback, long min, long max) {
+        return Math.max(min, Math.min(max, plugin.getConfig().getLong(path, fallback)));
+    }
+
+    private double configDouble(String path, double fallback, double min, double max) {
+        double value = plugin.getConfig().getDouble(path, fallback);
+        return Double.isFinite(value) ? Math.max(min, Math.min(max, value)) : fallback;
+    }
+
+    private static final class CartPlan {
+        private final UUID targetId;
+        private final Location railLocation;
+        private final long startedAt;
+        private int stage;
+        private long nextAt;
+        private RailPlacement rail;
+        private ExplosiveMinecart cart;
+        private ItemStack previousMainHand;
+        CartPlan(UUID targetId, Location railLocation, long startedAt, long nextAt) {
+            this.targetId = targetId; this.railLocation = railLocation.clone(); this.startedAt = startedAt;
+            this.nextAt = nextAt;
+        }
+        UUID targetId() { return targetId; }
+        Location railLocation() { return railLocation.clone(); }
+        long startedAt() { return startedAt; }
+        int stage() { return stage; }
+        void stage(int value) { stage = value; }
+        long nextAt() { return nextAt; }
+        void nextAt(long value) { nextAt = value; }
+        RailPlacement rail() { return rail; }
+        void rail(RailPlacement value) { rail = value; }
+        ExplosiveMinecart cart() { return cart; }
+        void cart(ExplosiveMinecart value) { cart = value; }
+        ItemStack previousMainHand() { return previousMainHand; }
+        void previousMainHand(ItemStack value) { previousMainHand = value; }
     }
 
     private RailPlacement findOrPlaceRail(Player bot, Location desired, Vector direction, BotTrait trait) {
@@ -183,120 +336,13 @@ public final class CartPvpController {
         }
     }
 
-    private Block ignite(Player bot, ExplosiveMinecart cart, Location spawn, BotTrait trait) {
-        ItemStack crossbow = find(bot, Material.CROSSBOW);
-        ItemStack flintSteel = find(bot, Material.FLINT_AND_STEEL);
-        ItemStack bow = find(bot, Material.BOW);
-        ItemStack arrows = find(bot, Material.ARROW);
-        boolean crossbowCart = crossbow != null && flintSteel != null && arrows != null &&
-            ThreadLocalRandom.current().nextDouble(100.0D) >= plugin.getConfig().getDouble(
-                "tactics.cart-pvp.flame-bow-chance-percent", 35.0D);
-        Block fireBlock = null;
-
-        if (crossbowCart) {
-            fireBlock = placeFireLane(bot, spawn, flintSteel);
-            if (fireBlock == null) crossbowCart = false;
-        }
-
-        ItemStack shooter = crossbowCart ? crossbow : bow;
-        boolean flameBow = bow != null && bow.getEnchantmentLevel(Enchantment.FLAME) > 0;
-        if (shooter == null || arrows == null || (!crossbowCart && !flameBow)) {
-            if (fireBlock != null && fireBlock.getType() == Material.FIRE) fireBlock.setType(Material.AIR, false);
-            int fallbackFuse = (int) TemplateDifficultyTuning.getLong(plugin, trait,
-                "cart-fuse-ticks", 35L, "tactics.cart-pvp.fuse-ticks");
-            cart.setFuseTicks(Math.max(5, Math.min(80, fallbackFuse)));
-            trait.lastTactic = "cart-native-ignition-fallback";
-            return null;
-        }
-
-        ItemStack oldHand = bot.getInventory().getItemInMainHand();
-        bot.getInventory().setItemInMainHand(shooter.clone());
-        Vector aim = spawn.toVector().add(new Vector(0.0D, 0.35D, 0.0D))
-            .subtract(bot.getEyeLocation().toVector());
-        if (aim.lengthSquared() > 1.0E-5D) {
-            aim.normalize().multiply(3.15D);
-            bot.swingMainHand();
-            try {
-                Arrow arrow = bot.launchProjectile(Arrow.class, aim);
-                arrow.setFireTicks(100);
-                consume(arrows);
-                if (crossbowCart) {
-                    trait.lastTactic = "cart-crossbow-fire-rail";
-                } else {
-                    trait.lastTactic = "cart-flame-bow";
-                }
-            } catch (Throwable ex) {
-                plugin.debugLog(() -> "CartPvP burning arrow failed: " + ex.getMessage());
-                int fallbackFuse = (int) TemplateDifficultyTuning.getLong(plugin, trait,
-                    "cart-fuse-ticks", 35L, "tactics.cart-pvp.fuse-ticks");
-                cart.setFuseTicks(Math.max(5, Math.min(80, fallbackFuse)));
-                if (fireBlock != null && fireBlock.getType() == Material.FIRE) fireBlock.setType(Material.AIR, false);
-                fireBlock = null;
-            }
-        } else {
-            cart.setFuseTicks(35);
-        }
-        bot.getInventory().setItemInMainHand(oldHand);
-        return fireBlock;
-    }
-
-    private Block placeFireLane(Player bot, Location cartLocation, ItemStack flintSteel) {
-        Vector line = cartLocation.toVector().subtract(bot.getEyeLocation().toVector());
-        line.setY(0.0D);
-        if (line.lengthSquared() < 1.0E-5D) return null;
-        line.normalize();
-        Block fire = bot.getLocation().clone().add(line.multiply(1.25D)).getBlock();
-        Block support = fire.getRelative(0, -1, 0);
-        if (!fire.getType().isAir() || !support.getType().isSolid() ||
-            support.getType().isFlammable() || fire.isLiquid() || hasFlammableNeighbor(fire)) return null;
-        ItemStack oldHand = bot.getInventory().getItemInMainHand();
-        try {
-            bot.getInventory().setItemInMainHand(flintSteel.clone());
-            fire.setType(Material.FIRE, false);
-            bot.swingMainHand();
-            damageFlintAndSteel(flintSteel);
-            bot.getInventory().setItemInMainHand(oldHand);
-            return fire;
-        } catch (Throwable ex) {
-            bot.getInventory().setItemInMainHand(oldHand);
-            if (fire.getType() == Material.FIRE) fire.setType(Material.AIR, false);
-            plugin.debugLog(() -> "CartPvP flint-and-steel fire placement failed: " + ex.getMessage());
-            return null;
-        }
-    }
-
-    private boolean hasFlammableNeighbor(Block fire) {
-        for (int x = -1; x <= 1; x++) {
-            for (int y = -1; y <= 1; y++) {
-                for (int z = -1; z <= 1; z++) {
-                    if (x == 0 && y == 0 && z == 0) continue;
-                    if (fire.getRelative(x, y, z).getType().isFlammable()) return true;
-                }
-            }
-        }
-        return false;
-    }
-
     private void rollbackRail(Player bot, RailPlacement placement) {
         if (placement == null || !placement.placed()) return;
         Block rail = placement.block();
         if (rail.getType() == Material.RAIL) {
             rail.setType(Material.AIR, false);
-            bot.getInventory().addItem(new ItemStack(Material.RAIL, 1));
+            if (bot != null) bot.getInventory().addItem(new ItemStack(Material.RAIL, 1));
         }
-    }
-
-    private void damageFlintAndSteel(ItemStack item) {
-        if (item == null || !item.hasItemMeta()) return;
-        var meta = item.getItemMeta();
-        if (!(meta instanceof Damageable damageable)) return;
-        int nextDamage = damageable.getDamage() + 1;
-        if (nextDamage >= item.getType().getMaxDurability()) {
-            item.setAmount(item.getAmount() - 1);
-            return;
-        }
-        damageable.setDamage(nextDamage);
-        item.setItemMeta(meta);
     }
 
     private void selectCombatItem(Player bot, double distance) {
@@ -326,6 +372,11 @@ public final class CartPvpController {
     private void consume(ItemStack item) {
         if (item == null || item.getAmount() <= 0) return;
         item.setAmount(item.getAmount() - 1);
+    }
+
+    static boolean isOutsideSelfSafetyRadius(double distance, double minimumDistance) {
+        return Double.isFinite(distance) && Double.isFinite(minimumDistance) &&
+            minimumDistance >= 0.0D && distance >= minimumDistance;
     }
 
     static boolean shouldAttemptCart(double distance, double minDistance, double maxDistance,

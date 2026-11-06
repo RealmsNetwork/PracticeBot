@@ -151,12 +151,12 @@ public class BotTrait extends Trait {
    public double macePeakY = 0.0D;
    public long spearChargeStartedAt = 0L;
    public long spearLastHitAt = 0L;
-   public org.bukkit.attribute.AttributeModifier attributeSwapModifier = null;
    public UUID modernWeaponTarget = null;
    public int simulatedPingMs = 0;
    public long tacticNextDecisionAt = 0L;
    public long tacticCooldownUntil = 0L;
    public long windChargeResetCooldownUntil = 0L;
+   public long spearWindChargeLaunchedAt = 0L;
    public long elytraFlightUntil = 0L;
    public long lastCartActionAt = 0L;
    public long lastStrafeSwitchAt = 0L;
@@ -258,6 +258,7 @@ public class BotTrait extends Trait {
       this.tacticNextDecisionAt = 0L;
       this.tacticCooldownUntil = 0L;
       this.windChargeResetCooldownUntil = 0L;
+      this.spearWindChargeLaunchedAt = 0L;
       this.elytraFlightUntil = 0L;
       this.lastCartActionAt = 0L;
       this.lastStrafeSwitchAt = 0L;
@@ -723,6 +724,7 @@ public class BotTrait extends Trait {
       this.tacticNextDecisionAt = 0L;
       this.tacticCooldownUntil = 0L;
       this.windChargeResetCooldownUntil = 0L;
+      this.spearWindChargeLaunchedAt = 0L;
       this.elytraFlightUntil = 0L;
       this.lastCartActionAt = 0L;
       this.lastStrafeSwitchAt = 0L;

@@ -387,8 +387,13 @@ public final class PvpTacticsEngine {
         Location original = bot.getLocation().clone();
         try {
             bot.setRotation(original.getYaw(), 78.0F);
-            bot.launchProjectile(WindCharge.class, launch);
+            WindCharge projectile = bot.launchProjectile(WindCharge.class, launch);
+            if (projectile == null || !projectile.isValid()) {
+                bot.setRotation(original.getYaw(), original.getPitch());
+                return false;
+            }
             charges.setAmount(charges.getAmount() - 1);
+            trait.spearWindChargeLaunchedAt = now;
         } catch (Throwable ex) {
             bot.setRotation(original.getYaw(), original.getPitch());
             plugin.debugLog(() -> "Spear wind-charge approach failed: " + ex.getMessage());
@@ -461,7 +466,12 @@ public final class PvpTacticsEngine {
         Vector downward = new Vector(0.0D, -1.0D, 0.0D);
 
         try {
-            bot.launchProjectile(WindCharge.class, downward);
+            WindCharge projectile = bot.launchProjectile(WindCharge.class, downward);
+            if (projectile == null || !projectile.isValid()) {
+                bot.setRotation(yaw, originalPitch);
+                return false;
+            }
+            trait.spearWindChargeLaunchedAt = now;
         } catch (Throwable ex) {
             bot.setRotation(yaw, originalPitch);
             return false;

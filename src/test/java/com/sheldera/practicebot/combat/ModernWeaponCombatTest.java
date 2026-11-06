@@ -40,12 +40,13 @@ class ModernWeaponCombatTest {
 
    @Test
    void lungeJabIsOnlyUsedWithLungeOutsideNormalJabRange() {
-      assertEquals(true, ModernWeaponCombat.shouldUseLungeJab(4.0, 4.5, 3, false, false));
-      assertEquals(false, ModernWeaponCombat.shouldUseLungeJab(3.0, 4.5, 3, false, false));
-      assertEquals(false, ModernWeaponCombat.shouldUseLungeJab(4.0, 4.5, 0, false, false));
-      assertEquals(false, ModernWeaponCombat.shouldUseLungeJab(4.0, 4.5, 3, true, false));
-      assertEquals(false, ModernWeaponCombat.shouldUseLungeJab(4.0, 4.5, 3, false, true));
-      assertEquals(false, ModernWeaponCombat.shouldUseLungeJab(5.0, 4.5, 3, false, false));
+      assertEquals(true, ModernWeaponCombat.shouldUseLungeJab(4.0, 4.5, 3, false, false, 20));
+      assertEquals(false, ModernWeaponCombat.shouldUseLungeJab(3.0, 4.5, 3, false, false, 20));
+      assertEquals(false, ModernWeaponCombat.shouldUseLungeJab(4.0, 4.5, 0, false, false, 20));
+      assertEquals(false, ModernWeaponCombat.shouldUseLungeJab(4.0, 4.5, 3, true, false, 20));
+      assertEquals(false, ModernWeaponCombat.shouldUseLungeJab(4.0, 4.5, 3, false, true, 20));
+      assertEquals(false, ModernWeaponCombat.shouldUseLungeJab(5.0, 4.5, 3, false, false, 20));
+      assertEquals(false, ModernWeaponCombat.shouldUseLungeJab(4.0, 4.5, 3, false, false, 5));
    }
 
    @Test
@@ -87,4 +88,18 @@ class ModernWeaponCombatTest {
       assertEquals(5.0,
          ModernWeaponCombat.spearChargeDamage(5.0, 2.0, 1.20), 1.0E-9);
    }
+   @Test
+   void reachSwapIsBoundedByBothDonorAndConfiguredReach() {
+      assertEquals(4.625,
+         ModernWeaponCombat.resolveReachSwapDistance(3.125, 4.625, 5.0, true), 1.0E-9);
+      assertEquals(4.0,
+         ModernWeaponCombat.resolveReachSwapDistance(3.125, 4.625, 4.0, true), 1.0E-9);
+      assertEquals(3.125,
+         ModernWeaponCombat.resolveReachSwapDistance(3.125, 4.625, 4.0, false), 1.0E-9);
+      assertEquals(3.125,
+         ModernWeaponCombat.resolveReachSwapDistance(3.125, 4.625, Double.NaN, true), 1.0E-9);
+      assertEquals(3.125,
+         ModernWeaponCombat.resolveReachSwapDistance(3.125, 3.0, 4.0, true), 1.0E-9);
+   }
+
 }

@@ -7,13 +7,21 @@ import org.bukkit.plugin.Plugin;
 
 import java.io.File;
 import java.util.Locale;
+import java.util.Collections;
+import java.util.Map;
+import java.util.WeakHashMap;
 
 public final class PvpEnvironment {
+    private static final Map<PracticeBotPlugin, Boolean> SWAP_WARNING_LOGGED =
+        Collections.synchronizedMap(new WeakHashMap<>());
+
     private final PracticeBotPlugin plugin;
     private final String serverName;
     private final String bukkitVersion;
     private final boolean paperFamily;
     private final boolean equipmentUpdatesOnActions;
+    private final boolean equipmentSettingDetected;
+    private final String equipmentSettingSource;
     private final boolean windChargeReset;
     private final boolean fastCrystals;
     private final boolean attributeSwapAvailable;
@@ -23,7 +31,10 @@ public final class PvpEnvironment {
         this.serverName = Bukkit.getName();
         this.bukkitVersion = Bukkit.getBukkitVersion();
         this.paperFamily = isPaperFamily();
-        this.equipmentUpdatesOnActions = readEquipmentUpdateSetting();
+        EquipmentUpdateSetting equipmentSetting = readEquipmentUpdateSetting();
+        this.equipmentUpdatesOnActions = equipmentSetting.value();
+        this.equipmentSettingDetected = equipmentSetting.detected();
+        this.equipmentSettingSource = equipmentSetting.source();
         this.windChargeReset = detectPlugin(
             "windchargereset",
             "wind charge reset",
@@ -36,7 +47,10 @@ public final class PvpEnvironment {
             "fastcrystalsreborn",
             "fastercrystals"
         );
-        this.attributeSwapAvailable = paperFamily && !equipmentUpdatesOnActions;
+        this.attributeSwapAvailable = supportsAttributeSwapping(
+            paperFamily, equipmentSettingDetected, equipmentUpdatesOnActions
+        );
+        logAttributeSwapCapability();
     }
 
     public String serverName() {
@@ -70,11 +84,21 @@ public final class PvpEnvironment {
         return attributeSwapAvailable;
     }
 
+    public boolean isEquipmentSettingDetected() {
+        return equipmentSettingDetected;
+    }
+
+    public String equipmentSettingSource() {
+        return equipmentSettingSource;
+    }
+
     public String summary() {
         return "server=" + serverName +
             ", version=" + bukkitVersion +
             ", paperFamily=" + paperFamily +
             ", updateEquipmentOnPlayerActions=" + equipmentUpdatesOnActions +
+            ", equipmentSettingDetected=" + equipmentSettingDetected +
+            ", equipmentSettingSource=" + equipmentSettingSource +
             ", attributeSwapAvailable=" + attributeSwapAvailable +
             ", WindChargeReset=" + windChargeReset +
             ", FastCrystals=" + fastCrystals;
@@ -102,9 +126,16 @@ public final class PvpEnvironment {
             value.toLowerCase(Locale.ROOT).replace(" ", "").replace("-", "").replace("_", "");
     }
 
-    private boolean readEquipmentUpdateSetting() {
-        File serverRoot = Bukkit.getWorldContainer();
+    static boolean supportsAttributeSwapping(
+        boolean paperFamily, boolean settingDetected, boolean equipmentUpdatesOnActions
+    ) {
+        return paperFamily && settingDetected && !equipmentUpdatesOnActions;
+    }
 
+    private record EquipmentUpdateSetting(boolean value, boolean detected, String source) {}
+
+    private EquipmentUpdateSetting readEquipmentUpdateSetting() {
+        File serverRoot = Bukkit.getWorldContainer();
         File[] candidates = new File[] {
             new File(serverRoot, "config/paper-global.yml"),
             new File(serverRoot, "paper.yml"),
@@ -120,10 +151,9 @@ public final class PvpEnvironment {
 
             try {
                 YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
-                if (config.contains("unsupported-settings.update-equipment-on-player-actions")) {
-                    return config.getBoolean(
-                        "unsupported-settings.update-equipment-on-player-actions", true
-                    );
+                String key = "unsupported-settings.update-equipment-on-player-actions";
+                if (config.contains(key)) {
+                    return new EquipmentUpdateSetting(config.getBoolean(key, true), true, file.getPath());
                 }
             } catch (Exception ex) {
                 plugin.getLogger().warning(
@@ -133,6 +163,40 @@ public final class PvpEnvironment {
             }
         }
 
-        return true;
+        return new EquipmentUpdateSetting(true, false, "not found");
     }
+
+    private void logAttributeSwapCapability() {
+        synchronized (SWAP_WARNING_LOGGED) {
+            if (SWAP_WARNING_LOGGED.putIfAbsent(plugin, Boolean.TRUE) != null) {
+                return;
+            }
+        }
+
+        if (attributeSwapAvailable) {
+            plugin.getLogger().info(
+                "Attribute-swap techniques enabled: " + equipmentSettingSource +
+                " explicitly sets unsupported-settings.update-equipment-on-player-actions=false. " +
+                "These techniques rely on unsupported vanilla behavior and should be tested on this server build."
+            );
+            return;
+        }
+
+        String reason;
+        if (!paperFamily) {
+            reason = "the server is not detected as Paper/Purpur";
+        } else if (!equipmentSettingDetected) {
+            reason = "unsupported-settings.update-equipment-on-player-actions was not explicitly found";
+        } else {
+            reason = "unsupported-settings.update-equipment-on-player-actions is true";
+        }
+
+        plugin.getLogger().warning(
+            "Attribute-swap techniques are DISABLED because " + reason + ". " +
+            "On supported Paper/Purpur builds, set unsupported-settings.update-equipment-on-player-actions: false " +
+            "in config/paper-global.yml and restart the server. Normal native weapon attacks remain enabled; " +
+            "PracticeBot will not substitute a synthetic damage bonus for unsupported swapping."
+        );
+    }
+
 }

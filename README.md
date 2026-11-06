@@ -79,8 +79,8 @@ Pushing a tag matching `v*.*.*` runs the release workflow. It rebuilds and tests
 Example:
 
 ```bash
-git tag v1.7.0
-git push origin v1.7.0
+git tag v1.8.10
+git push origin v1.8.10
 ```
 
 ## Compatibility

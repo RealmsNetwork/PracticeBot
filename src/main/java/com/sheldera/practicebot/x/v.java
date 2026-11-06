@@ -366,7 +366,7 @@ public class v {
 
       // A dedicated Mace profile must never silently fall back to sword damage
       // when a StrikePractice kit has not placed its Mace in the held slot.
-      if (this.modernWeaponCombat.isDedicatedModernWeaponProfile(var3)) {
+      if (this.modernWeaponCombat.isDedicatedWeaponProfile(var3)) {
          return;
       }
 

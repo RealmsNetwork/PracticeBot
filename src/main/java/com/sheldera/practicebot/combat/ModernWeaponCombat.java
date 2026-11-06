@@ -196,6 +196,7 @@ public final class ModernWeaponCombat {
     private void tickMace(Player bot, Player target, BotTrait trait, long now) {
         if (maceTargetChanged(trait, target)) {
             restoreMaceWeapon(bot, trait);
+            trait.spearWindChargeLaunchedAt = 0L;
             trait.maceLaunchActive = false;
             trait.maceWindChargePending = false;
             trait.maceAttemptedThisFall = false;
@@ -485,6 +486,7 @@ public final class ModernWeaponCombat {
         double distance = bot.getLocation().distance(target.getLocation());
         if (distance > effectiveMaceReach(bot)) return true;
         if (maceTargetChanged(trait, target)) {
+            trait.spearWindChargeLaunchedAt = 0L;
             trait.maceLaunchActive = false;
             trait.maceLaunchStartedAt = 0L;
         }
@@ -649,6 +651,7 @@ public final class ModernWeaponCombat {
     ) {
         if (spearTargetChanged(trait, target)) {
             NmsCombatBridge.stopUsingItem(bot);
+            trait.spearWindChargeLaunchedAt = 0L;
             trait.spearChargeStartedAt = 0L;
             trait.spearLastHitAt = 0L;
         }
@@ -714,6 +717,7 @@ public final class ModernWeaponCombat {
         if (distance < minReach - margin || distance > maxReach + margin) return true;
         if (spearTargetChanged(trait, target)) {
             NmsCombatBridge.stopUsingItem(bot);
+            trait.spearWindChargeLaunchedAt = 0L;
             trait.spearChargeStartedAt = 0L;
             trait.spearLastHitAt = 0L;
         }
@@ -1483,6 +1487,7 @@ public final class ModernWeaponCombat {
         trait.macePeakY = 0.0D;
         trait.spearChargeStartedAt = 0L;
         trait.spearLastHitAt = 0L;
+        trait.spearWindChargeLaunchedAt = 0L;
         trait.modernWeaponTarget = null;
     }
 }

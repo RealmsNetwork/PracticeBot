@@ -434,10 +434,12 @@ public final class ModernWeaponCombat {
         else item.setAmount(item.getAmount() - 1);
     }
 
-    public boolean isDedicatedModernWeaponProfile(BotTrait trait) {
+    public boolean isDedicatedWeaponProfile(BotTrait trait) {
         if (trait == null || trait.getWeaponProfile() == null) return false;
         String profile = trait.getWeaponProfile().trim().toLowerCase(java.util.Locale.ROOT);
-        return profile.startsWith("mace") || profile.startsWith("spear");
+        return profile.startsWith("mace") || profile.startsWith("spear") ||
+            "bow".equals(profile) || "cart".equals(profile) ||
+            "cart_elytra".equals(profile) || "water".equals(profile);
     }
 
     private boolean selectProfileItem(Player bot, java.util.function.Predicate<ItemStack> matches) {

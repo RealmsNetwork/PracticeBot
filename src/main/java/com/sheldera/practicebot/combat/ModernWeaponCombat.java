@@ -12,9 +12,6 @@ import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
-import org.bukkit.attribute.AttributeModifier;
-import org.bukkit.NamespacedKey;
-import org.bukkit.inventory.EquipmentSlotGroup;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
@@ -81,10 +78,10 @@ public final class ModernWeaponCombat {
         if (item.getType() == Material.MACE) {
             PaperItemDataBridge.AttackRangeData range =
                 PaperItemDataBridge.attackRange(item);
-
-            return range == null
+            double normalReach = range == null
                 ? MACE_MAX_REACH + MACE_HITBOX_MARGIN
                 : range.maxReach() + range.hitboxMargin();
+            return Math.max(normalReach, effectiveMaceReach(player));
         }
 
         if (isSpear(item)) {
@@ -106,7 +103,6 @@ public final class ModernWeaponCombat {
             if (bot != null && trait != null) {
                 restoreMaceWeapon(bot, trait);
                 NmsCombatBridge.stopUsingItem(bot);
-                removeAttributeSwapModifier(bot, trait);
             }
             reset(trait);
             return;
@@ -115,7 +111,6 @@ public final class ModernWeaponCombat {
         restoreMaceWeaponIfDue(bot, trait, now);
         if (trait.maceWindChargePending) {
             NmsCombatBridge.stopUsingItem(bot);
-            removeAttributeSwapModifier(bot, trait);
             tickMace(bot, target, trait, now);
             return;
         }
@@ -129,21 +124,18 @@ public final class ModernWeaponCombat {
 
         if (item == null || item.getType().isAir()) {
             NmsCombatBridge.stopUsingItem(bot);
-            removeAttributeSwapModifier(bot, trait);
             reset(trait);
             return;
         }
 
         if (item.getType() == Material.MACE) {
             NmsCombatBridge.stopUsingItem(bot);
-            removeAttributeSwapModifier(bot, trait);
             trait.spearChargeStartedAt = 0L;
             tickMace(bot, target, trait, now);
         } else if (isSpear(item)) {
             tickSpear(bot, target, trait, now);
         } else {
             NmsCombatBridge.stopUsingItem(bot);
-            removeAttributeSwapModifier(bot, trait);
             reset(trait);
         }
     }
@@ -441,8 +433,8 @@ public final class ModernWeaponCombat {
         // Switch to mace outside spear reach for the wind-charge launch, and keep
         // it during the aerial smash. Also answer an opponent who is actively
         // holding a mace instead of waiting to be hit/knocked airborne first.
-        boolean useMace = trait.maceLaunchActive || !bot.isOnGround() ||
-            targetIsThreateningWithMace ||
+        boolean useMace = trait.maceLaunchActive ||
+            !bot.isOnGround() || targetIsThreateningWithMace ||
             (distance > spearReach && distance <= maceLaunchMax &&
                 !plugin.getConfig().getBoolean("modern-weapons.spear.wind-charge-approach.enabled", true));
 
@@ -459,11 +451,25 @@ public final class ModernWeaponCombat {
         }
     }
 
+    private boolean shouldUseBreachSwap(Player bot, Player target) {
+        if (!environment.isAttributeSwapAvailable() || !techniqueEnabled("breach") ||
+            target == null || target.isDead()) return false;
+        int maceSlot = findSlot(bot, Material.MACE);
+        if (maceSlot < 0) return false;
+        ItemStack mace = bot.getInventory().getItem(maceSlot);
+        if (enchantLevel(mace, "breach") <= 0) return false;
+        AttributeInstance armor = target.getAttribute(Attribute.GENERIC_ARMOR);
+        double armorValue = armor == null ? 0.0D : armor.getValue();
+        double threshold = plugin.getConfig().getDouble(
+            "tactics.attribute-swap.techniques.breach.minimum-target-armor", 12.0D);
+        return Double.isFinite(armorValue) && armorValue >= Math.max(0.0D, threshold);
+    }
+
     private boolean maceAimHitsTarget(Player bot, Player target) {
         if (!bot.hasLineOfSight(target)) return false;
         Vector direction = bot.getEyeLocation().getDirection().normalize();
         return bot.getWorld().rayTraceEntities(
-            bot.getEyeLocation(), direction, MACE_MAX_REACH + MACE_HITBOX_MARGIN, 0.08D,
+            bot.getEyeLocation(), direction, effectiveMaceReach(bot), 0.08D,
             entity -> entity.getUniqueId().equals(target.getUniqueId())
         ) != null;
     }
@@ -477,7 +483,7 @@ public final class ModernWeaponCombat {
 
     private boolean tryMace(Player bot, Player target, BotTrait trait, long now) {
         double distance = bot.getLocation().distance(target.getLocation());
-        if (distance > MACE_MAX_REACH + MACE_HITBOX_MARGIN) return true;
+        if (distance > effectiveMaceReach(bot)) return true;
         if (maceTargetChanged(trait, target)) {
             trait.maceLaunchActive = false;
             trait.maceLaunchStartedAt = 0L;
@@ -520,11 +526,12 @@ public final class ModernWeaponCombat {
             logNativeFailure("mace attack");
             return;
         }
+        String swapTactic = trait.lastTactic.startsWith("attribute-swap-") ? trait.lastTactic : null;
         plugin.addCombatTag(target);
         trait.lastAttackTime = now;
         trait.modernWeaponCooldownUntil = now + attackCooldownMs(bot);
         applyHumanAttackDelay(trait, now);
-        trait.lastTactic = "mace-native-hit";
+        trait.lastTactic = swapTactic == null ? "mace-native-hit" : "mace-native-hit+" + swapTactic;
     }
 
     private void performMaceSmash(
@@ -547,6 +554,7 @@ public final class ModernWeaponCombat {
 
         // The server now owns smash damage, fall-distance reset, area knockback,
         // particles, Wind Burst and all mace enchantment effects.
+        String swapTactic = trait.lastTactic.startsWith("attribute-swap-") ? trait.lastTactic : null;
         plugin.addCombatTag(target);
         int windBurst = enchantLevel(bot.getInventory().getItemInMainHand(), "wind_burst");
         trait.maceLaunchActive = windBurst > 0 && bot.getVelocity().getY() > 0.05D;
@@ -555,7 +563,8 @@ public final class ModernWeaponCombat {
         trait.maceLaunchStartedAt = now;
         trait.lastAttackTime = now;
         trait.modernWeaponCooldownUntil = now + attackCooldownMs(bot);
-        trait.lastTactic = trait.maceLaunchActive ? "mace-native-wind-burst" : "mace-native-smash";
+        String smashTactic = trait.maceLaunchActive ? "mace-native-wind-burst" : "mace-native-smash";
+        trait.lastTactic = swapTactic == null ? smashTactic : smashTactic + "+" + swapTactic;
         applyHumanAttackDelay(trait, now);
         return true;
     }
@@ -640,7 +649,6 @@ public final class ModernWeaponCombat {
     ) {
         if (spearTargetChanged(trait, target)) {
             NmsCombatBridge.stopUsingItem(bot);
-            removeAttributeSwapModifier(bot, trait);
             trait.spearChargeStartedAt = 0L;
             trait.spearLastHitAt = 0L;
         }
@@ -655,10 +663,9 @@ public final class ModernWeaponCombat {
         // Jab is the close-range attack. Let the server handle its piercing,
         // cooldown, enchantments and Lunge effects when trySpear invokes attack().
         boolean lungeApproach = shouldUseLungeJab(distance, maxReach,
-            enchantLevel(spear, "lunge"), bot.isGliding(), bot.isInWater());
+            enchantLevel(spear, "lunge"), bot.isGliding(), bot.isInWater(), bot.getFoodLevel());
         if (distance <= 3.15D || lungeApproach || distance < minReach + 0.05D || distance > maxReach) {
             NmsCombatBridge.stopUsingItem(bot);
-            removeAttributeSwapModifier(bot, trait);
             trait.spearChargeStartedAt = 0L;
             if (distance < minReach + 0.05D && !bot.isGliding()) {
                 Vector away = bot.getLocation().toVector().subtract(target.getLocation().toVector());
@@ -677,19 +684,16 @@ public final class ModernWeaponCombat {
         if (!plugin.getConfig().getBoolean("modern-weapons.spear.charge-enabled", true) ||
             (!bot.isOnGround() && !bot.isGliding())) {
             NmsCombatBridge.stopUsingItem(bot);
-            removeAttributeSwapModifier(bot, trait);
             trait.spearChargeStartedAt = 0L;
             return;
         }
 
         if (!NmsCombatBridge.isUsingItem(bot)) {
-            applyAttributeSwapModifier(bot, trait);
             if (NmsCombatBridge.startUsingMainHand(bot)) {
                 trait.spearChargeStartedAt = now;
                 trait.lastTactic = isElytraProfile(trait) && bot.isGliding()
                     ? "elytra-spear-charge" : "spear-charge";
             } else {
-                removeAttributeSwapModifier(bot, trait);
                 trait.spearChargeStartedAt = 0L;
                 logNativeFailure("spear charge");
             }
@@ -722,39 +726,73 @@ public final class ModernWeaponCombat {
         trait.spearChargeStartedAt = 0L;
 
         boolean lungeApproach = shouldUseLungeJab(distance, maxReach,
-            enchantLevel(spear, "lunge"), bot.isGliding(), bot.isInWater());
+            enchantLevel(spear, "lunge"), bot.isGliding(), bot.isInWater(), bot.getFoodLevel());
         if ((distance > 3.15D && !lungeApproach) ||
             (!bot.isOnGround() && !lungeApproach) ||
             now < trait.modernWeaponCooldownUntil ||
             now - trait.lastAttackTime < attackCooldownMs(bot)) return true;
 
-        performSpearJab(bot, target, trait, now);
+        performSpearJab(bot, target, trait, now, lungeApproach);
         return true;
     }
 
     private void performSpearJab(
-        Player bot, Player target, BotTrait trait, long now
+        Player bot, Player target, BotTrait trait, long now, boolean lungeApproach
     ) {
         NmsCombatBridge.stopUsingItem(bot);
-        if (!spearAimHitsTarget(bot, target)) return;
+        Location originalView = bot.getLocation().clone();
+        boolean levelLungeAim = false;
+
+        // Lunge's impulse follows the spear user's view vector. A normal aim at
+        // the target's eyes often points downwards, which wastes most of the
+        // horizontal launch. Use a level yaw only when that ray still intersects
+        // the target; otherwise keep the normal target-tracking aim.
+        if (lungeApproach) {
+            Vector horizontal = target.getLocation().toVector()
+                .subtract(bot.getLocation().toVector());
+            horizontal.setY(0.0D);
+            if (horizontal.lengthSquared() > 1.0E-5D) {
+                float yaw = (float) Math.toDegrees(Math.atan2(-horizontal.getX(), horizontal.getZ()));
+                bot.setRotation(yaw, 0.0F);
+                levelLungeAim = spearAimHitsTarget(bot, target);
+            }
+        }
+
+        if (!levelLungeAim) {
+            bot.setRotation(originalView.getYaw(), originalView.getPitch());
+            if (!spearAimHitsTarget(bot, target)) return;
+        }
+
         bot.swingMainHand();
-        applyAttributeSwapModifier(bot, trait);
+        boolean forceLungeSwap = levelLungeAim && plugin.getConfig().getBoolean(
+            "tactics.attribute-swap.force-on-lunge", true
+        );
+        boolean breachSwap = !forceLungeSwap && shouldUseBreachSwap(bot, target);
         boolean jabSucceeded;
         try {
-            jabSucceeded = NmsCombatBridge.stabAttack(bot);
+            // STAB is dispatched synchronously, so the server applies Lunge
+            // using the level view before we restore the bot's tracking angle.
+            jabSucceeded = (forceLungeSwap || breachSwap)
+                ? performNativeStabWithAttributeSwap(bot, target, trait, forceLungeSwap)
+                : NmsCombatBridge.stabAttack(bot);
         } finally {
-            removeAttributeSwapModifier(bot, trait);
+            bot.setRotation(originalView.getYaw(), originalView.getPitch());
         }
         if (!jabSucceeded) {
             logNativeFailure("spear jab");
             return;
         }
         plugin.addCombatTag(target);
+        String swapTactic = trait.lastTactic.startsWith("attribute-swap-") ? trait.lastTactic : null;
         trait.lastAttackTime = now;
         trait.modernWeaponCooldownUntil = now + attackCooldownMs(bot);
         trait.spearChargeStartedAt = 0L;
+        if (trait.spearWindChargeLaunchedAt > 0L && now - trait.spearWindChargeLaunchedAt <= 900L) {
+            trait.spearWindChargeLaunchedAt = 0L;
+        }
         applyHumanAttackDelay(trait, now);
-        trait.lastTactic = "spear-native-jab";
+        String jabTactic = levelLungeAim ? "spear-lunge-jab" : "spear-native-jab";
+        trait.lastTactic = swapTactic == null ? jabTactic : jabTactic + "+" + swapTactic;
     }
 
     private boolean spearAimHitsTarget(Player bot, Player target) {
@@ -912,17 +950,6 @@ public final class ModernWeaponCombat {
             : Math.max(1.0D, attribute.getValue());
     }
 
-    private double attributeDamageBonus(Player bot) {
-        AttributeInstance attribute =
-            bot.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE);
-
-        if (attribute == null) {
-            return 0.0D;
-        }
-
-        return Math.max(0.0D, attribute.getValue() - attribute.getBaseValue());
-    }
-
     private void logNativeFailure(String action) {
         String failure = NmsCombatBridge.lastFailure();
         if (failure == null || failure.equals(lastNativeFailureLogged)) return;
@@ -931,114 +958,166 @@ public final class ModernWeaponCombat {
     }
 
     private boolean performNativeAttackWithAttributeSwap(Player bot, Player target, BotTrait trait) {
-        applyAttributeSwapModifier(bot, trait);
+        int originalSlot = bot.getInventory().getHeldItemSlot();
+        String technique = prepareNativeSwapWindow(bot, target, trait, false);
         try {
-            return NmsCombatBridge.attack(bot, target);
+            boolean attacked = NmsCombatBridge.attack(bot, target);
+            if (attacked && technique != null) {
+                trait.lastTactic = "attribute-swap-" + technique;
+            }
+            return attacked;
         } finally {
-            removeAttributeSwapModifier(bot, trait);
-        }
-    }
-
-    private void applyAttributeSwapModifier(Player bot, BotTrait trait) {
-        if (trait.attributeSwapModifier != null) return;
-        double bonus = attributeSwapBonus(bot, trait);
-        if (bonus <= 0.0D) return;
-        AttributeInstance attribute = bot.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE);
-        if (attribute == null) return;
-        NamespacedKey key = new NamespacedKey(plugin, "attribute-swap-" + java.util.UUID.randomUUID().toString().replace("-", ""));
-        AttributeModifier modifier = new AttributeModifier(
-            key, bonus, AttributeModifier.Operation.ADD_NUMBER, EquipmentSlotGroup.ANY
-        );
-        try {
-            attribute.addTransientModifier(modifier);
-            trait.attributeSwapModifier = modifier;
-        } catch (Throwable throwable) {
-            plugin.debugLog(() -> "Could not apply native attribute-swap modifier: " + throwable.getMessage());
-        }
-    }
-
-    private void removeAttributeSwapModifier(Player bot, BotTrait trait) {
-        if (trait == null || trait.attributeSwapModifier == null) return;
-        AttributeInstance attribute = bot == null ? null : bot.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE);
-        if (attribute != null) {
-            try {
-                attribute.removeModifier(trait.attributeSwapModifier);
-            } catch (Throwable ignored) {
+            if (bot.getInventory().getHeldItemSlot() != originalSlot) {
+                bot.getInventory().setHeldItemSlot(originalSlot);
             }
         }
-        trait.attributeSwapModifier = null;
     }
 
-    private double attributeSwapBonus(Player bot, BotTrait trait) {
-        if (!environment.isAttributeSwapAvailable() ||
-            !plugin.getConfig().getBoolean(
-                "tactics.attribute-swap.enabled", true
-            )) {
-            return 0.0D;
-        }
-
-        double chance = plugin.getConfig().getDouble(
-            "tactics.attribute-swap.chance-percent", 10.0D
-        );
-
-        if (ThreadLocalRandom.current().nextDouble(100.0D) >= chance) {
-            return 0.0D;
-        }
-
-        ItemStack original =
-            bot.getInventory().getItemInMainHand();
-
-        ItemStack alternate = findAlternateWeapon(
-            bot.getInventory(), original
-        );
-
-        if (alternate == null) {
-            return 0.0D;
-        }
-
-        AttributeInstance attribute =
-            bot.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE);
-
-        if (attribute == null) {
-            return 0.0D;
-        }
-
-        double current = attribute.getValue();
-
-        // This intentionally measures a real server-side attribute delta from
-        // the actual inventory rather than hard-coding weapon damage values.
-        bot.getInventory().setItemInMainHand(alternate.clone());
-
-        double swapped = attribute.getValue();
-
-        bot.getInventory().setItemInMainHand(original);
-
-        trait.lastTactic = "attribute-swap";
-        return Math.max(0.0D, swapped - current);
-    }
-
-    private ItemStack findAlternateWeapon(
-        PlayerInventory inventory, ItemStack current
+    private boolean performNativeStabWithAttributeSwap(
+        Player bot, Player target, BotTrait trait, boolean lunge
     ) {
-        boolean currentIsSpear = current != null && current.getType().name().endsWith("_SPEAR");
-        ItemStack fallback = null;
-        for (int slot = 0; slot < inventory.getSize(); slot++) {
-            ItemStack candidate = inventory.getItem(slot);
+        int originalSlot = bot.getInventory().getHeldItemSlot();
+        String technique = prepareNativeSwapWindow(bot, target, trait, lunge);
+        try {
+            boolean stabbed = NmsCombatBridge.stabAttack(bot);
+            if (stabbed && technique != null) {
+                trait.lastTactic = "attribute-swap-" + technique;
+            }
+            return stabbed;
+        } finally {
+            if (bot.getInventory().getHeldItemSlot() != originalSlot) {
+                bot.getInventory().setHeldItemSlot(originalSlot);
+            }
+        }
+    }
 
-            if (candidate == null || candidate.getType().isAir()) continue;
+    /**
+     * Replays a real same-tick hotbar transition before a native attack. Unlike
+     * the old implementation, this never fabricates an attack-damage modifier.
+     * Paper's unsupported setting is required because the behavior is a vanilla
+     * equipment-update quirk, not a supported combat API.
+     */
+    private String prepareNativeSwapWindow(
+        Player bot, Player target, BotTrait trait, boolean lunge
+    ) {
+        if (!environment.isAttributeSwapAvailable() ||
+            !plugin.getConfig().getBoolean("tactics.attribute-swap.enabled", true)) {
+            return null;
+        }
 
-            String name = candidate.getType().name();
-            boolean weapon = name.endsWith("_SWORD") || name.endsWith("_AXE") ||
-                name.equals("MACE") || name.endsWith("_MACE") || name.endsWith("_SPEAR");
-            if (!weapon || (current != null && candidate.getType() == current.getType())) continue;
+        ItemStack current = bot.getInventory().getItemInMainHand();
+        if (current == null || current.getType().isAir()) return null;
 
-            // In a Spear/Mace kit the mace is the intended damage-attribute
-            // donor for the Lunge Jab. Do not let the optional stun-slam axe
-            // in an earlier hotbar slot shadow it.
-            if (currentIsSpear && candidate.getType() == Material.MACE) return candidate;
-            if (fallback == null) fallback = candidate;
+        double distance = bot.getLocation().distance(target.getLocation());
+        boolean currentSpear = isSpear(current);
+        boolean currentMace = current.getType() == Material.MACE;
+        int donorSlot = -1;
+        String technique = null;
+
+        if (currentSpear && !bot.isOnGround() &&
+            trait.spearWindChargeLaunchedAt > 0L &&
+            System.currentTimeMillis() - trait.spearWindChargeLaunchedAt <= 900L &&
+            techniqueEnabled("wind-charge-lunge")) {
+            donorSlot = findSlot(bot, Material.WIND_CHARGE);
+            technique = "wind-charge-lunge";
+        } else if (currentSpear && lunge && techniqueEnabled("lunge-damage")) {
+            donorSlot = findSlot(bot, Material.MACE);
+            technique = "lunge-damage";
+        } else if (currentSpear && shouldUseBreachSwap(bot, target)) {
+            donorSlot = findSlot(bot, Material.MACE);
+            technique = "breach";
+        } else if (currentMace && distance > MACE_MAX_REACH &&
+            techniqueEnabled("reach")) {
+            donorSlot = findSpearSlot(bot);
+            technique = "reach";
+        } else if (currentMace && !bot.isOnGround() && !bot.isGliding() &&
+            bot.getFallDistance() >= MACE_MIN_SMASH_FALL &&
+            enchantLevel(current, "density") > 0 && techniqueEnabled("density")) {
+            donorSlot = findFastWeaponSlot(bot, current.getType());
+            technique = "density";
+        } else if (currentMace && techniqueEnabled("cooldown") &&
+            ThreadLocalRandom.current().nextDouble(100.0D) < Math.max(0.0D, Math.min(100.0D,
+                plugin.getConfig().getDouble("tactics.attribute-swap.chance-percent", 10.0D)))) {
+            donorSlot = findFastWeaponSlot(bot, current.getType());
+            technique = "cooldown";
+        }
+
+        if (donorSlot < 0 || donorSlot == bot.getInventory().getHeldItemSlot()) {
+            return null;
+        }
+
+        int originalSlot = bot.getInventory().getHeldItemSlot();
+        try {
+            bot.getInventory().setHeldItemSlot(donorSlot);
+        } finally {
+            if (bot.getInventory().getHeldItemSlot() != originalSlot) {
+                bot.getInventory().setHeldItemSlot(originalSlot);
+            }
+        }
+        return technique;
+    }
+
+    private boolean techniqueEnabled(String technique) {
+        return plugin.getConfig().getBoolean(
+            "tactics.attribute-swap.techniques." + technique + ".enabled", true
+        );
+    }
+
+    private int findSlot(Player bot, Material material) {
+        // A same-tick held-slot transition can only target hotbar slots 0-8.
+        for (int slot = 0; slot < 9; slot++) {
+            ItemStack item = bot.getInventory().getItem(slot);
+            if (item != null && item.getType() == material && item.getAmount() > 0) {
+                return slot;
+            }
+        }
+        return -1;
+    }
+
+    private int findSpearSlot(Player bot) {
+        for (int slot = 0; slot < 9; slot++) {
+            ItemStack item = bot.getInventory().getItem(slot);
+            if (item != null && isSpear(item)) return slot;
+        }
+        return -1;
+    }
+
+    private int findFastWeaponSlot(Player bot, Material currentType) {
+        int fallback = -1;
+        for (int slot = 0; slot < 9; slot++) {
+            ItemStack item = bot.getInventory().getItem(slot);
+            if (item == null || item.getType().isAir() || item.getType() == currentType) continue;
+            String name = item.getType().name();
+            if (name.endsWith("_SWORD")) return slot;
+            if (name.endsWith("_AXE") && fallback < 0) fallback = slot;
         }
         return fallback;
+    }
+
+    private double effectiveMaceReach(Player bot) {
+        double normalReach = MACE_MAX_REACH + MACE_HITBOX_MARGIN;
+        if (!environment.isAttributeSwapAvailable() || !techniqueEnabled("reach")) {
+            return normalReach;
+        }
+        int spearSlot = findSpearSlot(bot);
+        if (spearSlot < 0) return normalReach;
+        ItemStack spear = bot.getInventory().getItem(spearSlot);
+        PaperItemDataBridge.AttackRangeData range = PaperItemDataBridge.attackRange(spear);
+        double spearReach = range == null ? SPEAR_MAX_REACH + SPEAR_HITBOX_MARGIN
+            : range.maxReach() + range.hitboxMargin();
+        double configuredReach = plugin.getConfig().getDouble(
+            "tactics.attribute-swap.techniques.reach.max-distance", spearReach);
+        return resolveReachSwapDistance(normalReach, spearReach, configuredReach, true);
+    }
+
+    static double resolveReachSwapDistance(
+        double normalReach, double donorReach, double configuredReach, boolean enabled
+    ) {
+        if (!enabled || !Double.isFinite(normalReach) || !Double.isFinite(donorReach) ||
+            !Double.isFinite(configuredReach) || normalReach < 0.0D || donorReach < normalReach) {
+            return normalReach;
+        }
+        return Math.max(normalReach, Math.min(donorReach, configuredReach));
     }
 
     private long attackCooldownMs(Player bot) {
@@ -1145,10 +1224,11 @@ public final class ModernWeaponCombat {
     }
 
     static boolean shouldUseLungeJab(
-        double distance, double maxReach, int lungeLevel, boolean gliding, boolean inWater
+        double distance, double maxReach, int lungeLevel, boolean gliding, boolean inWater,
+        int foodLevel
     ) {
-        return lungeLevel > 0 && Double.isFinite(distance) && distance > 3.15D &&
-            distance <= maxReach && !gliding && !inWater;
+        return lungeLevel > 0 && foodLevel >= 6 && Double.isFinite(distance) &&
+            distance > 3.15D && distance <= maxReach && !gliding && !inWater;
     }
 
     static boolean shouldAttemptStunSlam(

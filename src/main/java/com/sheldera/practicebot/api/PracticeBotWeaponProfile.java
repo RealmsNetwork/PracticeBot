@@ -7,6 +7,7 @@ public enum PracticeBotWeaponProfile {
    SWORD,
    MACE,
    MACE_ELYTRA,
+   MACE_ROCKET,
    SPEAR,
    SPEAR_ELYTRA,
    SPEAR_MACE,

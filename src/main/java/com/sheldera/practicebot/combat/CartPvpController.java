@@ -135,7 +135,7 @@ public final class CartPvpController {
                     plans.remove(bot.getUniqueId());
                     return true;
                 }
-                Location spawn = plan.rail().block().getLocation().add(0.5D, 0.12D, 0.5D);
+                Location spawn = plan.rail().block().getLocation().add(0.5D, 0.0625D, 0.5D);
                 double safeDistance = configDouble("tactics.cart-pvp.self-safe-distance", 6.0D, 3.0D, 12.0D);
                 if (!isOutsideSelfSafetyRadius(bot.getLocation().distance(spawn), safeDistance)) {
                     cleanupPlan(bot, plan);
@@ -206,6 +206,7 @@ public final class CartPvpController {
                     bot.swingMainHand();
                     Arrow arrow = bot.launchProjectile(Arrow.class, aim);
                     arrow.setFireTicks(100);
+                    arrow.setVisualFire(true);
                     consume(arrows);
                     restoreMainHand(bot, plan);
                     plan.stage(3);

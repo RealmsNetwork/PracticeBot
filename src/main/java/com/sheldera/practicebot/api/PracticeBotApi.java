@@ -12,7 +12,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 
 public interface PracticeBotApi {
-   String API_VERSION = "1.11.0";
+   String API_VERSION = "1.12.0";
 
    String getApiVersion();
 

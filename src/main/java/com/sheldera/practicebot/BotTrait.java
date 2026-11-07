@@ -790,7 +790,7 @@ public class BotTrait extends Trait {
 
       String normalized = profile.trim().toLowerCase(Locale.ROOT);
       return switch (normalized) {
-         case "mace", "mace_elytra", "spear", "spear_elytra", "spear_mace", "spear_mace_elytra", "cart", "cart_elytra", "bow", "uhc", "water", "sword" -> normalized;
+         case "mace", "mace_elytra", "mace_rocket", "spear", "spear_elytra", "spear_mace", "spear_mace_elytra", "cart", "cart_elytra", "bow", "uhc", "water", "sword" -> normalized;
          default -> "sword";
       };
    }

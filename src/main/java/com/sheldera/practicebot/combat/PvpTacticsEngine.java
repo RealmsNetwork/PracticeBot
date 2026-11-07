@@ -9,6 +9,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.attribute.Attribute;
+import org.bukkit.entity.Firework;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
@@ -128,14 +129,13 @@ public final class PvpTacticsEngine {
             if (trySpearWindChargeApproach(bot, target, trait, now)) return false;
         }
 
-        if (profile.endsWith("_elytra") &&
+        if (usesElytraProfile(profile) &&
             tryElytraApproach(bot, target, trait, now, profile)) {
             return false;
         }
 
         if ("cart".equals(profile) || "cart_elytra".equals(profile)) {
-            cartController.tick(bot, target, trait, now);
-            return false;
+            return cartController.tick(bot, target, trait, now);
         }
 
         applyHumanMovementNoise(bot, target, trait, now);
@@ -639,13 +639,9 @@ public final class PvpTacticsEngine {
     private boolean tryElytraApproach(
         Player bot, Player target, BotTrait trait, long now, String profile
     ) {
-        if (!profile.endsWith("_elytra") ||
-            !TemplateDifficultyTuning.getBoolean(plugin, trait, "elytra-enabled", true, "tactics.elytra.enabled")) {
-            return false;
-        }
-
-        ItemStack chest = bot.getInventory().getChestplate();
-        if (chest == null || chest.getType() != Material.ELYTRA) {
+        if (!usesElytraProfile(profile) ||
+            !TemplateDifficultyTuning.getBoolean(plugin, trait, "elytra-enabled", true, "tactics.elytra.enabled") ||
+            !ensureElytraEquipped(bot)) {
             return false;
         }
 
@@ -691,12 +687,15 @@ public final class PvpTacticsEngine {
 
             if (rocket != null && rocket.getAmount() > 0) {
                 try {
-                    ItemStack boostItem = new ItemStack(Material.FIREWORK_ROCKET);
-                    boostItem.setAmount(1);
-                    bot.fireworkBoost(boostItem);
-                    rocket.setAmount(rocket.getAmount() - 1);
-                    trait.lastRocketBoostAt = now;
-                } catch (IllegalArgumentException ignored) {
+                    Firework boost = bot.fireworkBoost(rocket.clone());
+                    if (boost != null) {
+                        rocket.setAmount(rocket.getAmount() - 1);
+                        trait.lastRocketBoostAt = now;
+                        trait.lastTactic = "elytra-rocket-boost";
+                        bot.updateInventory();
+                    }
+                } catch (IllegalArgumentException failure) {
+                    plugin.debugLog(() -> "Elytra rocket boost failed: " + failure.getMessage());
                 }
             }
         }
@@ -756,6 +755,32 @@ public final class PvpTacticsEngine {
         }
 
         return true;
+    }
+
+    static boolean usesElytraProfile(String profile) {
+        if (profile == null) return false;
+        String normalized = profile.trim().toLowerCase(java.util.Locale.ROOT);
+        return normalized.endsWith("_elytra") || "mace_rocket".equals(normalized);
+    }
+
+    private boolean ensureElytraEquipped(Player bot) {
+        var inventory = bot.getInventory();
+        ItemStack chest = inventory.getChestplate();
+        if (chest != null && chest.getType() == Material.ELYTRA) return true;
+
+        ItemStack[] storage = inventory.getStorageContents();
+        for (int slot = 0; slot < storage.length; slot++) {
+            ItemStack candidate = storage[slot];
+            if (candidate == null || candidate.getType() != Material.ELYTRA || candidate.getAmount() <= 0) {
+                continue;
+            }
+            inventory.setChestplate(candidate.clone());
+            inventory.setItem(slot, chest == null || chest.getType().isAir() ? null : chest.clone());
+            bot.updateInventory();
+            plugin.debugLog(() -> "Equipped inventory Elytra for rocket-assisted kit: " + bot.getName());
+            return true;
+        }
+        return false;
     }
 
     private void setLookDirection(Player player, Location target) {

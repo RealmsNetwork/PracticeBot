@@ -1568,7 +1568,8 @@ public final class ModernWeaponCombat {
     }
 
     private boolean isElytraProfile(BotTrait trait) {
-        return trait.getWeaponProfile().endsWith("_elytra");
+        String profile = trait == null ? null : trait.getWeaponProfile();
+        return profile != null && (profile.endsWith("_elytra") || "mace_rocket".equals(profile));
     }
 
     private boolean isSpear(ItemStack item) {
